@@ -1,0 +1,67 @@
+package domain
+
+import (
+	"errors"
+	"time"
+)
+
+// MessageRole represents the role of the message sender
+type MessageRole string
+
+const (
+	MessageRoleUser      MessageRole = "user"
+	MessageRoleAssistant MessageRole = "assistant"
+	MessageRoleSystem    MessageRole = "system"
+)
+
+// IsValid checks if the message role is valid
+func (r MessageRole) IsValid() bool {
+	switch r {
+	case MessageRoleUser, MessageRoleAssistant, MessageRoleSystem:
+		return true
+	}
+	return false
+}
+
+// Message represents a single message in a chat
+type Message struct {
+	ID         uint        `gorm:"primaryKey" json:"id"`
+	ChatID     uint        `gorm:"not null" json:"chat_id"`
+	Role       MessageRole `gorm:"size:20;not null" json:"role"`
+	Content    string      `gorm:"type:text;not null" json:"content"`
+	Metadata   string      `gorm:"type:jsonb" json:"metadata"` // Additional JSON metadata
+	Latency    int         `json:"latency"`                    // Response time in milliseconds
+	TokenCount int         `json:"token_count"`                // Number of tokens in the message
+	CreatedAt  time.Time   `json:"created_at"`
+}
+
+// Validate performs validation on the message structure
+func (m *Message) Validate() error {
+	if !m.Role.IsValid() {
+		return errors.New("invalid message role, must be 'user', 'assistant', or 'system'")
+	}
+	if m.Content == "" {
+		return errors.New("message content cannot be empty")
+	}
+	return nil
+}
+
+// MessageRepository defines the interface for message data operations
+type MessageRepository interface {
+	Create(message *Message) error
+	FindByID(id uint) (*Message, error)
+	FindByChatID(chatID uint) ([]Message, error)
+	CountByOrgIDAndDateRange(orgID uint, start, end time.Time) (int64, error)
+	GetRoleStats(orgID uint) (map[MessageRole]int64, error)
+	GetLatencyStats(orgID uint) (map[string]float64, error)  // min, max, avg
+	GetTokenCountStats(orgID uint) (map[string]int64, error) // total, avg
+}
+
+// MessageService defines the interface for message business logic
+type MessageService interface {
+	CreateMessage(message *Message) error
+	GetByID(id uint) (*Message, error)
+	GetByChatID(chatID uint) ([]Message, error)
+	// Analytics methods for messages
+	GetMessageStats(orgID uint, start, end time.Time) (map[string]interface{}, error)
+}

@@ -1,0 +1,42 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VERSION=${VERSION:-}
+        - BUILD_TIME=${BUILD_TIME:-}
+        - GIT_COMMIT=${GIT_COMMIT:-}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/chatlogger
+      - PORT=8080
+      - JWT_SECRET=your-jwt-secret-replace-in-production
+      - API_KEY_SALT=your-api-key-salt-replace-in-production
+    restart: unless-stopped
+    volumes:
+      - ./migrations:/app/migrations
+
+  # Using the postgres:alpine image is optional.
+  # You can also replace the DATABASE_URL with a different database URL if needed
+  db:
+    image: postgres:alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=dbuser
+      - POSTGRES_PASSWORD=dbpassword
+      - POSTGRES_DB=chatlogger
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbuser"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

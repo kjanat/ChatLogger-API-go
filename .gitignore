@@ -21,5 +21,6 @@
 go.work
 go.work.sum
 
-# env file
+# env file/credential files
 .env
+002_ensure_defaults.sql

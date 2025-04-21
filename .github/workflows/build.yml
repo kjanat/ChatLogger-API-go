@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # This fetches all history for all tags and branches for proper versioning
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+          check-latest: true
+          cache: true
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Build with version info
+        run: |
+          VERSION=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
+          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GIT_COMMIT=$(git rev-parse HEAD)
+          
+          echo "Building version: $VERSION, build time: $BUILD_TIME, git commit: $GIT_COMMIT"
+          
+          go build -ldflags "-X 'ChatLogger-API-go/internal/version.Version=$VERSION' -X 'ChatLogger-API-go/internal/version.BuildTime=$BUILD_TIME' -X 'ChatLogger-API-go/internal/version.GitCommit=$GIT_COMMIT'" -o chatlogger-api ./cmd/server
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: chatlogger-api
+          path: chatlogger-api
+          
+  # Deploy job can be added here for automatic deployment
+  # deploy:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     ...

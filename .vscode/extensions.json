@@ -1,0 +1,6 @@
+{
+    "recommendations": [
+        "golang.Go",
+        "ms-ossdata.vscode-postgresql"
+    ]
+}
