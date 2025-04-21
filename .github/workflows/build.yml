@@ -18,12 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # This fetches all history for all tags and branches for proper versioning
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.24'
           check-latest: true
@@ -43,7 +43,7 @@ jobs:
           go build -ldflags "-X 'ChatLogger-API-go/internal/version.Version=$VERSION' -X 'ChatLogger-API-go/internal/version.BuildTime=$BUILD_TIME' -X 'ChatLogger-API-go/internal/version.GitCommit=$GIT_COMMIT'" -o chatlogger-api ./cmd/server
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: chatlogger-api
           path: chatlogger-api
