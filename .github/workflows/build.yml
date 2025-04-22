@@ -80,7 +80,7 @@ jobs:
           echo "Version: $VERSION, Build time: $BUILD_TIME, Git commit: $GIT_COMMIT"
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v7
         with:
           version: latest
 
@@ -160,7 +160,7 @@ jobs:
           fi
 
       - name: GoReleaser Release
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: latest
