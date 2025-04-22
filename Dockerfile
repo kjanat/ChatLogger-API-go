@@ -28,7 +28,7 @@ RUN if [ -z "$VERSION" ]; then \
     go build -ldflags "-X 'ChatLogger-API-go/internal/version.Version=$VERSION' -X 'ChatLogger-API-go/internal/version.BuildTime=$BUILD_TIME' -X 'ChatLogger-API-go/internal/version.GitCommit=$GIT_COMMIT'" -o /app/chatlogger-api ./cmd/server
 
 # Use a smaller image for the final stage
-FROM alpine:latest
+FROM alpine
 
 WORKDIR /app
 

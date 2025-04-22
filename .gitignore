@@ -17,10 +17,22 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# Editor
+.vscode/
+.idea/
+
 # Go workspace file
 go.work
 go.work.sum
 
+# Distribution files
+dist
+
+# GitHub Actions
+.github/workflows/go.yml
+
 # env file/credential files
 .env
 002_ensure_defaults.sql
+.cache_ggshield
+cosign.key

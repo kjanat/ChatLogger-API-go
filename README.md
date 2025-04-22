@@ -1,7 +1,7 @@
 # ChatLogger API (Go)
-<!-- ![ChatLogger API](https://raw.githubusercontent.com/yourusername/ChatLogger-API-go/main/assets/logo.png) -->
+<!-- ![ChatLogger API](https://raw.githubusercontent.com/kjanat/ChatLogger-API-go/master/assets/logo.png) -->
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/ChatLogger-API-go)](https://goreportcard.com/report/github.com/kjanat/ChatLogger-API-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kjanat/chatlogger-api-go)](https://goreportcard.com/report/github.com/kjanat/ChatLogger-API-go)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A multi-tenant backend API for logging and managing chat sessions, supporting both authenticated and unauthenticated usage with analytics capabilities.
@@ -39,7 +39,7 @@ The easiest way to get started is using Docker Compose:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ChatLogger-API-go.git
+git clone https://github.com/kjanat/ChatLogger-API-go.git
 cd ChatLogger-API-go
 
 # Start the application and database
@@ -52,7 +52,7 @@ The API will be available at `http://localhost:8080`.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ChatLogger-API-go.git
+git clone https://github.com/kjanat/ChatLogger-API-go.git
 cd ChatLogger-API-go
 
 # Install dependencies
@@ -135,24 +135,24 @@ curl -X GET \
 
 ### Public API (Chat Plugin)
 
-| Method | Endpoint                                    | Description               |
-| ------ | ------------------------------------------- | ------------------------- |
-| POST   | `/api/v1/orgs/:slug/chats`                  | Create a new chat session |
-| POST   | `/api/v1/orgs/:slug/chats/:chatID/messages` | Add a message to a chat   |
+| Method   | Endpoint                                     | Description                |
+|:---------|:---------------------------------------------|:---------------------------|
+| `POST`   | `/api/v1/orgs/:slug/chats`                   | Create a new chat session  |
+| `POST`   | `/api/v1/orgs/:slug/chats/:chatID/messages`  | Add a message to a chat    |
 
 ### Dashboard API (Authenticated)
 
-| Method | Endpoint                     | Description                |
-| ------ | ---------------------------- | -------------------------- |
-| POST   | `/auth/login`                | Login and get JWT cookie   |
-| GET    | `/users/me`                  | Get current user info      |
-| PATCH  | `/users/me`                  | Update current user        |
-| GET    | `/orgs/me/apikeys`           | List organization API keys |
-| POST   | `/orgs/me/apikeys`           | Create new API key         |
-| DELETE | `/orgs/me/apikeys/:id`       | Revoke an API key          |
-| GET    | `/analytics/orgs/me/summary` | Get organization analytics |
-| POST   | `/exports/orgs/me`           | Trigger data export        |
-| GET    | `/exports/orgs/me/:id`       | Download export file       |
+| Method   | Endpoint                      | Description                  |
+|:---------|:------------------------------|:-----------------------------|
+| `POST`   | `/auth/login`                 | Login and get JWT cookie     |
+| `GET`    | `/users/me`                   | Get current user info        |
+| `PATCH`  | `/users/me`                   | Update current user          |
+| `GET`    | `/orgs/me/apikeys`            | List organization API keys   |
+| `POST`   | `/orgs/me/apikeys`            | Create new API key           |
+| `DELETE` | `/orgs/me/apikeys/:id`        | Revoke an API key            |
+| `GET`    | `/analytics/orgs/me/summary`  | Get organization analytics   |
+| `POST`   | `/exports/orgs/me`            | Trigger data export          |
+| `GET`    | `/exports/orgs/me/:id`        | Download export file         |
 
 ## 🔧 Configuration
 
@@ -178,7 +178,7 @@ The application includes version information that can be injected during build:
 ```bash
 # Build with version information
 docker build -t chatlogger-api \
-  --build-arg VERSION=0.1.0 \
+  --build-arg VERSION=0.1.1 \
   --build-arg BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
   --build-arg GIT_COMMIT=$(git rev-parse HEAD) \
   .

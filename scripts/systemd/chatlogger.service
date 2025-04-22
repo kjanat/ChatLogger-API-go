@@ -1,0 +1,26 @@
+[Unit]
+Description=ChatLogger API Service
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=chatlogger
+Group=chatlogger
+WorkingDirectory=/opt/chatlogger
+ExecStart=/usr/bin/chatlogger-api
+Restart=on-failure
+RestartSec=10
+Environment=CONFIG_FILE=/etc/chatlogger/config.yaml
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+ProtectHome=true
+ReadWritePaths=/var/lib/chatlogger
+
+[Install]
+WantedBy=multi-user.target

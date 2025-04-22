@@ -5,49 +5,122 @@ on:
     branches:
       - main
       - master
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
       - master
-  release:
-    types:
-      - created
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write # Needed for cosign keyless signing
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # This fetches all history for all tags and branches for proper versioning
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.24'
           check-latest: true
           cache: true
 
-      - name: Run tests
-        run: go test -v ./...
-
-      - name: Build with version info
+      # Extract version directly from version.go
+      - name: Extract Version from version.go
+        id: get_version
         run: |
           VERSION=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
           BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GIT_COMMIT=$(git rev-parse HEAD)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "BUILD_TIME=$BUILD_TIME" >> $GITHUB_ENV
+          echo "GIT_COMMIT=$GIT_COMMIT" >> $GITHUB_ENV
+          echo "Extracted version: $VERSION"
+          echo "Build time: $BUILD_TIME"
+          echo "Git commit: $GIT_COMMIT"
+
+      - name: Run linters
+        run: |
+          go get -u golang.org/x/lint/golint
+          golint ./... | tee lint_report.txt
+          if [ -s lint_report.txt ]; then
+            echo "Linting errors found:"
+            cat lint_report.txt
+            exit 1
+          else
+            echo "No linting errors found."
+          fi
+
+      # - name: Build with version info
+      #   run: |
+      #     # Use the extracted version, build time, and git commit for the build
+      #     echo "Building version: ${{ steps.get_version.outputs.VERSION }}, build time: ${{ steps.get_version.outputs.BUILD_TIME }}, git commit: ${{ steps.get_version.outputs.GIT_COMMIT }}"
           
-          echo "Building version: $VERSION, build time: $BUILD_TIME, git commit: $GIT_COMMIT"
-          
-          go build -ldflags "-X 'ChatLogger-API-go/internal/version.Version=$VERSION' -X 'ChatLogger-API-go/internal/version.BuildTime=$BUILD_TIME' -X 'ChatLogger-API-go/internal/version.GitCommit=$GIT_COMMIT'" -o chatlogger-api ./cmd/server
-      
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
+      #     go build -ldflags \
+      #       -X 'github.com/kjanat/ChatLogger-API-go/internal/version.Version=${{ steps.get_version.outputs.VERSION }}' \
+      #       -X 'github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime=${{ steps.get_version.outputs.BUILD_TIME }}' \
+      #       -X 'github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit=${{ steps.get_version.outputs.GIT_COMMIT }}' \
+      #       -o chatlogger-api \
+      #       ./cmd/server
+
+      # - name: Run tests
+      #   run: go test -v ./...
+
+      - name: Set up Docker Buildx
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/login-action@v3
         with:
-          name: chatlogger-api
-          path: chatlogger-api
-          
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Cosign
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: sigstore/cosign-installer@v3.4.0
+
+      - name: Setup Cosign for Docker Signing
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          # If using a private key stored in secrets
+          if [[ -n "${{ secrets.COSIGN_PRIVATE_KEY }}" ]]; then
+            echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+            echo "COSIGN_PRIVATE_KEY=cosign.key" >> $GITHUB_ENV
+            echo "Using provided cosign private key"
+          else
+            echo "No cosign private key provided, will use cosign.key from repository if it exists"
+          fi
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
+          GORELEASE_CURRENT_RUN: ${{ github.run_id }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chatlogger-api-go
+          path: dist/*
+
   # Deploy job can be added here for automatic deployment
   # deploy:
   #   needs: build
