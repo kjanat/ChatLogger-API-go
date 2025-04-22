@@ -33,8 +33,6 @@ linters-settings:
   
   # Detect bugs, performance and style issues
   govet:
-    # Report about shadowed variables
-    check-shadowing: true
     # Enable all analyzers
     enable-all: true
     # Disable specific analyzers
@@ -114,6 +112,7 @@ output:
       path: ./.temp/golangci-lint-report.json
     html:
       path: ./.temp/golangci-lint-report.html
+  sort-results: true
   sort-order:
     - linter
     - file
