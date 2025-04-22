@@ -50,7 +50,7 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 	var userID *uint64
 	userIDInterface, exists := c.Get("userID")
 	if exists {
-		uid := uint64(userIDInterface.(uint))
+		uid := userIDInterface.(uint64)
 		userID = &uid
 	} else {
 		// Use the userID from the request if provided
@@ -66,7 +66,7 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 
 	// Create chat object
 	chat := &domain.Chat{
-		OrganizationID: uint64(orgID.(uint)),
+		OrganizationID: organizationID,
 		UserID:         userID,
 		Title:          req.Title,
 		Tags:           string(tagsJSON),
@@ -153,7 +153,7 @@ func (h *ChatHandler) ListChats(c *gin.Context) {
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
 	// Get chats
-	chats, err := h.chatService.GetByOrganizationID(uint64(orgID.(uint)), limit, offset)
+	chats, err := h.chatService.GetByOrganizationID(orgID.(uint64), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list chats"})
 		return
