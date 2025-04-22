@@ -153,7 +153,7 @@ func (h *ChatHandler) ListChats(c *gin.Context) {
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
 	// Get chats
-	chats, err := h.chatService.GetByOrganizationID(uint64(orgID.(uint)), limit, offset)
+	chats, err := h.chatService.GetByOrganizationID(orgID.(uint64), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list chats"})
 		return
