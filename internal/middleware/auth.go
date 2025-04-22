@@ -1,16 +1,19 @@
+// Package middleware provides HTTP middleware for the ChatLogger API,
+// including authentication, authorization, versioning, and request processing.
 package middleware
 
 import (
-	"ChatLogger-API-go/internal/domain"
-	"ChatLogger-API-go/internal/service"
 	"fmt"
 	"net/http"
+
+	"ChatLogger-API-go/internal/domain"
+	"ChatLogger-API-go/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// JWTAuth middleware for user authentication using JWT
+// JWTAuth middleware for user authentication using JWT.
 func JWTAuth(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the JWT token from the cookie
@@ -18,21 +21,27 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 			c.Abort()
+
 			return
 		}
 
 		// Parse the JWT token
-		token, err := jwt.ParseWithClaims(tokenString, &service.JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-			// Validate the signing method
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(jwtSecret), nil
-		})
+		token, err := jwt.ParseWithClaims(
+			tokenString,
+			&service.JWTClaims{},
+			func(token *jwt.Token) (interface{}, error) {
+				// Validate the signing method
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
 
+				return []byte(jwtSecret), nil
+			},
+		)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
+
 			return
 		}
 
@@ -41,6 +50,7 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 		if !ok || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
+
 			return
 		}
 
@@ -53,7 +63,7 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 	}
 }
 
-// APIKeyAuth middleware for authentication using API key
+// APIKeyAuth middleware for authentication using API key.
 func APIKeyAuth(apiKeyService domain.APIKeyService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the API key from the header
@@ -61,6 +71,7 @@ func APIKeyAuth(apiKeyService domain.APIKeyService) gin.HandlerFunc {
 		if apiKey == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "API key required"})
 			c.Abort()
+
 			return
 		}
 
@@ -69,11 +80,14 @@ func APIKeyAuth(apiKeyService domain.APIKeyService) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to validate API key"})
 			c.Abort()
+
 			return
 		}
+
 		if key == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid API key"})
 			c.Abort()
+
 			return
 		}
 
@@ -84,7 +98,7 @@ func APIKeyAuth(apiKeyService domain.APIKeyService) gin.HandlerFunc {
 	}
 }
 
-// RoleRequired middleware to check if user has required role
+// RoleRequired middleware to check if user has required role.
 func RoleRequired(roles ...domain.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get user's role from context
@@ -92,6 +106,7 @@ func RoleRequired(roles ...domain.Role) gin.HandlerFunc {
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{"error": "role information not available"})
 			c.Abort()
+
 			return
 		}
 
@@ -99,9 +114,11 @@ func RoleRequired(roles ...domain.Role) gin.HandlerFunc {
 
 		// Check if the user has one of the required roles
 		authorized := false
+
 		for _, r := range roles {
 			if userRole == r {
 				authorized = true
+
 				break
 			}
 		}
@@ -114,6 +131,7 @@ func RoleRequired(roles ...domain.Role) gin.HandlerFunc {
 		if !authorized {
 			c.JSON(http.StatusForbidden, gin.H{"error": "insufficient permissions"})
 			c.Abort()
+
 			return
 		}
 
@@ -121,7 +139,7 @@ func RoleRequired(roles ...domain.Role) gin.HandlerFunc {
 	}
 }
 
-// ValidateOrgAccess middleware to check if user has access to the requested organization
+// ValidateOrgAccess middleware to check if user has access to the requested organization.
 func ValidateOrgAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get user's organization ID from context
@@ -129,6 +147,7 @@ func ValidateOrgAccess() gin.HandlerFunc {
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{"error": "organization information not available"})
 			c.Abort()
+
 			return
 		}
 
@@ -138,13 +157,15 @@ func ValidateOrgAccess() gin.HandlerFunc {
 		if requestedOrgIDStr == "me" {
 			// The "me" shorthand refers to the user's own organization
 			c.Next()
+
 			return
 		}
 
-		var requestedOrgID uint
+		var requestedOrgID uint64
 		if _, err := fmt.Sscanf(requestedOrgIDStr, "%d", &requestedOrgID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization ID"})
 			c.Abort()
+
 			return
 		}
 
@@ -153,6 +174,7 @@ func ValidateOrgAccess() gin.HandlerFunc {
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{"error": "role information not available"})
 			c.Abort()
+
 			return
 		}
 
@@ -161,13 +183,18 @@ func ValidateOrgAccess() gin.HandlerFunc {
 		// SuperAdmin can access any organization
 		if userRole == domain.RoleSuperAdmin {
 			c.Next()
+
 			return
 		}
 
 		// Other users can only access their own organization
-		if userOrgID.(uint) != requestedOrgID {
-			c.JSON(http.StatusForbidden, gin.H{"error": "you do not have access to this organization"})
+		if userOrgID.(uint64) != requestedOrgID {
+			c.JSON(
+				http.StatusForbidden,
+				gin.H{"error": "you do not have access to this organization"},
+			)
 			c.Abort()
+
 			return
 		}
 
@@ -175,7 +202,7 @@ func ValidateOrgAccess() gin.HandlerFunc {
 	}
 }
 
-// ValidateSlugAccess middleware to check if user has access to the requested organization by slug
+// ValidateSlugAccess middleware to check if user has access to the requested organization by slug.
 func ValidateSlugAccess(orgService domain.OrganizationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get user's organization ID from context
@@ -183,6 +210,7 @@ func ValidateSlugAccess(orgService domain.OrganizationService) gin.HandlerFunc {
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{"error": "organization information not available"})
 			c.Abort()
+
 			return
 		}
 
@@ -194,11 +222,14 @@ func ValidateSlugAccess(orgService domain.OrganizationService) gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to lookup organization"})
 			c.Abort()
+
 			return
 		}
+
 		if org == nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "organization not found"})
 			c.Abort()
+
 			return
 		}
 
@@ -215,21 +246,27 @@ func ValidateSlugAccess(orgService domain.OrganizationService) gin.HandlerFunc {
 			// SuperAdmin can access any organization
 			if userRole == domain.RoleSuperAdmin {
 				c.Next()
+
 				return
 			}
 
 			// Other users can only access their own organization
-			if userOrgID.(uint) != org.ID {
-				c.JSON(http.StatusForbidden, gin.H{"error": "you do not have access to this organization"})
+			if userOrgID.(uint64) != org.ID {
+				c.JSON(
+					http.StatusForbidden,
+					gin.H{"error": "you do not have access to this organization"},
+				)
 				c.Abort()
+
 				return
 			}
 		} else {
 			// For API key auth, we already verified the key belongs to the org
 			// Just check that the key's org matches the requested org
-			if userOrgID.(uint) != org.ID {
+			if userOrgID.(uint64) != org.ID {
 				c.JSON(http.StatusForbidden, gin.H{"error": "this API key cannot access this organization"})
 				c.Abort()
+
 				return
 			}
 		}

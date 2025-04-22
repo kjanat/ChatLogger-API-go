@@ -1,3 +1,5 @@
+// Package main provides a command-line tool for generating bcrypt password hashes
+// with configurable cost parameters for the ChatLogger API application.
 package main
 
 import (
@@ -28,7 +30,11 @@ func main() {
 		fmt.Println("Usage: generate_hash [-password=<password>] [-cost=<cost>] [password]")
 		fmt.Println("  or provide password via stdin")
 		fmt.Print("Enter password to hash: ")
-		fmt.Scanln(&password)
+
+		_, err := fmt.Scanln(&password)
+		if err != nil {
+			log.Fatalf("Error reading password: %v", err)
+		}
 
 		if password == "" {
 			os.Exit(1)

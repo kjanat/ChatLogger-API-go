@@ -1,64 +1,70 @@
 package repository
 
 import (
-	"ChatLogger-API-go/internal/domain"
 	"errors"
 	"time"
 
+	"ChatLogger-API-go/internal/domain"
 	"gorm.io/gorm"
 )
 
-// MessageRepo implements the domain.MessageRepository interface
+// MessageRepo implements the domain.MessageRepository interface.
 type MessageRepo struct {
 	db *Database
 }
 
-// NewMessageRepository creates a new message repository
+// NewMessageRepository creates a new message repository.
 func NewMessageRepository(db *Database) domain.MessageRepository {
 	return &MessageRepo{db: db}
 }
 
-// Create creates a new message
+// Create creates a new message.
 func (r *MessageRepo) Create(message *domain.Message) error {
 	return r.db.Create(message).Error
 }
 
-// FindByID finds a message by ID
-func (r *MessageRepo) FindByID(id uint) (*domain.Message, error) {
+// FindByID finds a message by ID.
+func (r *MessageRepo) FindByID(id uint64) (*domain.Message, error) {
 	var message domain.Message
+
 	err := r.db.First(&message, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	return &message, nil
 }
 
-// FindByChatID finds messages by chat ID
-func (r *MessageRepo) FindByChatID(chatID uint) ([]domain.Message, error) {
+// FindByChatID finds messages by chat ID.
+func (r *MessageRepo) FindByChatID(chatID uint64) ([]domain.Message, error) {
 	var messages []domain.Message
 	err := r.db.Where("chat_id = ?", chatID).Order("created_at ASC").Find(&messages).Error
+
 	return messages, err
 }
 
-// CountByOrgIDAndDateRange counts messages in a date range for an organization
-func (r *MessageRepo) CountByOrgIDAndDateRange(orgID uint, start, end time.Time) (int64, error) {
+// CountByOrgIDAndDateRange counts messages in a date range for an organization.
+func (r *MessageRepo) CountByOrgIDAndDateRange(orgID uint64, start, end time.Time) (int64, error) {
 	var count int64
 	err := r.db.Model(&domain.Message{}).
 		Joins("JOIN chats ON messages.chat_id = chats.id").
 		Where("chats.organization_id = ? AND messages.created_at BETWEEN ? AND ?", orgID, start, end).
 		Count(&count).Error
+
 	return count, err
 }
 
-// GetRoleStats gets statistics for message roles in an organization
-func (r *MessageRepo) GetRoleStats(orgID uint) (map[domain.MessageRole]int64, error) {
+// GetRoleStats gets statistics for message roles in an organization.
+func (r *MessageRepo) GetRoleStats(orgID uint64) (map[domain.MessageRole]int64, error) {
 	type Result struct {
 		Role  domain.MessageRole
 		Count int64
 	}
+
 	var results []Result
 
 	err := r.db.Model(&domain.Message{}).
@@ -67,7 +73,6 @@ func (r *MessageRepo) GetRoleStats(orgID uint) (map[domain.MessageRole]int64, er
 		Where("chats.organization_id = ?", orgID).
 		Group("messages.role").
 		Scan(&results).Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +85,15 @@ func (r *MessageRepo) GetRoleStats(orgID uint) (map[domain.MessageRole]int64, er
 	return stats, nil
 }
 
-// GetLatencyStats gets latency statistics for an organization
-func (r *MessageRepo) GetLatencyStats(orgID uint) (map[string]float64, error) {
+// GetLatencyStats gets latency statistics for an organization.
+func (r *MessageRepo) GetLatencyStats(orgID uint64) (map[string]float64, error) {
 	type Result struct {
 		Min   float64
 		Max   float64
 		Avg   float64
 		Total int64
 	}
+
 	var result Result
 
 	err := r.db.Model(&domain.Message{}).
@@ -95,7 +101,6 @@ func (r *MessageRepo) GetLatencyStats(orgID uint) (map[string]float64, error) {
 		Joins("JOIN chats ON messages.chat_id = chats.id").
 		Where("chats.organization_id = ? AND messages.role = ?", orgID, domain.MessageRoleAssistant).
 		Scan(&result).Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -109,12 +114,13 @@ func (r *MessageRepo) GetLatencyStats(orgID uint) (map[string]float64, error) {
 	return stats, nil
 }
 
-// GetTokenCountStats gets token count statistics for an organization
-func (r *MessageRepo) GetTokenCountStats(orgID uint) (map[string]int64, error) {
+// GetTokenCountStats gets token count statistics for an organization.
+func (r *MessageRepo) GetTokenCountStats(orgID uint64) (map[string]int64, error) {
 	type Result struct {
 		Total int64
 		Avg   float64
 	}
+
 	var result Result
 
 	err := r.db.Model(&domain.Message{}).
@@ -122,7 +128,6 @@ func (r *MessageRepo) GetTokenCountStats(orgID uint) (map[string]int64, error) {
 		Joins("JOIN chats ON messages.chat_id = chats.id").
 		Where("chats.organization_id = ?", orgID).
 		Scan(&result).Error
-
 	if err != nil {
 		return nil, err
 	}

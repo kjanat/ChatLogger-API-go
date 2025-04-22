@@ -3,6 +3,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/kjanat/chatlogger-api-go)](https://goreportcard.com/report/github.com/kjanat/ChatLogger-API-go)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Build and Release](https://github.com/kjanat/ChatLogger-API-go/actions/workflows/build.yml/badge.svg)](https://github.com/kjanat/ChatLogger-API-go/actions/workflows/build.yml)
 
 A multi-tenant backend API for logging and managing chat sessions, supporting both authenticated and unauthenticated usage with analytics capabilities.
 

@@ -1,31 +1,35 @@
+// Package handler implements HTTP request handlers for the ChatLogger API.
+// It contains handler functions for routing, request validation,
+// and response formatting by interacting with service layer components.
 package handler
 
 import (
-	"ChatLogger-API-go/internal/domain"
 	"fmt"
 	"net/http"
+
+	"ChatLogger-API-go/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )
 
-// APIKeyHandler handles API key-related requests
+// APIKeyHandler handles API key-related requests.
 type APIKeyHandler struct {
 	apiKeyService domain.APIKeyService
 }
 
-// NewAPIKeyHandler creates a new API key handler
+// NewAPIKeyHandler creates a new API key handler.
 func NewAPIKeyHandler(apiKeyService domain.APIKeyService) *APIKeyHandler {
 	return &APIKeyHandler{
 		apiKeyService: apiKeyService,
 	}
 }
 
-// GenerateKeyRequest represents the request to generate a new API key
+// GenerateKeyRequest represents the request to generate a new API key.
 type GenerateKeyRequest struct {
-	Label string `json:"label" binding:"required"`
+	Label string `binding:"required" json:"label"`
 }
 
-// GenerateKey handles the request to generate a new API key
+// GenerateKey handles the request to generate a new API key.
 func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 	var req GenerateKeyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -41,7 +45,7 @@ func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 	}
 
 	// Generate a new API key
-	rawKey, err := h.apiKeyService.GenerateKey(orgID.(uint), req.Label)
+	rawKey, err := h.apiKeyService.GenerateKey(orgID.(uint64), req.Label)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate API key"})
 		return
@@ -55,7 +59,7 @@ func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 	})
 }
 
-// ListKeys handles the request to list API keys for an organization
+// ListKeys handles the request to list API keys for an organization.
 func (h *APIKeyHandler) ListKeys(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")
@@ -65,7 +69,7 @@ func (h *APIKeyHandler) ListKeys(c *gin.Context) {
 	}
 
 	// Get API keys
-	keys, err := h.apiKeyService.ListByOrganizationID(orgID.(uint))
+	keys, err := h.apiKeyService.ListByOrganizationID(orgID.(uint64))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list API keys"})
 		return
@@ -74,42 +78,58 @@ func (h *APIKeyHandler) ListKeys(c *gin.Context) {
 	c.JSON(http.StatusOK, keys)
 }
 
-// RevokeKey handles the request to revoke an API key
-func (h *APIKeyHandler) RevokeKey(c *gin.Context) {
+// validateKeyAccess is a helper function to validate API key access and permissions.
+// It returns the key ID, API key, and a boolean indicating if validation was successful.
+// If validation fails, it sets the appropriate HTTP response and returns false.
+func (h *APIKeyHandler) validateKeyAccess(c *gin.Context, actionName string) (uint64, *domain.APIKey, bool) {
 	// Get key ID from URL
 	keyID := c.Param("id")
 	if keyID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "API key ID is required"})
-		return
+		return 0, nil, false
 	}
 
-	var id uint
+	var id uint64
 	if _, err := fmt.Sscanf(keyID, "%d", &id); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid API key ID"})
-		return
+		return 0, nil, false
 	}
 
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Organization ID not found in context"})
-		return
+		return 0, nil, false
 	}
 
 	// Get the API key
 	key, err := h.apiKeyService.GetByID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get API key"})
-		return
+		return 0, nil, false
 	}
+
 	if key == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "API key not found"})
-		return
+		return 0, nil, false
 	}
 
 	// Check if the key belongs to the organization
-	if key.OrganizationID != orgID.(uint) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to revoke this API key"})
+	if key.OrganizationID != orgID.(uint64) {
+		c.JSON(
+			http.StatusForbidden,
+			gin.H{"error": "You do not have permission to " + actionName + " this API key"},
+		)
+		return 0, nil, false
+	}
+
+	return id, key, true
+}
+
+// RevokeKey handles the request to revoke an API key.
+func (h *APIKeyHandler) RevokeKey(c *gin.Context) {
+	id, _, ok := h.validateKeyAccess(c, "revoke")
+	if !ok {
 		return
 	}
 
@@ -122,42 +142,10 @@ func (h *APIKeyHandler) RevokeKey(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "API key revoked successfully"})
 }
 
-// DeleteKey handles the request to delete an API key
+// DeleteKey handles the request to delete an API key.
 func (h *APIKeyHandler) DeleteKey(c *gin.Context) {
-	// Get key ID from URL
-	keyID := c.Param("id")
-	if keyID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "API key ID is required"})
-		return
-	}
-
-	var id uint
-	if _, err := fmt.Sscanf(keyID, "%d", &id); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid API key ID"})
-		return
-	}
-
-	// Get organization ID from context
-	orgID, exists := c.Get("orgID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Organization ID not found in context"})
-		return
-	}
-
-	// Get the API key
-	key, err := h.apiKeyService.GetByID(id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get API key"})
-		return
-	}
-	if key == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "API key not found"})
-		return
-	}
-
-	// Check if the key belongs to the organization
-	if key.OrganizationID != orgID.(uint) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to delete this API key"})
+	id, _, ok := h.validateKeyAccess(c, "delete")
+	if !ok {
 		return
 	}
 

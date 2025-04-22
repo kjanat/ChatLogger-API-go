@@ -1,25 +1,26 @@
 package service
 
 import (
-	"ChatLogger-API-go/internal/domain"
 	"errors"
 	"fmt"
 	"time"
+
+	"ChatLogger-API-go/internal/domain"
 )
 
-// ChatService implements the domain.ChatService interface
+// ChatService implements the domain.ChatService interface.
 type ChatService struct {
 	chatRepo domain.ChatRepository
 }
 
-// NewChatService creates a new chat service
+// NewChatService creates a new chat service.
 func NewChatService(chatRepo domain.ChatRepository) domain.ChatService {
 	return &ChatService{
 		chatRepo: chatRepo,
 	}
 }
 
-// CreateChat creates a new chat
+// CreateChat creates a new chat.
 func (s *ChatService) CreateChat(chat *domain.Chat) error {
 	// Set timestamps
 	chat.CreatedAt = time.Now()
@@ -29,28 +30,29 @@ func (s *ChatService) CreateChat(chat *domain.Chat) error {
 	return s.chatRepo.Create(chat)
 }
 
-// GetByID gets a chat by ID
-func (s *ChatService) GetByID(id uint) (*domain.Chat, error) {
+// GetByID gets a chat by ID.
+func (s *ChatService) GetByID(id uint64) (*domain.Chat, error) {
 	return s.chatRepo.FindByID(id)
 }
 
-// GetByOrganizationID gets chats by organization ID with pagination
-func (s *ChatService) GetByOrganizationID(orgID uint, limit, offset int) ([]domain.Chat, error) {
+// GetByOrganizationID gets chats by organization ID with pagination.
+func (s *ChatService) GetByOrganizationID(orgID uint64, limit, offset int) ([]domain.Chat, error) {
 	return s.chatRepo.FindByOrganizationID(orgID, limit, offset)
 }
 
-// GetByUserID gets chats by user ID with pagination
-func (s *ChatService) GetByUserID(userID uint, limit, offset int) ([]domain.Chat, error) {
+// GetByUserID gets chats by user ID with pagination.
+func (s *ChatService) GetByUserID(userID uint64, limit, offset int) ([]domain.Chat, error) {
 	return s.chatRepo.FindByUserID(userID, limit, offset)
 }
 
-// UpdateChat updates a chat
+// UpdateChat updates a chat.
 func (s *ChatService) UpdateChat(chat *domain.Chat) error {
 	// Get the existing chat
 	existingChat, err := s.chatRepo.FindByID(chat.ID)
 	if err != nil {
 		return fmt.Errorf("error finding chat: %w", err)
 	}
+
 	if existingChat == nil {
 		return errors.New("chat not found")
 	}
@@ -62,13 +64,16 @@ func (s *ChatService) UpdateChat(chat *domain.Chat) error {
 	return s.chatRepo.Update(chat)
 }
 
-// DeleteChat deletes a chat
-func (s *ChatService) DeleteChat(id uint) error {
+// DeleteChat deletes a chat.
+func (s *ChatService) DeleteChat(id uint64) error {
 	return s.chatRepo.Delete(id)
 }
 
-// GetChatStats gets chat statistics for an organization
-func (s *ChatService) GetChatStats(orgID uint, start, end time.Time) (map[string]interface{}, error) {
+// GetChatStats gets chat statistics for an organization.
+func (s *ChatService) GetChatStats(
+	orgID uint64,
+	start, end time.Time,
+) (map[string]interface{}, error) {
 	// Get chat count in date range
 	chatCount, err := s.chatRepo.CountByOrgIDAndDateRange(orgID, start, end)
 	if err != nil {

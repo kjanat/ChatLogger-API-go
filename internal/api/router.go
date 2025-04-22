@@ -1,3 +1,5 @@
+// Package api handles the API routes, middleware configuration, and API initialization
+// for the ChatLogger application. It defines both public and authenticated routes.
 package api
 
 import (
