@@ -55,7 +55,7 @@ func (h *MessageHandler) CreateMessage(c *gin.Context) {
 	}
 
 	// Get the chat to validate ownership
-	chat, err := h.chatService.GetByID(uint(id))
+	chat, err := h.chatService.GetByID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat"})
 		return
@@ -73,7 +73,7 @@ func (h *MessageHandler) CreateMessage(c *gin.Context) {
 	}
 
 	// Check if the chat belongs to the organization
-	if chat.OrganizationID != orgID.(uint) {
+	if chat.OrganizationID != uint64(orgID.(uint)) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to add messages to this chat"})
 		return
 	}
@@ -117,7 +117,7 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 	}
 
 	// Get the chat to validate ownership
-	chat, err := h.chatService.GetByID(uint(id))
+	chat, err := h.chatService.GetByID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat"})
 		return
@@ -135,7 +135,7 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 	}
 
 	// Check if the chat belongs to the organization
-	if chat.OrganizationID != orgID.(uint) {
+	if chat.OrganizationID != uint64(orgID.(uint)) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to view messages in this chat"})
 		return
 	}
@@ -189,7 +189,7 @@ func (h *MessageHandler) GetMessageStats(c *gin.Context) {
 	}
 
 	// Get message statistics
-	stats, err := h.messageService.GetMessageStats(orgID.(uint), start, end)
+	stats, err := h.messageService.GetMessageStats(uint64(orgID.(uint)), start, end)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get message statistics"})
 		return

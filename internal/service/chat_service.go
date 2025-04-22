@@ -30,17 +30,17 @@ func (s *ChatService) CreateChat(chat *domain.Chat) error {
 }
 
 // GetByID gets a chat by ID
-func (s *ChatService) GetByID(id uint) (*domain.Chat, error) {
+func (s *ChatService) GetByID(id uint64) (*domain.Chat, error) {
 	return s.chatRepo.FindByID(id)
 }
 
 // GetByOrganizationID gets chats by organization ID with pagination
-func (s *ChatService) GetByOrganizationID(orgID uint, limit, offset int) ([]domain.Chat, error) {
+func (s *ChatService) GetByOrganizationID(orgID uint64, limit, offset int) ([]domain.Chat, error) {
 	return s.chatRepo.FindByOrganizationID(orgID, limit, offset)
 }
 
 // GetByUserID gets chats by user ID with pagination
-func (s *ChatService) GetByUserID(userID uint, limit, offset int) ([]domain.Chat, error) {
+func (s *ChatService) GetByUserID(userID uint64, limit, offset int) ([]domain.Chat, error) {
 	return s.chatRepo.FindByUserID(userID, limit, offset)
 }
 
@@ -63,12 +63,12 @@ func (s *ChatService) UpdateChat(chat *domain.Chat) error {
 }
 
 // DeleteChat deletes a chat
-func (s *ChatService) DeleteChat(id uint) error {
+func (s *ChatService) DeleteChat(id uint64) error {
 	return s.chatRepo.Delete(id)
 }
 
 // GetChatStats gets chat statistics for an organization
-func (s *ChatService) GetChatStats(orgID uint, start, end time.Time) (map[string]interface{}, error) {
+func (s *ChatService) GetChatStats(orgID uint64, start, end time.Time) (map[string]interface{}, error) {
 	// Get chat count in date range
 	chatCount, err := s.chatRepo.CountByOrgIDAndDateRange(orgID, start, end)
 	if err != nil {

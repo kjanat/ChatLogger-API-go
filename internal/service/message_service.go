@@ -33,17 +33,17 @@ func (s *MessageService) CreateMessage(message *domain.Message) error {
 }
 
 // GetByID gets a message by ID
-func (s *MessageService) GetByID(id uint) (*domain.Message, error) {
+func (s *MessageService) GetByID(id uint64) (*domain.Message, error) {
 	return s.messageRepo.FindByID(id)
 }
 
 // GetByChatID gets messages by chat ID
-func (s *MessageService) GetByChatID(chatID uint) ([]domain.Message, error) {
+func (s *MessageService) GetByChatID(chatID uint64) ([]domain.Message, error) {
 	return s.messageRepo.FindByChatID(chatID)
 }
 
 // GetMessageStats gets message statistics for an organization
-func (s *MessageService) GetMessageStats(orgID uint, start, end time.Time) (map[string]interface{}, error) {
+func (s *MessageService) GetMessageStats(orgID uint64, start, end time.Time) (map[string]interface{}, error) {
 	// Get message count in date range
 	messageCount, err := s.messageRepo.CountByOrgIDAndDateRange(orgID, start, end)
 	if err != nil {

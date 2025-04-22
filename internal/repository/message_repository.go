@@ -24,7 +24,7 @@ func (r *MessageRepo) Create(message *domain.Message) error {
 }
 
 // FindByID finds a message by ID
-func (r *MessageRepo) FindByID(id uint) (*domain.Message, error) {
+func (r *MessageRepo) FindByID(id uint64) (*domain.Message, error) {
 	var message domain.Message
 	err := r.db.First(&message, id).Error
 	if err != nil {
@@ -37,14 +37,14 @@ func (r *MessageRepo) FindByID(id uint) (*domain.Message, error) {
 }
 
 // FindByChatID finds messages by chat ID
-func (r *MessageRepo) FindByChatID(chatID uint) ([]domain.Message, error) {
+func (r *MessageRepo) FindByChatID(chatID uint64) ([]domain.Message, error) {
 	var messages []domain.Message
 	err := r.db.Where("chat_id = ?", chatID).Order("created_at ASC").Find(&messages).Error
 	return messages, err
 }
 
 // CountByOrgIDAndDateRange counts messages in a date range for an organization
-func (r *MessageRepo) CountByOrgIDAndDateRange(orgID uint, start, end time.Time) (int64, error) {
+func (r *MessageRepo) CountByOrgIDAndDateRange(orgID uint64, start, end time.Time) (int64, error) {
 	var count int64
 	err := r.db.Model(&domain.Message{}).
 		Joins("JOIN chats ON messages.chat_id = chats.id").
@@ -54,7 +54,7 @@ func (r *MessageRepo) CountByOrgIDAndDateRange(orgID uint, start, end time.Time)
 }
 
 // GetRoleStats gets statistics for message roles in an organization
-func (r *MessageRepo) GetRoleStats(orgID uint) (map[domain.MessageRole]int64, error) {
+func (r *MessageRepo) GetRoleStats(orgID uint64) (map[domain.MessageRole]int64, error) {
 	type Result struct {
 		Role  domain.MessageRole
 		Count int64
@@ -81,7 +81,7 @@ func (r *MessageRepo) GetRoleStats(orgID uint) (map[domain.MessageRole]int64, er
 }
 
 // GetLatencyStats gets latency statistics for an organization
-func (r *MessageRepo) GetLatencyStats(orgID uint) (map[string]float64, error) {
+func (r *MessageRepo) GetLatencyStats(orgID uint64) (map[string]float64, error) {
 	type Result struct {
 		Min   float64
 		Max   float64
@@ -110,7 +110,7 @@ func (r *MessageRepo) GetLatencyStats(orgID uint) (map[string]float64, error) {
 }
 
 // GetTokenCountStats gets token count statistics for an organization
-func (r *MessageRepo) GetTokenCountStats(orgID uint) (map[string]int64, error) {
+func (r *MessageRepo) GetTokenCountStats(orgID uint64) (map[string]int64, error) {
 	type Result struct {
 		Total int64
 		Avg   float64

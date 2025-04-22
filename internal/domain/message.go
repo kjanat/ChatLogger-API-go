@@ -25,8 +25,8 @@ func (r MessageRole) IsValid() bool {
 
 // Message represents a single message in a chat
 type Message struct {
-	ID         uint        `gorm:"primaryKey" json:"id"`
-	ChatID     uint        `gorm:"not null" json:"chat_id"`
+	ID         uint64      `gorm:"primaryKey" json:"id"`
+	ChatID     uint64      `gorm:"not null" json:"chat_id"`
 	Role       MessageRole `gorm:"size:20;not null" json:"role"`
 	Content    string      `gorm:"type:text;not null" json:"content"`
 	Metadata   string      `gorm:"type:jsonb" json:"metadata"` // Additional JSON metadata
@@ -49,19 +49,19 @@ func (m *Message) Validate() error {
 // MessageRepository defines the interface for message data operations
 type MessageRepository interface {
 	Create(message *Message) error
-	FindByID(id uint) (*Message, error)
-	FindByChatID(chatID uint) ([]Message, error)
-	CountByOrgIDAndDateRange(orgID uint, start, end time.Time) (int64, error)
-	GetRoleStats(orgID uint) (map[MessageRole]int64, error)
-	GetLatencyStats(orgID uint) (map[string]float64, error)  // min, max, avg
-	GetTokenCountStats(orgID uint) (map[string]int64, error) // total, avg
+	FindByID(id uint64) (*Message, error)
+	FindByChatID(chatID uint64) ([]Message, error)
+	CountByOrgIDAndDateRange(orgID uint64, start, end time.Time) (int64, error)
+	GetRoleStats(orgID uint64) (map[MessageRole]int64, error)
+	GetLatencyStats(orgID uint64) (map[string]float64, error)  // min, max, avg
+	GetTokenCountStats(orgID uint64) (map[string]int64, error) // total, avg
 }
 
 // MessageService defines the interface for message business logic
 type MessageService interface {
 	CreateMessage(message *Message) error
-	GetByID(id uint) (*Message, error)
-	GetByChatID(chatID uint) ([]Message, error)
+	GetByID(id uint64) (*Message, error)
+	GetByChatID(chatID uint64) ([]Message, error)
 	// Analytics methods for messages
-	GetMessageStats(orgID uint, start, end time.Time) (map[string]interface{}, error)
+	GetMessageStats(orgID uint64, start, end time.Time) (map[string]interface{}, error)
 }
