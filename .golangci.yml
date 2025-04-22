@@ -108,12 +108,5 @@ issues:
 
 # Output configuration
 output:
-  # Format of output
-  # Default: colored-line-number
-  format:
-    - text: colored-line-number
-    - html: ./.temp/golangci-lint-report.html
-    - json: ./.temp/golangci-lint-report.json
-  
-  # Show issues sorted by severity and file
+  format: colored-line-number
   sort-results: true
