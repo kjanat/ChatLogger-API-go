@@ -79,10 +79,11 @@ jobs:
           echo "git_commit=$GIT_COMMIT" >> $GITHUB_ENV
           echo "Version: $VERSION, Build time: $BUILD_TIME, Git commit: $GIT_COMMIT"
 
-      # - name: Run golangci-lint
-      #   uses: golangci/golangci-lint-action@v3
-      #   with:
-      #     version: latest
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout=5m --config=.golangci.yml
 
       # - name: Run Tests
       #   run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...

@@ -1,16 +1,16 @@
 package api
 
 import (
+	"net/http"
+
 	"ChatLogger-API-go/internal/domain"
 	"ChatLogger-API-go/internal/handler"
 	"ChatLogger-API-go/internal/middleware"
 	"ChatLogger-API-go/internal/version"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
-// addRoutes adds API routes to the router
+// addRoutes adds API routes to the router.
 func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 	// Public health and version endpoints
 	router.GET("/health", func(c *gin.Context) {

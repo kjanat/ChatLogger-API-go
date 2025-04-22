@@ -5,19 +5,18 @@ import (
 	"log"
 	"time"
 
+	"ChatLogger-API-go/internal/domain"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-
-	"ChatLogger-API-go/internal/domain"
 )
 
-// Database represents a database connection
+// Database represents a database connection.
 type Database struct {
 	*gorm.DB
 }
 
-// NewDatabase creates a new database connection
+// NewDatabase creates a new database connection.
 func NewDatabase(dsn string) (*Database, error) {
 	config := &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
@@ -50,14 +49,16 @@ func NewDatabase(dsn string) (*Database, error) {
 	}
 
 	log.Println("Database connected and migrated successfully")
+
 	return &Database{DB: db}, nil
 }
 
-// Close closes the database connection
+// Close closes the database connection.
 func (db *Database) Close() error {
 	sqlDB, err := db.DB.DB()
 	if err != nil {
 		return err
 	}
+
 	return sqlDB.Close()
 }

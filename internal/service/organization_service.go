@@ -1,27 +1,28 @@
 package service
 
 import (
-	"ChatLogger-API-go/internal/domain"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
+
+	"ChatLogger-API-go/internal/domain"
 )
 
-// OrganizationService implements the domain.OrganizationService interface
+// OrganizationService implements the domain.OrganizationService interface.
 type OrganizationService struct {
 	orgRepo domain.OrganizationRepository
 }
 
-// NewOrganizationService creates a new organization service
+// NewOrganizationService creates a new organization service.
 func NewOrganizationService(orgRepo domain.OrganizationRepository) domain.OrganizationService {
 	return &OrganizationService{
 		orgRepo: orgRepo,
 	}
 }
 
-// Create creates a new organization
+// Create creates a new organization.
 func (s *OrganizationService) Create(org *domain.Organization) error {
 	// Generate a slug if not provided
 	if org.Slug == "" {
@@ -33,6 +34,7 @@ func (s *OrganizationService) Create(org *domain.Organization) error {
 	if err != nil {
 		return fmt.Errorf("error checking existing organization: %w", err)
 	}
+
 	if existingOrg != nil {
 		return errors.New("organization with this slug already exists")
 	}
@@ -45,23 +47,24 @@ func (s *OrganizationService) Create(org *domain.Organization) error {
 	return s.orgRepo.Create(org)
 }
 
-// GetByID gets an organization by ID
+// GetByID gets an organization by ID.
 func (s *OrganizationService) GetByID(id uint) (*domain.Organization, error) {
 	return s.orgRepo.FindByID(id)
 }
 
-// GetBySlug gets an organization by slug
+// GetBySlug gets an organization by slug.
 func (s *OrganizationService) GetBySlug(slug string) (*domain.Organization, error) {
 	return s.orgRepo.FindBySlug(slug)
 }
 
-// Update updates an organization
+// Update updates an organization.
 func (s *OrganizationService) Update(org *domain.Organization) error {
 	// Get the existing organization
 	existingOrg, err := s.orgRepo.FindByID(org.ID)
 	if err != nil {
 		return fmt.Errorf("error finding organization: %w", err)
 	}
+
 	if existingOrg == nil {
 		return errors.New("organization not found")
 	}
@@ -72,6 +75,7 @@ func (s *OrganizationService) Update(org *domain.Organization) error {
 		if err != nil {
 			return fmt.Errorf("error checking slug: %w", err)
 		}
+
 		if orgWithSlug != nil {
 			return errors.New("organization with this slug already exists")
 		}
@@ -84,19 +88,19 @@ func (s *OrganizationService) Update(org *domain.Organization) error {
 	return s.orgRepo.Update(org)
 }
 
-// Delete deletes an organization
+// Delete deletes an organization.
 func (s *OrganizationService) Delete(id uint) error {
 	return s.orgRepo.Delete(id)
 }
 
-// List lists organizations with pagination
+// List lists organizations with pagination.
 func (s *OrganizationService) List(limit, offset int) ([]domain.Organization, error) {
 	return s.orgRepo.List(limit, offset)
 }
 
 // Helper functions
 
-// generateSlug generates a URL-friendly slug from a name
+// generateSlug generates a URL-friendly slug from a name.
 func generateSlug(name string) string {
 	// Convert to lowercase
 	slug := strings.ToLower(name)

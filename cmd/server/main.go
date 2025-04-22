@@ -1,3 +1,6 @@
+// Package main is the entry point for the ChatLogger API server.
+// It initializes the configuration, sets up database connections,
+// initializes all services and repositories, and starts the HTTP server.
 package main
 
 import (
@@ -26,11 +29,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
+
 	sqlDB, err := db.DB.DB()
 	if err != nil {
 		log.Fatalf("Failed to get SQL DB: %v", err)
 	}
-	defer sqlDB.Close()
+
+	defer func() {
+		if err := sqlDB.Close(); err != nil {
+			log.Printf("Error closing database connection: %v", err)
+		}
+	}()
 
 	// 3. Initialize Repositories
 	orgRepo := repository.NewOrganizationRepository(db)
@@ -61,6 +70,7 @@ func main() {
 	// 7. Start the Server
 	port := cfg.ServerPort
 	log.Printf("Server listening on port %s", port)
+
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}

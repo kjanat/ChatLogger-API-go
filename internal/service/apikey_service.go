@@ -1,27 +1,31 @@
+// Package service implements the business logic layer for the ChatLogger API,
+// providing implementations of the domain service interfaces.
 package service
 
 import (
-	"ChatLogger-API-go/internal/domain"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"time"
+
+	"ChatLogger-API-go/internal/domain"
 )
 
-// APIKeyService implements the domain.APIKeyService interface
+// APIKeyService implements the domain.APIKeyService interface.
 type APIKeyService struct {
 	apiKeyRepo domain.APIKeyRepository
 }
 
-// NewAPIKeyService creates a new API key service
+// NewAPIKeyService creates a new API key service.
 func NewAPIKeyService(apiKeyRepo domain.APIKeyRepository) domain.APIKeyService {
 	return &APIKeyService{
 		apiKeyRepo: apiKeyRepo,
 	}
 }
 
-// GenerateKey generates a new API key for an organization
+// GenerateKey generates a new API key for an organization.
 func (s *APIKeyService) GenerateKey(orgID uint, label string) (string, error) {
 	// Generate a random key
 	rawBytes := make([]byte, 32) // 256 bits
@@ -51,7 +55,7 @@ func (s *APIKeyService) GenerateKey(orgID uint, label string) (string, error) {
 	return rawKey, nil
 }
 
-// ValidateKey validates a raw API key and returns the associated API key if valid
+// ValidateKey validates a raw API key and returns the associated API key if valid.
 func (s *APIKeyService) ValidateKey(rawKey string) (*domain.APIKey, error) {
 	// Hash the key for lookup
 	hashedKey := hashKey(rawKey)
@@ -69,29 +73,30 @@ func (s *APIKeyService) ValidateKey(rawKey string) (*domain.APIKey, error) {
 	return key, nil
 }
 
-// GetByID gets an API key by ID
+// GetByID gets an API key by ID.
 func (s *APIKeyService) GetByID(id uint) (*domain.APIKey, error) {
 	return s.apiKeyRepo.FindByID(id)
 }
 
-// ListByOrganizationID lists API keys for an organization
+// ListByOrganizationID lists API keys for an organization.
 func (s *APIKeyService) ListByOrganizationID(orgID uint) ([]domain.APIKey, error) {
 	return s.apiKeyRepo.ListByOrganizationID(orgID)
 }
 
-// RevokeKey revokes an API key
+// RevokeKey revokes an API key.
 func (s *APIKeyService) RevokeKey(id uint) error {
 	return s.apiKeyRepo.Revoke(id)
 }
 
-// DeleteKey permanently deletes an API key
+// DeleteKey permanently deletes an API key.
 func (s *APIKeyService) DeleteKey(id uint) error {
 	return s.apiKeyRepo.Delete(id)
 }
 
-// hashKey hashes an API key for secure storage
+// hashKey hashes an API key for secure storage.
 func hashKey(key string) string {
 	h := sha256.New()
 	h.Write([]byte(key))
-	return fmt.Sprintf("%x", h.Sum(nil))
+
+	return hex.EncodeToString(h.Sum(nil))
 }

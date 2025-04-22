@@ -1,24 +1,25 @@
 package service
 
 import (
-	"ChatLogger-API-go/internal/domain"
 	"fmt"
 	"time"
+
+	"ChatLogger-API-go/internal/domain"
 )
 
-// MessageService implements the domain.MessageService interface
+// MessageService implements the domain.MessageService interface.
 type MessageService struct {
 	messageRepo domain.MessageRepository
 }
 
-// NewMessageService creates a new message service
+// NewMessageService creates a new message service.
 func NewMessageService(messageRepo domain.MessageRepository) domain.MessageService {
 	return &MessageService{
 		messageRepo: messageRepo,
 	}
 }
 
-// CreateMessage creates a new message
+// CreateMessage creates a new message.
 func (s *MessageService) CreateMessage(message *domain.Message) error {
 	// Validate the message
 	if err := message.Validate(); err != nil {
@@ -32,18 +33,21 @@ func (s *MessageService) CreateMessage(message *domain.Message) error {
 	return s.messageRepo.Create(message)
 }
 
-// GetByID gets a message by ID
+// GetByID gets a message by ID.
 func (s *MessageService) GetByID(id uint64) (*domain.Message, error) {
 	return s.messageRepo.FindByID(id)
 }
 
-// GetByChatID gets messages by chat ID
+// GetByChatID gets messages by chat ID.
 func (s *MessageService) GetByChatID(chatID uint64) ([]domain.Message, error) {
 	return s.messageRepo.FindByChatID(chatID)
 }
 
-// GetMessageStats gets message statistics for an organization
-func (s *MessageService) GetMessageStats(orgID uint64, start, end time.Time) (map[string]interface{}, error) {
+// GetMessageStats gets message statistics for an organization.
+func (s *MessageService) GetMessageStats(
+	orgID uint64,
+	start, end time.Time,
+) (map[string]interface{}, error) {
 	// Get message count in date range
 	messageCount, err := s.messageRepo.CountByOrgIDAndDateRange(orgID, start, end)
 	if err != nil {
