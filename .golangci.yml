@@ -11,13 +11,6 @@ run:
   # Default: 1m
   timeout: 5m
   
-  # Skip directories not relevant for linting
-  skip-dirs:
-    - vendor
-    - migrations
-    - .github
-    - scripts/package
-  
   # Exit code when at least one issue was found
   # Default: 1
   issues-exit-code: 1
@@ -92,6 +85,12 @@ issues:
   # Maximum count of issues with the same text
   # Default: 3
   max-same-issues: 0
+
+  exclude-dirs:
+    - vendor
+    - migrations
+    - .github
+    - scripts/package
   
   # Excluding configuration for specific rules and files
   exclude-rules:
@@ -108,5 +107,14 @@ issues:
 
 # Output configuration
 output:
-  format: colored-line-number
-  sort-results: true
+  formats:
+    text:
+      path: stdout
+    json:
+      path: ./.temp/golangci-lint-report.json
+    html:
+      path: ./.temp/golangci-lint-report.html
+  sort-order:
+    - linter
+    - file
+    - severity
