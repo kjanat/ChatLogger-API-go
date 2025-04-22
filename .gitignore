@@ -29,7 +29,6 @@ go.work.sum
 dist
 
 # GitHub Actions
-.github/workflows/go.yml
 
 # env file/credential files
 .env
