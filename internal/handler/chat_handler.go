@@ -74,7 +74,7 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 
 	// Create chat object
 	chat := &domain.Chat{
-		OrganizationID: uint64(orgID.(uint64)),
+		OrganizationID: orgID.(uint64),
 		UserID:         userID,
 		Title:          req.Title,
 		Tags:           string(tagsJSON),

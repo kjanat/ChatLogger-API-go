@@ -84,7 +84,7 @@ func (h *MessageHandler) CreateMessage(c *gin.Context) {
 	}
 
 	// Check if the chat belongs to the organization
-	if chat.OrganizationID != uint64(orgID.(uint64)) {
+	if chat.OrganizationID != orgID.(uint64) {
 		c.JSON(
 			http.StatusForbidden,
 			gin.H{"error": "You do not have permission to add messages to this chat"},
