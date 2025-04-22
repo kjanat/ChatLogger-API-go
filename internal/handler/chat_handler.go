@@ -28,7 +28,7 @@ type CreateChatRequest struct {
 	Title    string          `json:"title"`
 	Tags     []string        `json:"tags,omitempty"`
 	Metadata json.RawMessage `json:"metadata,omitempty"`
-	UserID   *uint           `json:"user_id,omitempty"` // Optional, for anonymous chats
+	UserID   *uint64         `json:"user_id,omitempty"` // Optional, for anonymous chats
 }
 
 // CreateChat handles the request to create a new chat
@@ -47,10 +47,10 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 	}
 
 	// Get a userID if available from the JWT context (may not exist for API key auth)
-	var userID *uint
+	var userID *uint64
 	userIDInterface, exists := c.Get("userID")
 	if exists {
-		uid := userIDInterface.(uint)
+		uid := uint64(userIDInterface.(uint))
 		userID = &uid
 	} else {
 		// Use the userID from the request if provided
@@ -66,7 +66,7 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 
 	// Create chat object
 	chat := &domain.Chat{
-		OrganizationID: orgID.(uint),
+		OrganizationID: uint64(orgID.(uint)),
 		UserID:         userID,
 		Title:          req.Title,
 		Tags:           string(tagsJSON),
@@ -101,7 +101,7 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 	}
 
 	// Get the chat
-	chat, err := h.chatService.GetByID(uint(id))
+	chat, err := h.chatService.GetByID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat"})
 		return
@@ -119,7 +119,7 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 	}
 
 	// Check if the chat belongs to the organization
-	if chat.OrganizationID != orgID.(uint) {
+	if chat.OrganizationID != orgID.(uint64) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this chat"})
 		return
 	}
@@ -153,7 +153,7 @@ func (h *ChatHandler) ListChats(c *gin.Context) {
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
 	// Get chats
-	chats, err := h.chatService.GetByOrganizationID(orgID.(uint), limit, offset)
+	chats, err := h.chatService.GetByOrganizationID(uint64(orgID.(uint)), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list chats"})
 		return
@@ -191,7 +191,7 @@ func (h *ChatHandler) UpdateChat(c *gin.Context) {
 	}
 
 	// Get the existing chat
-	chat, err := h.chatService.GetByID(uint(id))
+	chat, err := h.chatService.GetByID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat"})
 		return
@@ -209,7 +209,7 @@ func (h *ChatHandler) UpdateChat(c *gin.Context) {
 	}
 
 	// Check if the chat belongs to the organization
-	if chat.OrganizationID != orgID.(uint) {
+	if chat.OrganizationID != orgID.(uint64) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to update this chat"})
 		return
 	}
@@ -257,7 +257,7 @@ func (h *ChatHandler) DeleteChat(c *gin.Context) {
 	}
 
 	// Get the chat
-	chat, err := h.chatService.GetByID(uint(id))
+	chat, err := h.chatService.GetByID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat"})
 		return
@@ -275,13 +275,13 @@ func (h *ChatHandler) DeleteChat(c *gin.Context) {
 	}
 
 	// Check if the chat belongs to the organization
-	if chat.OrganizationID != orgID.(uint) {
+	if chat.OrganizationID != orgID.(uint64) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to delete this chat"})
 		return
 	}
 
 	// Delete the chat
-	if err := h.chatService.DeleteChat(uint(id)); err != nil {
+	if err := h.chatService.DeleteChat(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete chat"})
 		return
 	}
