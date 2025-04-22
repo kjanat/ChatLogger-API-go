@@ -50,7 +50,7 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 	var userID *uint64
 	userIDInterface, exists := c.Get("userID")
 	if exists {
-		uid := uint64(userIDInterface.(uint))
+		uid := userIDInterface.(uint64)
 		userID = &uid
 	} else {
 		// Use the userID from the request if provided
