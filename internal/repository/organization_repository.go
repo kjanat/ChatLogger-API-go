@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"ChatLogger-API-go/internal/domain"
+
 	"gorm.io/gorm"
 )
 
@@ -23,7 +24,7 @@ func (r *OrganizationRepo) Create(org *domain.Organization) error {
 }
 
 // FindByID finds an organization by ID.
-func (r *OrganizationRepo) FindByID(id uint) (*domain.Organization, error) {
+func (r *OrganizationRepo) FindByID(id uint64) (*domain.Organization, error) {
 	var org domain.Organization
 
 	err := r.db.First(&org, id).Error
@@ -60,7 +61,7 @@ func (r *OrganizationRepo) Update(org *domain.Organization) error {
 }
 
 // Delete deletes an organization by ID.
-func (r *OrganizationRepo) Delete(id uint) error {
+func (r *OrganizationRepo) Delete(id uint64) error {
 	return r.db.Delete(&domain.Organization{}, id).Error
 }
 

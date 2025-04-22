@@ -57,7 +57,7 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 
 	userIDInterface, exists := c.Get("userID")
 	if exists {
-		uid := uint64(userIDInterface.(uint))
+		uid := userIDInterface.(uint64)
 		userID = &uid
 	} else {
 		// Use the userID from the request if provided
@@ -74,7 +74,7 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 
 	// Create chat object
 	chat := &domain.Chat{
-		OrganizationID: uint64(orgID.(uint)),
+		OrganizationID: uint64(orgID.(uint64)),
 		UserID:         userID,
 		Title:          req.Title,
 		Tags:           string(tagsJSON),

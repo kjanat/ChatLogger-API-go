@@ -7,6 +7,7 @@ import (
 
 	"ChatLogger-API-go/internal/domain"
 	"ChatLogger-API-go/internal/hash"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -22,6 +23,40 @@ func NewUserService(userRepo domain.UserRepository, jwtSecret string) domain.Use
 		userRepo:  userRepo,
 		jwtSecret: jwtSecret,
 	}
+}
+
+// Authenticate authenticates a user and returns the user and JWT token.
+func (s *UserService) Authenticate(email, password string) (*domain.User, string, error) {
+	// Find user by email
+	user, err := s.userRepo.FindByEmail(email)
+	if err != nil {
+		return nil, "", fmt.Errorf("error finding user: %w", err)
+	}
+
+	if user == nil {
+		return nil, "", errors.New("invalid email or password")
+	}
+
+	// Check password using our centralized hash package
+	if err := hash.VerifyPassword(user.PasswordHash, password); err != nil {
+		return nil, "", errors.New("invalid email or password")
+	}
+
+	// Generate JWT token
+	token, err := generateJWT(user, s.jwtSecret)
+	if err != nil {
+		return nil, "", fmt.Errorf("error generating token: %w", err)
+	}
+
+	// Update last login timestamp
+	now := time.Now()
+	user.LastLoginAt = &now
+	if err := s.userRepo.Update(user); err != nil {
+		// Non-critical error, log it but continue
+		fmt.Printf("Error updating last login time: %v\n", err)
+	}
+
+	return user, token, nil
 }
 
 // Register registers a new user.
@@ -51,34 +86,8 @@ func (s *UserService) Register(user *domain.User, password string) error {
 	return s.userRepo.Create(user)
 }
 
-// Login authenticates a user and returns a JWT token.
-func (s *UserService) Login(email, password string) (string, error) {
-	// Find user by email
-	user, err := s.userRepo.FindByEmail(email)
-	if err != nil {
-		return "", fmt.Errorf("error finding user: %w", err)
-	}
-
-	if user == nil {
-		return "", errors.New("invalid email or password")
-	}
-
-	// Check password using our centralized hash package
-	if err := hash.VerifyPassword(user.PasswordHash, password); err != nil {
-		return "", errors.New("invalid email or password")
-	}
-
-	// Generate JWT token
-	token, err := generateJWT(user, s.jwtSecret)
-	if err != nil {
-		return "", fmt.Errorf("error generating token: %w", err)
-	}
-
-	return token, nil
-}
-
 // GetByID gets a user by ID.
-func (s *UserService) GetByID(id uint) (*domain.User, error) {
+func (s *UserService) GetByID(id uint64) (*domain.User, error) {
 	return s.userRepo.FindByID(id)
 }
 
@@ -88,7 +97,7 @@ func (s *UserService) GetByEmail(email string) (*domain.User, error) {
 }
 
 // GetByOrganizationID gets users by organization ID with pagination.
-func (s *UserService) GetByOrganizationID(orgID uint, limit, offset int) ([]domain.User, error) {
+func (s *UserService) GetByOrganizationID(orgID uint64, limit, offset int) ([]domain.User, error) {
 	return s.userRepo.FindByOrganizationID(orgID, limit, offset)
 }
 
@@ -101,7 +110,7 @@ func (s *UserService) UpdateUser(user *domain.User) error {
 }
 
 // ChangePassword changes a user's password.
-func (s *UserService) ChangePassword(userID uint, currentPassword, newPassword string) error {
+func (s *UserService) ChangePassword(userID uint64, currentPassword, newPassword string) error {
 	// Get the user
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
@@ -131,15 +140,15 @@ func (s *UserService) ChangePassword(userID uint, currentPassword, newPassword s
 }
 
 // DeleteUser deletes a user.
-func (s *UserService) DeleteUser(id uint) error {
+func (s *UserService) DeleteUser(id uint64) error {
 	return s.userRepo.Delete(id)
 }
 
 // JWTClaims represents the claims in a JWT token.
 type JWTClaims struct {
-	UserID         uint        `json:"uid"`
+	UserID         uint64      `json:"uid"`
 	Email          string      `json:"email"`
-	OrganizationID uint        `json:"org_id"`
+	OrganizationID uint64      `json:"org_id"`
 	Role           domain.Role `json:"role"`
 	jwt.RegisteredClaims
 }

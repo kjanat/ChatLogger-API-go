@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"ChatLogger-API-go/internal/domain"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,7 +37,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	// Authenticate user
-	token, err := h.userService.Login(req.Email, req.Password)
+	user, token, err := h.userService.Authenticate(req.Email, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 
@@ -54,7 +55,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		true,  // HTTP-only
 	)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "user": user})
 }
 
 // RegisterRequest represents the register request body.
@@ -64,7 +65,7 @@ type RegisterRequest struct {
 	FirstName string      `                         json:"first_name"`
 	LastName  string      `                         json:"last_name"`
 	Role      domain.Role `                         json:"role"`
-	OrgID     uint        `                         json:"organization_id"` // Made optional, otherwise: `binding:"required"`
+	OrgID     uint64      `                         json:"organization_id"` // Made optional, otherwise: `binding:"required"`
 }
 
 // Register handles user registration.

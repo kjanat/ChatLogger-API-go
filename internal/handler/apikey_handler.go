@@ -45,7 +45,7 @@ func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 	}
 
 	// Generate a new API key
-	rawKey, err := h.apiKeyService.GenerateKey(orgID.(uint), req.Label)
+	rawKey, err := h.apiKeyService.GenerateKey(orgID.(uint64), req.Label)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate API key"})
 		return
@@ -69,7 +69,7 @@ func (h *APIKeyHandler) ListKeys(c *gin.Context) {
 	}
 
 	// Get API keys
-	keys, err := h.apiKeyService.ListByOrganizationID(orgID.(uint))
+	keys, err := h.apiKeyService.ListByOrganizationID(orgID.(uint64))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list API keys"})
 		return
@@ -81,7 +81,7 @@ func (h *APIKeyHandler) ListKeys(c *gin.Context) {
 // validateKeyAccess is a helper function to validate API key access and permissions.
 // It returns the key ID, API key, and a boolean indicating if validation was successful.
 // If validation fails, it sets the appropriate HTTP response and returns false.
-func (h *APIKeyHandler) validateKeyAccess(c *gin.Context, actionName string) (uint, *domain.APIKey, bool) {
+func (h *APIKeyHandler) validateKeyAccess(c *gin.Context, actionName string) (uint64, *domain.APIKey, bool) {
 	// Get key ID from URL
 	keyID := c.Param("id")
 	if keyID == "" {
@@ -89,7 +89,7 @@ func (h *APIKeyHandler) validateKeyAccess(c *gin.Context, actionName string) (ui
 		return 0, nil, false
 	}
 
-	var id uint
+	var id uint64
 	if _, err := fmt.Sscanf(keyID, "%d", &id); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid API key ID"})
 		return 0, nil, false
@@ -115,7 +115,7 @@ func (h *APIKeyHandler) validateKeyAccess(c *gin.Context, actionName string) (ui
 	}
 
 	// Check if the key belongs to the organization
-	if key.OrganizationID != orgID.(uint) {
+	if key.OrganizationID != orgID.(uint64) {
 		c.JSON(
 			http.StatusForbidden,
 			gin.H{"error": "You do not have permission to " + actionName + " this API key"},

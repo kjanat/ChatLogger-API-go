@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"ChatLogger-API-go/internal/domain"
+
 	"gorm.io/gorm"
 )
 
@@ -23,7 +24,7 @@ func (r *UserRepo) Create(user *domain.User) error {
 }
 
 // FindByID finds a user by ID.
-func (r *UserRepo) FindByID(id uint) (*domain.User, error) {
+func (r *UserRepo) FindByID(id uint64) (*domain.User, error) {
 	var user domain.User
 
 	err := r.db.First(&user, id).Error
@@ -55,7 +56,7 @@ func (r *UserRepo) FindByEmail(email string) (*domain.User, error) {
 }
 
 // FindByOrganizationID finds users by organization ID with pagination.
-func (r *UserRepo) FindByOrganizationID(orgID uint, limit, offset int) ([]domain.User, error) {
+func (r *UserRepo) FindByOrganizationID(orgID uint64, limit, offset int) ([]domain.User, error) {
 	var users []domain.User
 	err := r.db.Where("organization_id = ?", orgID).Limit(limit).Offset(offset).Find(&users).Error
 
@@ -68,6 +69,6 @@ func (r *UserRepo) Update(user *domain.User) error {
 }
 
 // Delete deletes a user by ID.
-func (r *UserRepo) Delete(id uint) error {
+func (r *UserRepo) Delete(id uint64) error {
 	return r.db.Delete(&domain.User{}, id).Error
 }

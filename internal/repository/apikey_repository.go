@@ -27,7 +27,7 @@ func (r *APIKeyRepo) Create(key *domain.APIKey) error {
 }
 
 // FindByID finds an API key by ID.
-func (r *APIKeyRepo) FindByID(id uint) (*domain.APIKey, error) {
+func (r *APIKeyRepo) FindByID(id uint64) (*domain.APIKey, error) {
 	var key domain.APIKey
 
 	err := r.db.First(&key, id).Error
@@ -64,7 +64,7 @@ func (r *APIKeyRepo) FindByHashedKey(hashedKey string) (*domain.APIKey, error) {
 }
 
 // ListByOrganizationID lists API keys for an organization.
-func (r *APIKeyRepo) ListByOrganizationID(orgID uint) ([]domain.APIKey, error) {
+func (r *APIKeyRepo) ListByOrganizationID(orgID uint64) ([]domain.APIKey, error) {
 	var keys []domain.APIKey
 	err := r.db.Where("organization_id = ?", orgID).Find(&keys).Error
 
@@ -72,13 +72,13 @@ func (r *APIKeyRepo) ListByOrganizationID(orgID uint) ([]domain.APIKey, error) {
 }
 
 // Revoke revokes an API key by ID.
-func (r *APIKeyRepo) Revoke(id uint) error {
+func (r *APIKeyRepo) Revoke(id uint64) error {
 	now := time.Now()
 
 	return r.db.Model(&domain.APIKey{}).Where("id = ?", id).Update("revoked_at", &now).Error
 }
 
 // Delete permanently deletes an API key by ID.
-func (r *APIKeyRepo) Delete(id uint) error {
+func (r *APIKeyRepo) Delete(id uint64) error {
 	return r.db.Delete(&domain.APIKey{}, id).Error
 }

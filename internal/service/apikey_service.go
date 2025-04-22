@@ -26,7 +26,7 @@ func NewAPIKeyService(apiKeyRepo domain.APIKeyRepository) domain.APIKeyService {
 }
 
 // GenerateKey generates a new API key for an organization.
-func (s *APIKeyService) GenerateKey(orgID uint, label string) (string, error) {
+func (s *APIKeyService) GenerateKey(orgID uint64, label string) (string, error) {
 	// Generate a random key
 	rawBytes := make([]byte, 32) // 256 bits
 	if _, err := rand.Read(rawBytes); err != nil {
@@ -74,22 +74,22 @@ func (s *APIKeyService) ValidateKey(rawKey string) (*domain.APIKey, error) {
 }
 
 // GetByID gets an API key by ID.
-func (s *APIKeyService) GetByID(id uint) (*domain.APIKey, error) {
+func (s *APIKeyService) GetByID(id uint64) (*domain.APIKey, error) {
 	return s.apiKeyRepo.FindByID(id)
 }
 
 // ListByOrganizationID lists API keys for an organization.
-func (s *APIKeyService) ListByOrganizationID(orgID uint) ([]domain.APIKey, error) {
+func (s *APIKeyService) ListByOrganizationID(orgID uint64) ([]domain.APIKey, error) {
 	return s.apiKeyRepo.ListByOrganizationID(orgID)
 }
 
 // RevokeKey revokes an API key.
-func (s *APIKeyService) RevokeKey(id uint) error {
+func (s *APIKeyService) RevokeKey(id uint64) error {
 	return s.apiKeyRepo.Revoke(id)
 }
 
 // DeleteKey permanently deletes an API key.
-func (s *APIKeyService) DeleteKey(id uint) error {
+func (s *APIKeyService) DeleteKey(id uint64) error {
 	return s.apiKeyRepo.Delete(id)
 }
 

@@ -48,7 +48,7 @@ func (s *OrganizationService) Create(org *domain.Organization) error {
 }
 
 // GetByID gets an organization by ID.
-func (s *OrganizationService) GetByID(id uint) (*domain.Organization, error) {
+func (s *OrganizationService) GetByID(id uint64) (*domain.Organization, error) {
 	return s.orgRepo.FindByID(id)
 }
 
@@ -89,7 +89,7 @@ func (s *OrganizationService) Update(org *domain.Organization) error {
 }
 
 // Delete deletes an organization.
-func (s *OrganizationService) Delete(id uint) error {
+func (s *OrganizationService) Delete(id uint64) error {
 	return s.orgRepo.Delete(id)
 }
 

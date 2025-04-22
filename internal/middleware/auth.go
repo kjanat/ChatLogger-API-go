@@ -161,7 +161,7 @@ func ValidateOrgAccess() gin.HandlerFunc {
 			return
 		}
 
-		var requestedOrgID uint
+		var requestedOrgID uint64
 		if _, err := fmt.Sscanf(requestedOrgIDStr, "%d", &requestedOrgID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization ID"})
 			c.Abort()
@@ -188,7 +188,7 @@ func ValidateOrgAccess() gin.HandlerFunc {
 		}
 
 		// Other users can only access their own organization
-		if userOrgID.(uint) != requestedOrgID {
+		if userOrgID.(uint64) != requestedOrgID {
 			c.JSON(
 				http.StatusForbidden,
 				gin.H{"error": "you do not have access to this organization"},
@@ -251,7 +251,7 @@ func ValidateSlugAccess(orgService domain.OrganizationService) gin.HandlerFunc {
 			}
 
 			// Other users can only access their own organization
-			if userOrgID.(uint) != org.ID {
+			if userOrgID.(uint64) != org.ID {
 				c.JSON(
 					http.StatusForbidden,
 					gin.H{"error": "you do not have access to this organization"},
@@ -263,7 +263,7 @@ func ValidateSlugAccess(orgService domain.OrganizationService) gin.HandlerFunc {
 		} else {
 			// For API key auth, we already verified the key belongs to the org
 			// Just check that the key's org matches the requested org
-			if userOrgID.(uint) != org.ID {
+			if userOrgID.(uint64) != org.ID {
 				c.JSON(http.StatusForbidden, gin.H{"error": "this API key cannot access this organization"})
 				c.Abort()
 

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"ChatLogger-API-go/internal/domain"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +31,7 @@ func (h *UserHandler) GetMe(c *gin.Context) {
 	}
 
 	// Get user from service
-	user, err := h.userService.GetByID(userID.(uint))
+	user, err := h.userService.GetByID(userID.(uint64))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
 
@@ -70,7 +71,7 @@ func (h *UserHandler) UpdateMe(c *gin.Context) {
 	}
 
 	// Get the current user
-	user, err := h.userService.GetByID(userID.(uint))
+	user, err := h.userService.GetByID(userID.(uint64))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
 
@@ -121,7 +122,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	}
 
 	// Change the password
-	err := h.userService.ChangePassword(userID.(uint), req.CurrentPassword, req.NewPassword)
+	err := h.userService.ChangePassword(userID.(uint64), req.CurrentPassword, req.NewPassword)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 
@@ -146,7 +147,7 @@ func (h *UserHandler) ListOrgUsers(c *gin.Context) {
 	offset := 0 // Default offset
 
 	// Get users
-	users, err := h.userService.GetByOrganizationID(orgID.(uint), limit, offset)
+	users, err := h.userService.GetByOrganizationID(orgID.(uint64), limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get users"})
 

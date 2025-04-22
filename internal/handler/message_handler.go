@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"ChatLogger-API-go/internal/domain"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -83,7 +84,7 @@ func (h *MessageHandler) CreateMessage(c *gin.Context) {
 	}
 
 	// Check if the chat belongs to the organization
-	if chat.OrganizationID != uint64(orgID.(uint)) {
+	if chat.OrganizationID != uint64(orgID.(uint64)) {
 		c.JSON(
 			http.StatusForbidden,
 			gin.H{"error": "You do not have permission to add messages to this chat"},
@@ -156,7 +157,7 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 	}
 
 	// Check if the chat belongs to the organization
-	if chat.OrganizationID != uint64(orgID.(uint)) {
+	if chat.OrganizationID != uint64(orgID.(uint64)) {
 		c.JSON(
 			http.StatusForbidden,
 			gin.H{"error": "You do not have permission to view messages in this chat"},
@@ -219,7 +220,7 @@ func (h *MessageHandler) GetMessageStats(c *gin.Context) {
 	}
 
 	// Get message statistics
-	stats, err := h.messageService.GetMessageStats(uint64(orgID.(uint)), start, end)
+	stats, err := h.messageService.GetMessageStats(uint64(orgID.(uint64)), start, end)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get message statistics"})
 
