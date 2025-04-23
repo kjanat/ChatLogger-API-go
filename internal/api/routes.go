@@ -7,6 +7,7 @@ import (
 	"ChatLogger-API-go/internal/handler"
 	"ChatLogger-API-go/internal/middleware"
 	"ChatLogger-API-go/internal/version"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -75,6 +76,10 @@ func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 
 		// Analytics routes
 		dashboardGroup.GET("/analytics/messages", messageHandler.GetMessageStats)
+
+		// Export routes - available to all authenticated users
+		exportHandler := handler.NewExportHandler(services.ChatService, services.MessageService)
+		dashboardGroup.POST("/exports", exportHandler.Export)
 	}
 
 	// Public API routes (API key auth required)
