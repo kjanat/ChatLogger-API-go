@@ -132,6 +132,5 @@ jobs:
       build_time: ${{ needs.tag-version.outputs.build_time }}
       git_commit: ${{ needs.tag-version.outputs.git_commit }}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
       COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}

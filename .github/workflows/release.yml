@@ -20,8 +20,6 @@ on:
         required: true
       COSIGN_PASSWORD:
         required: true
-      GITHUB_TOKEN:
-        required: true
 
 permissions:
   contents: write
