@@ -15,6 +15,7 @@ on:
   push:
     branches:
       - master
+      - development
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -52,8 +53,8 @@ jobs:
       - name: Commit and push changes
         run: |
           new_version=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
+          git config user.email "${{ secrets.ACTIONS_EMAIL }}"
+          git config user.name "${{ secrets.ACTIONS_USERNAME }}"
           git config user.signingkey "${{ steps.import_gpg.outputs.fingerprint }}"
           git config commit.gpgsign true
           git config tag.gpgsign true
@@ -91,8 +92,8 @@ jobs:
 
       - name: Update latest tag
         run: |
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
+          git config user.email "${{ secrets.ACTIONS_EMAIL }}"
+          git config user.name "${{ secrets.ACTIONS_USERNAME }}"
           git config user.signingkey "${{ steps.import_gpg.outputs.fingerprint }}"
           git config commit.gpgsign true
           git config tag.gpgsign true

@@ -2,13 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: 
+      - master
+      - development
     paths-ignore:
       - '**.md'
       - 'LICENSE'
       - '.github/ISSUE_TEMPLATE/**'
   pull_request:
-    branches: [main, master]
+    branches:
+      - master
+      - development
 
 # Set default permissions as read only
 permissions:
