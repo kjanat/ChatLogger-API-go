@@ -17,8 +17,10 @@ jobs:
     permissions:
       contents: write
     outputs:
-      version: ${{ steps.extract_version.outputs.version }}
       created_tag: ${{ steps.create_tag.outputs.created }}
+      version: ${{ steps.extract_version.outputs.version }}
+      build_time: ${{ steps.extract_version.outputs.build_time }}
+      git_commit: ${{ steps.extract_version.outputs.git_commit }}
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     steps:
       - name: Checkout Code
@@ -30,7 +32,12 @@ jobs:
         run: |
           # Extract version using robust pattern matching with fallback
           VERSION=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go || grep 'Version = ' internal/version/version.go | awk -F'"' '{print $2}')
+          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          GIT_COMMIT=$(git rev-parse HEAD)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
+          echo "git_commit=$GIT_COMMIT" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION, Build time: $BUILD_TIME, Git commit: $GIT_COMMIT"
           echo "Extracted version: $VERSION"
 
       - name: Create Tag If Needed
@@ -60,10 +67,6 @@ jobs:
         scripts:
           - server
           - worker
-    outputs:
-      version: ${{ steps.extract_build_info.outputs.version }}
-      build_time: ${{ steps.extract_build_info.outputs.build_time }}
-      git_commit: ${{ steps.extract_build_info.outputs.git_commit }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -88,36 +91,30 @@ jobs:
       - name: Extract Build Info
         id: extract_build_info
         run: |
-          VERSION=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go || grep 'Version = ' internal/version/version.go | awk -F'"' '{print $2}')
-          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          GIT_COMMIT=$(git rev-parse HEAD)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
-          echo "git_commit=$GIT_COMMIT" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION, Build time: $BUILD_TIME, Git commit: $GIT_COMMIT"
+          echo "Version: ${{ needs.tag-version.outputs.version }}, Build time: ${{ needs.tag-version.outputs.build_time }}, Git commit: ${{ needs.tag-version.outputs.git_commit }}"
 
-      - name: Build Binary ${{ matrix.scripts }}-v${{ steps.extract_build_info.outputs.version }}
+      - name: Build Binary ${{ matrix.scripts }}-v${{ needs.tag-version.outputs.version }}
         run: |
           go build -ldflags "-s -w \
-            -X github.com/kjanat/ChatLogger-API-go/internal/version.Version=${{ steps.extract_build_info.outputs.version }} \
-            -X github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime=${{ steps.extract_build_info.outputs.build_time }} \
-            -X github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit=${{ steps.extract_build_info.outputs.git_commit }}" \
-            -o chatlogger-api-${{ matrix.scripts }}-${{ steps.extract_build_info.outputs.version }} \
+            -X github.com/kjanat/ChatLogger-API-go/internal/version.Version=${{ needs.tag-version.outputs.version }} \
+            -X github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime=${{ needs.tag-version.outputs.build_time }} \
+            -X github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit=${{ needs.tag-version.outputs.git_commit }}" \
+            -o chatlogger-api-${{ matrix.scripts }}-${{ needs.tag-version.outputs.version }} \
             ./cmd/${{ matrix.scripts }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: chatlogger-api_${{ matrix.scripts }}_linux-amd64_${{ github.run_id }}
-          path: chatlogger-api-${{ matrix.scripts }}-${{ steps.extract_build_info.outputs.version }}
+          path: chatlogger-api-${{ matrix.scripts }}-${{ needs.tag-version.outputs.version }}
           retention-days: 5
 
   release:
     name: Trigger Release Workflow
-    needs: [tag-version, build]
+    needs: [tag-version]
     if: needs.tag-version.outputs.created_tag == 'true'
-    uses: kjanat/ChatLogger-API-go/.github/workflows/release.yml@master
+    uses: ./.github/workflows/release.yml
     with:
-      version: ${{ needs.build.outputs.version }}
-      build_time: ${{ needs.build.outputs.build_time }}
-      git_commit: ${{ needs.build.outputs.git_commit }}
+      version: ${{ needs.tag-version.outputs.version }}
+      build_time: ${{ needs.tag-version.outputs.build_time }}
+      git_commit: ${{ needs.tag-version.outputs.git_commit }}
