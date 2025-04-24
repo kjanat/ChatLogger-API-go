@@ -88,6 +88,9 @@ jobs:
           - linux/arm64
           - linux/arm/v7
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Prepare
         run: |
           platform=${{ matrix.platform }}

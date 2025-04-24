@@ -75,6 +75,17 @@ jobs:
           check-latest: true
           cache: true
 
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+
+      # - name: Run Tests
+      #   run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+
       - name: Extract Build Info
         id: extract_build_info
         run: |
@@ -85,14 +96,6 @@ jobs:
           echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
           echo "git_commit=$GIT_COMMIT" >> $GITHUB_OUTPUT
           echo "Version: $VERSION, Build time: $BUILD_TIME, Git commit: $GIT_COMMIT"
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: latest
-
-      # - name: Run Tests
-      #   run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
 
       - name: Build Binary ${{ matrix.scripts }}-v${{ steps.extract_build_info.outputs.version }}
         run: |
@@ -106,8 +109,8 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: chatlogger-api-linux-amd64
-          path: chatlogger-*
+          name: chatlogger-api_${{ matrix.scripts }}_linux-amd64_${{ github.run_id }}
+          path: chatlogger-api-${{ matrix.scripts }}-${{ steps.extract_build_info.outputs.version }}
           retention-days: 5
 
       - name: Trigger Release Workflow

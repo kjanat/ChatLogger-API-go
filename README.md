@@ -17,8 +17,10 @@ A multi-tenant backend API for logging and managing chat sessions, supporting bo
 - **Dual Authentication**: API key for chat plugins and JWT for dashboard users
 - **Role-based Access Control**: Superadmin, admin, user, and viewer roles
 - **Analytics**: Usage metrics per organization
-- **Export Capabilities**: Export chat data in multiple formats (CSV, JSON)
+- **Export Capabilities**: Export chat data in multiple formats (CSV, JSON) with both sync and async options
 - **Clean Architecture**: Separation of concerns with layered design
+- **Strategy Pattern**: Used for exporter formats (JSON, CSV) and other pluggable components
+- **Asynchronous Jobs**: Background processing with Redis and Asynq
 
 ## 🛠️ Tech Stack
 
@@ -28,12 +30,14 @@ A multi-tenant backend API for logging and managing chat sessions, supporting bo
 - **Authentication**: JWT using [golang-jwt/jwt][JWT]
 - **Password Hashing**: bcrypt
 - **Configuration**: Environment-based loading
+- **Queue System**: [Asynq][Asynq] with Redis (for async exports)
 - **Containerization**: Docker & Docker Compose
 
 ## 📋 Prerequisites
 
 - Go 1.24.2 or higher
 - PostgreSQL 14+
+- Redis (optional, for async exports)
 - Docker & Docker Compose (optional for containerized deployment)
 
 ## 🚀 Quick Start
@@ -69,9 +73,14 @@ cp .env.example .env
 
 # Run migrations
 psql -U postgres -d chatlogger -f migrations/001_initial_schema.sql
+psql -U postgres -d chatlogger -f migrations/002_ensure_defaults.sql
+psql -U postgres -d chatlogger -f migrations/003_add_exports_table.sql
 
 # Run the server
 go run cmd/server/main.go
+
+# Run the worker (optional, for async exports)
+go run cmd/worker/main.go
 ```
 
 ## 🔑 Authentication
@@ -119,21 +128,24 @@ curl -X GET \
 ## 📁 Project Structure
 
 ```plaintext
-/cmd/server                → Application entry point
-/cmd/tools                 → Utility tools
-/internal/
-  api/                     → Gin router and setup
-  config/                  → Configuration loading
-  domain/                  → Core models and interfaces
-  handler/                 → Request handlers
-  hash/                    → Password hashing utilities
-  middleware/              → Auth, RBAC, logging middleware
-  repository/              → Database access layer
-  service/                 → Business logic layer
-  strategy/                → Exporters, auth validators
-  version/                 → Version information
-/migrations/               → SQL schema migrations
-/scripts/                  → Utility scripts
+/cmd
+  /server                → Main API server entry point
+  /tools                 → Utility tools
+  /worker                → Background job worker for async exports
+/internal
+  /api                   → Gin router and setup
+  /config                → Configuration loading
+  /domain                → Core models and interfaces
+  /handler               → Request handlers
+  /hash                  → Password hashing utilities
+  /jobs                  → Queue and processor for async tasks
+  /middleware            → Auth, RBAC, logging middleware
+  /repository            → Database access layer
+  /service               → Business logic layer
+  /strategy              → Strategy pattern implementations (exporters)
+  /version               → Version information
+/migrations              → SQL schema migrations
+/scripts                 → Utility scripts
 ```
 
 ## 📊 API Endpoints
@@ -156,12 +168,50 @@ curl -X GET \
 | `POST`   | `/orgs/me/apikeys`            | Create new API key           |
 | `DELETE` | `/orgs/me/apikeys/:id`        | Revoke an API key            |
 | `GET`    | `/analytics/orgs/me/summary`  | Get organization analytics   |
-| `POST`   | `/exports/orgs/me`            | Trigger data export          |
-| `GET`    | `/exports/orgs/me/:id`        | Download export file         |
+
+### Export Endpoints
+
+| Method   | Endpoint                      | Description                  |
+|:---------|:------------------------------|:-----------------------------|
+| `POST`   | `/exports/orgs/me`            | Create async export job      |
+| `GET`    | `/exports/orgs/me/:id`        | Get export job status        |
+| `GET`    | `/exports/orgs/me/:id/download` | Download completed export  |
+| `GET`    | `/exports/orgs/me`            | List export jobs             |
+| `POST`   | `/exports/orgs/me/sync`       | Create synchronous export    |
 
 ## 🔧 Configuration
 
-The application is configured using environment variables. See `.env.example` for available options.
+The application is configured using environment variables:
+
+| Variable       | Description                      | Default           |
+|:---------------|:---------------------------------|:------------------|
+| `PORT`         | Server port                      | `8080`            |
+| `DATABASE_URL` | PostgreSQL connection string     | Required          |
+| `JWT_SECRET`   | Secret for JWT signing           | Required          |
+| `REDIS_ADDR`   | Redis address for job queue      | `localhost:6379`  |
+| `EXPORT_DIR`   | Directory to store export files  | `./exports`       |
+
+## ⚙️ Export System
+
+The application supports both synchronous and asynchronous exports:
+
+### Synchronous Exports
+
+- Immediate response with download
+- Good for small data sets
+- Available at `/exports/orgs/me/sync`
+- Works without Redis
+
+### Asynchronous Exports
+
+- Queued processing with status tracking
+- Better for large data sets
+- Requires Redis and worker process
+- Creates a job at `/exports/orgs/me`
+- Check status at `/exports/orgs/me/:id`
+- Download at `/exports/orgs/me/:id/download`
+
+Both export types support JSON and CSV formats.
 
 ## 🧪 Testing
 
@@ -172,6 +222,9 @@ go test ./...
 # Run tests with coverage
 go test -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out
+
+# Run linting checks
+golangci-lint run
 ```
 
 ## 🚢 Deployment
@@ -191,17 +244,22 @@ docker build -t chatlogger-api \
 
 ### CI/CD
 
-The project includes GitHub Actions workflows for CI/CD in [`.github/workflows/`](.github/workflows).
+The project includes GitHub Actions workflows for CI/CD:
+
+- **Build Workflow**: Builds, tests, and tags versions on pushes to main
+- **Release Workflow**: Creates GitHub releases when tags are pushed
 
 ## 📝 Next Steps and Enhancements
 
 Here are some potential enhancements planned for future development:
 
-- [ ] **Export Features**: Implement the export functionality as a strategy pattern (JSON/CSV)
+- [x] **Export Features**: Implemented export functionality as a strategy pattern (JSON/CSV)
+- [x] **Async Exports**: Added background processing for large exports
 - [ ] **Pagination**: Add more robust pagination to list endpoints
 - [ ] **Testing**: Add unit and integration tests
 - [ ] **Documentation**: Generate API documentation with Swagger
 - [ ] **Monitoring**: Add logging and metrics collection
+- [ ] **Real-time notifications**: Add WebSocket support for live updates
 
 ## 📄 License
 
@@ -223,3 +281,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 [Gin]: https://github.com/gin-gonic/gin
 [Gorm]: https://gorm.io/
 [JWT]: https://github.com/golang-jwt/jwt/tree/v5
+[Asynq]: https://github.com/hibiken/asynq
