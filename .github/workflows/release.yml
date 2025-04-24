@@ -4,12 +4,15 @@ on:
   workflow_call:
     inputs:
       version:
+        description: 'Version of the release'
         required: true
         type: string
       build_time:
+        description: 'Build time of the release'
         required: true
         type: string
       git_commit:
+        description: 'Git commit hash of the release'
         required: true
         type: string
 

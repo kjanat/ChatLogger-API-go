@@ -112,10 +112,12 @@ jobs:
           path: chatlogger-api-${{ matrix.scripts }}-${{ steps.extract_build_info.outputs.version }}
           retention-days: 5
 
-      - name: Trigger Release Workflow
-        if: needs.tag-version.outputs.created_tag == 'true'
-        uses: kjanat/ChatLogger-API-go/.github/workflows/release.yml@master
-        with:
-          version: ${{ steps.extract_build_info.outputs.version }}
-          build_time: ${{ steps.extract_build_info.outputs.build_time }}
-          git_commit: ${{ steps.extract_build_info.outputs.git_commit }}
+  release:
+    name: Trigger Release Workflow
+    needs: [tag-version, build]
+    if: needs.tag-version.outputs.created_tag == 'true'
+    uses: kjanat/ChatLogger-API-go/.github/workflows/release.yml@master
+    with:
+      version: ${{ needs.build.outputs.version }}
+      build_time: ${{ needs.build.outputs.build_time }}
+      git_commit: ${{ needs.build.outputs.git_commit }}
