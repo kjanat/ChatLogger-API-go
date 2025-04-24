@@ -73,7 +73,6 @@ jobs:
         with:
           go-version: '1.24'
           check-latest: true
-          cache: true
 
       - name: Install dependencies
         run: go mod tidy
@@ -115,7 +114,7 @@ jobs:
 
       - name: Trigger Release Workflow
         if: needs.tag-version.outputs.created_tag == 'true'
-        uses: ./.github/workflows/release.yml
+        uses: kjanat/ChatLogger-API-go/.github/workflows/release.yml@master
         with:
           version: ${{ steps.extract_build_info.outputs.version }}
           build_time: ${{ steps.extract_build_info.outputs.build_time }}
