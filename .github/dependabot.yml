@@ -40,31 +40,35 @@ updates:
       github-dependencies:
         patterns:
           - '*'
-  # - package-ecosystem: 'docker'
-  #   directory: '/'
-  #   schedule:
-  #     interval: weekly
-  #     day: 'tuesday'
-  #     time: '03:00'
-  #     timezone: 'Europe/Amsterdam'
-  #   open-pull-requests-limit: 10
-  #   reviewers:
-  #     - 'kjanat'
-  #   groups:
-  #     docker-dependencies:
-  #       patterns:
-  #         - '*'
-  # - package-ecosystem: 'docker-compose'
-  #   directory: '/'
-  #   schedule:
-  #     interval: weekly
-  #     day: 'tuesday'
-  #     time: '03:00'
-  #     timezone: 'Europe/Amsterdam'
-  #   open-pull-requests-limit: 10
-  #   reviewers:
-  #     - 'kjanat'
-  #   groups:
-  #     docker-dependencies:
-  #       patterns:
-  #         - '*'
+  - package-ecosystem: 'docker'
+    directories:
+      - '/'
+      - '/.github/workflows/docker'
+    schedule:
+      interval: weekly
+      day: 'tuesday'
+      time: '03:00'
+      timezone: 'Europe/Amsterdam'
+    open-pull-requests-limit: 10
+    reviewers:
+      - 'kjanat'
+    groups:
+      docker-dependencies:
+        patterns:
+          - '*'
+  - package-ecosystem: 'docker-compose'
+    directories:
+      - '/'
+      - '/.github/workflows/docker'
+    schedule:
+      interval: weekly
+      day: 'tuesday'
+      time: '03:00'
+      timezone: 'Europe/Amsterdam'
+    open-pull-requests-limit: 10
+    reviewers:
+      - 'kjanat'
+    groups:
+      docker-dependencies:
+        patterns:
+          - '*'

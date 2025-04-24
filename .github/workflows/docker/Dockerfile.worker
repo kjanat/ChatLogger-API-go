@@ -1,11 +1,6 @@
-FROM golang:1.24-alpine AS builder
+FROM alpine:3.21.3
 WORKDIR /app
-COPY . .
-RUN go build -o /app/chatlogger-worker ./cmd/worker
-
-FROM alpine:latest
-WORKDIR /app
-COPY --from=builder /app/chatlogger-worker /app/
+COPY chatlogger-worker chatlogger-worker
 ENV GIN_MODE=release
 RUN mkdir -p /app/exports
 CMD ["/app/chatlogger-worker"]

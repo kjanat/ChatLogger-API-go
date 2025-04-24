@@ -1,12 +1,12 @@
-FROM golang:1.24-alpine AS builder
+FROM golang:1.24.2-alpine AS builder
 WORKDIR /app
 COPY . .
 RUN go build -o /app/chatlogger-server ./cmd/server
 
-FROM alpine:latest
+FROM alpine:3.21.3
 WORKDIR /app
-COPY --from=builder /app/chatlogger-server /app/
-# COPY --from=builder /app/migrations /app/migrations
+COPY --from=builder /app/chatlogger-server chatlogger-server
+COPY --from=builder /app/go.mod go.mod
 ENV GIN_MODE=release
 EXPOSE 8080
 CMD ["/app/chatlogger-server"]
