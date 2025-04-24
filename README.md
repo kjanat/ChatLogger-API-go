@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/github/license/kjanat/ChatLogger-API-go?label=License)](LICENSE)
 [![Commit activity](https://img.shields.io/github/commit-activity/m/kjanat/ChatLogger-API-go?label=Commit%20activity)][Commits]
 [![Last commit](https://img.shields.io/github/last-commit/kjanat/ChatLogger-API-go?label=Last%20commit)][Commits]
+[![CI](https://img.shields.io/github/actions/workflow/status/kjanat/ChatLogger-API-go/ci.yml?logo=github&label=CI)](https://github.com/kjanat/ChatLogger-API-go/actions/workflows/ci.yml)
 [![Build status](https://img.shields.io/github/actions/workflow/status/kjanat/ChatLogger-API-go/release.yml?logo=github&label=Build%20and%20Release)](https://github.com/kjanat/ChatLogger-API-go/actions/workflows/release.yml)
 [![Codecov](https://img.shields.io/codecov/c/gh/kjanat/ChatLogger-API-go?token=QUop5QdCOv&logo=codecov&logoColor=%23F01F7A&label=Coverage)][Codecov] <!-- https://codecov.io/gh/kjanat/ChatLogger-API-go/graph/badge.svg?token=QUop5QdCOv -->
 [![Issues](https://img.shields.io/github/issues/kjanat/ChatLogger-API-go?label=Issues)][Issues]
