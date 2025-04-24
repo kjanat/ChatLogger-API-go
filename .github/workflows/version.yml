@@ -48,6 +48,7 @@ jobs:
 
       - name: Execute version script
         run: |
+          chmod +x ./scripts/version.sh
           ./scripts/version.sh ${{ github.event.inputs.version_type }}
 
       - name: Commit and push changes
