@@ -54,16 +54,20 @@ nfpms:
 
 dockers:
   - image_templates:
-    - "ghcr.io/kjanat/ChatLogger-API-go:server-{{.Version}}"
-    - "ghcr.io/kjanat/ChatLogger-API-go:server-latest"
+    - "ghcr.io/kjanat/chatlogger-api-go:server-latest"
+    - "ghcr.io/kjanat/chatlogger-api-go:server-{{.Major}}"
+    - "ghcr.io/kjanat/chatlogger-api-go:server-{{.Major}}.{{.Minor}}"
+    - "ghcr.io/kjanat/chatlogger-api-go:server-{{.Version}}"
     dockerfile: .github/workflows/docker/Dockerfile.server
     goos: linux
     goarch: amd64
     ids: [server]
   
   - image_templates:
-    - "ghcr.io/kjanat/ChatLogger-API-go:worker-{{.Version}}"
-    - "ghcr.io/kjanat/ChatLogger-API-go:worker-latest"
+    - "ghcr.io/kjanat/chatlogger-api-go:worker-latest"
+    - "ghcr.io/kjanat/chatlogger-api-go:worker-{{.Major}}"
+    - "ghcr.io/kjanat/chatlogger-api-go:worker-{{.Major}}.{{.Minor}}"
+    - "ghcr.io/kjanat/chatlogger-api-go:worker-{{.Version}}"
     dockerfile: .github/workflows/docker/Dockerfile.worker
     goos: linux
     goarch: amd64

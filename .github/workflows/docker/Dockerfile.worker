@@ -6,5 +6,6 @@ RUN go build -o /app/chatlogger-worker ./cmd/worker
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/chatlogger-worker /app/
+ENV GIN_MODE=release
 RUN mkdir -p /app/exports
 CMD ["/app/chatlogger-worker"]
