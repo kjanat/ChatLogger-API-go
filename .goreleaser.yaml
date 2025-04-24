@@ -1,32 +1,20 @@
 version: 2
 
-project_name: chatlogger-api-go
+project_name: ChatLogger-API-go
 builds:
-  - id: chatlogger
+  - id: server
     main: ./cmd/server
-    binary: chatlogger-api-go_{{ .Version }}_{{ .Os }}_{{ .Arch }}
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-      - arm
-    goarm:
-      - "6"
-      - "7"
-    env:
-      - CGO_ENABLED=0
-      - COSIGN_PRIV_KEY={{ if index .Env "COSIGN_PRIVATE_KEY"  }}{{ .Env.COSIGN_PRIVATE_KEY }}{{ else }}cosign.key{{ end }}
-    ldflags:
-      - -s
-      - -w
-      - -X main.version={{.Version}}
-      - -X github.com/kjanat/ChatLogger-API-go/internal/version.Version={{.Version}}
-      - -X github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime={{.Timestamp}}
-      - -X github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit={{.Commit}}
-      - -X github.com/kjanat/ChatLogger-API-go/internal/version.BuildUser={{.Env.GITHUB_ACTOR}}
+    binary: chatlogger-server
+    ldflags: ['-s -w -X "ChatLogger-API-go/internal/version.Version={{.Version}}" -X "ChatLogger-API-go/internal/version.BuildTime={{.Date}}" -X "ChatLogger-API-go/internal/version.GitCommit={{.Commit}}"']
+    goos: [linux, windows, darwin]
+    goarch: [amd64, arm64]
+
+  - id: worker
+    main: ./cmd/worker
+    binary: chatlogger-worker
+    ldflags: ['-s -w -X "ChatLogger-API-go/internal/version.Version={{.Version}}" -X "ChatLogger-API-go/internal/version.BuildTime={{.Date}}" -X "ChatLogger-API-go/internal/version.GitCommit={{.Commit}}"']
+    goos: [linux, windows, darwin]
+    goarch: [amd64, arm64]
 
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
@@ -38,11 +26,8 @@ archives:
 checksum:
   name_template: "{{ .ProjectName }}_checksums.txt"
 
-# release:
-#   disable: true
-
 nfpms:
-  - id: chatlogger-api-go
+  - id: ChatLogger-API-go
     package_name: "{{.ProjectName}}"
     vendor: kjanat
     homepage: https://github.com/kjanat/ChatLogger-API-go
@@ -67,20 +52,29 @@ nfpms:
       postinstall: "./scripts/package/postinstall.sh"
       preremove: "./scripts/package/preremove.sh"
 
-# dockers:
-#   - image_templates:
-#       - "ghcr.io/kjanat/{{.ProjectName}}:latest"
-#       - "ghcr.io/kjanat/{{.ProjectName}}:{{ .Tag }}"
-#       - "ghcr.io/kjanat/{{.ProjectName}}:{{ .Tag }}-{{ .Env.GORELEASE_CURRENT_RUN }}"
-#       - "ghcr.io/kjanat/{{.ProjectName}}:v{{ .Major }}"
-#     dockerfile: Dockerfile
+dockers:
+  - image_templates:
+    - "ghcr.io/kjanat/ChatLogger-API-go:server-{{.Version}}"
+    - "ghcr.io/kjanat/ChatLogger-API-go:server-latest"
+    dockerfile: .github/workflows/docker/Dockerfile.server
+    goos: linux
+    goarch: amd64
+    ids: [server]
+  
+  - image_templates:
+    - "ghcr.io/kjanat/ChatLogger-API-go:worker-{{.Version}}"
+    - "ghcr.io/kjanat/ChatLogger-API-go:worker-latest"
+    dockerfile: .github/workflows/docker/Dockerfile.worker
+    goos: linux
+    goarch: amd64
+    ids: [worker]
 
-# docker_signs:
-#   - id: chatlogger
-#     cmd: cosign
-#     args:
-#       - "sign"
-#       - "--key={{ .Env.COSIGN_PRIV_KEY }}"
-#       - "${artifact}"
-#       - "--yes"
-#     artifacts: all
+docker_signs:
+  - id: chatlogger
+    cmd: cosign
+    args:
+      - "sign"
+      - "--key={{ .Env.COSIGN_PRIVATE_KEY }}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: all

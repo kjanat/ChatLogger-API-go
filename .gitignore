@@ -30,9 +30,5 @@ go.work.sum
 dist
 exports/
 
-# GitHub Actions
-
-# env file/credential files
+# Environment/credential files
 .env
-.cache_ggshield
-cosign.key
