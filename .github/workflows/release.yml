@@ -15,6 +15,11 @@ on:
         description: 'Git commit hash of the release'
         required: true
         type: string
+      repo:
+        description: 'Repository name'
+        required: false
+        type: string
+        default: 'kjanat/chatlogger-api-go'
     secrets:
       COSIGN_PRIVATE_KEY:
         required: true
@@ -27,7 +32,7 @@ permissions:
   id-token: write
 
 env:
-  IMAGE_NAME: ${{ github.event.repo }}
+  IMAGE_NAME: ${{ inputs.repo }}
   IMAGE_TAG: ${{ inputs.git_commit }}
   IMAGE_VERSION: ${{ inputs.version }}
   IMAGE_DESCRIPTION: ${{ github.event.repository.description }}
