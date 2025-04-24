@@ -13,6 +13,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Context keys for values stored in Gin context
+const (
+	// OrganizationIDKey is the key used to store organization ID in the context
+	OrganizationIDKey = "orgID"
+	// UserIDKey is the key used to store user ID in the context
+	UserIDKey = "userID"
+	// RoleKey is the key used to store user role in the context
+	RoleKey = "role"
+	// RequestedOrgIDKey is the key used to store requested organization ID in the context
+	RequestedOrgIDKey = "requestedOrgID"
+)
+
 // JWTAuth middleware for user authentication using JWT.
 func JWTAuth(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -55,9 +67,9 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 		}
 
 		// Set user details in context
-		c.Set("userID", claims.UserID)
-		c.Set("orgID", claims.OrganizationID)
-		c.Set("role", claims.Role)
+		c.Set(UserIDKey, claims.UserID)
+		c.Set(OrganizationIDKey, claims.OrganizationID)
+		c.Set(RoleKey, claims.Role)
 
 		c.Next()
 	}
@@ -92,7 +104,7 @@ func APIKeyAuth(apiKeyService domain.APIKeyService) gin.HandlerFunc {
 		}
 
 		// Set organization ID in context
-		c.Set("orgID", key.OrganizationID)
+		c.Set(OrganizationIDKey, key.OrganizationID)
 
 		c.Next()
 	}
@@ -102,7 +114,7 @@ func APIKeyAuth(apiKeyService domain.APIKeyService) gin.HandlerFunc {
 func RoleRequired(roles ...domain.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get user's role from context
-		role, exists := c.Get("role")
+		role, exists := c.Get(RoleKey)
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{"error": "role information not available"})
 			c.Abort()
@@ -143,7 +155,7 @@ func RoleRequired(roles ...domain.Role) gin.HandlerFunc {
 func ValidateOrgAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get user's organization ID from context
-		userOrgID, exists := c.Get("orgID")
+		userOrgID, exists := c.Get(OrganizationIDKey)
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{"error": "organization information not available"})
 			c.Abort()
@@ -170,7 +182,7 @@ func ValidateOrgAccess() gin.HandlerFunc {
 		}
 
 		// Get user's role from context
-		role, exists := c.Get("role")
+		role, exists := c.Get(RoleKey)
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{"error": "role information not available"})
 			c.Abort()
@@ -206,7 +218,7 @@ func ValidateOrgAccess() gin.HandlerFunc {
 func ValidateSlugAccess(orgService domain.OrganizationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get user's organization ID from context
-		userOrgID, exists := c.Get("orgID")
+		userOrgID, exists := c.Get(OrganizationIDKey)
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{"error": "organization information not available"})
 			c.Abort()
@@ -234,10 +246,10 @@ func ValidateSlugAccess(orgService domain.OrganizationService) gin.HandlerFunc {
 		}
 
 		// Store the organization ID in context for later use
-		c.Set("requestedOrgID", org.ID)
+		c.Set(RequestedOrgIDKey, org.ID)
 
 		// Get user's role from context if it exists (may not exist for API key auth)
-		roleInterface, roleExists := c.Get("role")
+		roleInterface, roleExists := c.Get(RoleKey)
 
 		// If role exists, check permissions
 		if roleExists {

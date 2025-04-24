@@ -28,11 +28,11 @@ go.work.sum
 
 # Distribution files
 dist
+exports/
 
 # GitHub Actions
 
 # env file/credential files
 .env
-002_ensure_defaults.sql
 .cache_ggshield
 cosign.key

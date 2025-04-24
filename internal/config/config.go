@@ -17,6 +17,10 @@ type Config struct {
 	DatabaseURL string
 	// JWTSecret is the secret key used for JWT token signing and validation
 	JWTSecret string
+	// RedisAddr is the address of the Redis server for async job processing
+	RedisAddr string
+	// ExportDir is the directory where export files will be stored
+	ExportDir string
 	// Add more config fields as needed
 }
 
@@ -34,6 +38,8 @@ func LoadConfig() (*Config, error) {
 		ServerPort:  os.Getenv("PORT"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		JWTSecret:   os.Getenv("JWT_SECRET"),
+		RedisAddr:   os.Getenv("REDIS_ADDR"),
+		ExportDir:   os.Getenv("EXPORT_DIR"),
 		// Load other config...
 	}
 
@@ -51,6 +57,21 @@ func LoadConfig() (*Config, error) {
 		cfg.JWTSecret = "development-jwt-secret" // Default for development
 
 		log.Println("Warning: Using default JWT secret. Set JWT_SECRET for production.")
+	}
+
+	if cfg.RedisAddr == "" {
+		cfg.RedisAddr = "localhost:6379" // Default Redis address
+		log.Println("Warning: Using default Redis address. Set REDIS_ADDR for production.")
+	}
+
+	if cfg.ExportDir == "" {
+		cfg.ExportDir = "./exports" // Default export directory
+		log.Println("Warning: Using default export directory. Set EXPORT_DIR for production.")
+	}
+
+	// Create export directory if it doesn't exist
+	if err := os.MkdirAll(cfg.ExportDir, 0755); err != nil {
+		log.Printf("Warning: Failed to create export directory %s: %v", cfg.ExportDir, err)
 	}
 
 	return cfg, nil

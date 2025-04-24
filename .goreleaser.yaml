@@ -66,20 +66,20 @@ nfpms:
       postinstall: "./scripts/package/postinstall.sh"
       preremove: "./scripts/package/preremove.sh"
 
-dockers:
-  - image_templates:
-      - "ghcr.io/kjanat/{{.ProjectName}}:latest"
-      - "ghcr.io/kjanat/{{.ProjectName}}:{{ .Tag }}"
-      - "ghcr.io/kjanat/{{.ProjectName}}:{{ .Tag }}-{{ .Env.GORELEASE_CURRENT_RUN }}"
-      - "ghcr.io/kjanat/{{.ProjectName}}:v{{ .Major }}"
-    dockerfile: Dockerfile
+# dockers:
+#   - image_templates:
+#       - "ghcr.io/kjanat/{{.ProjectName}}:latest"
+#       - "ghcr.io/kjanat/{{.ProjectName}}:{{ .Tag }}"
+#       - "ghcr.io/kjanat/{{.ProjectName}}:{{ .Tag }}-{{ .Env.GORELEASE_CURRENT_RUN }}"
+#       - "ghcr.io/kjanat/{{.ProjectName}}:v{{ .Major }}"
+#     dockerfile: Dockerfile
 
-docker_signs:
-  - id: chatlogger
-    cmd: cosign
-    args:
-      - "sign"
-      - "--key={{ .Env.COSIGN_PRIV_KEY }}"
-      - "${artifact}"
-      - "--yes"
-    artifacts: all
+# docker_signs:
+#   - id: chatlogger
+#     cmd: cosign
+#     args:
+#       - "sign"
+#       - "--key={{ .Env.COSIGN_PRIV_KEY }}"
+#       - "${artifact}"
+#       - "--yes"
+#     artifacts: all

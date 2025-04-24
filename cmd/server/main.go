@@ -8,6 +8,7 @@ import (
 
 	"ChatLogger-API-go/internal/api"
 	"ChatLogger-API-go/internal/config"
+	"ChatLogger-API-go/internal/jobs"
 	"ChatLogger-API-go/internal/repository"
 	"ChatLogger-API-go/internal/service"
 	"ChatLogger-API-go/internal/version"
@@ -24,8 +25,11 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// 2. Initialize Database
-	db, err := repository.NewDatabase(cfg.DatabaseURL)
+	// 2. Initialize Database with migrations enabled (server is responsible for migrations)
+	dbOptions := repository.DefaultDatabaseOptions()
+	dbOptions.RunMigrations = true // Server should run migrations
+
+	db, err := repository.NewDatabaseWithOptions(cfg.DatabaseURL, dbOptions)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -47,27 +51,41 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	chatRepo := repository.NewChatRepository(db)
 	messageRepo := repository.NewMessageRepository(db)
+	exportRepo := repository.NewExportRepository(db.DB)
 
-	// 4. Initialize Services
+	// 4. Initialize Job Queue
+	queue := jobs.NewQueue(cfg.RedisAddr)
+	defer func() {
+		if err := queue.Close(); err != nil {
+			log.Printf("Error closing queue connection: %v", err)
+		}
+	}()
+
+	// 5. Initialize Services
 	orgService := service.NewOrganizationService(orgRepo)
 	apiKeyService := service.NewAPIKeyService(apiKeyRepo)
 	userService := service.NewUserService(userRepo, cfg.JWTSecret)
 	chatService := service.NewChatService(chatRepo)
 	messageService := service.NewMessageService(messageRepo)
+	exportService := service.NewExportService(exportRepo, queue)
 
-	// 5. Bundle services for dependency injection
+	// 6. Bundle services for dependency injection
 	services := &api.AppServices{
 		OrganizationService: orgService,
 		APIKeyService:       apiKeyService,
 		UserService:         userService,
 		ChatService:         chatService,
 		MessageService:      messageService,
+		ExportService:       exportService,
+		Config: &api.AppConfig{
+			ExportDir: cfg.ExportDir,
+		},
 	}
 
-	// 6. Set up Gin Router with routes and inject services
+	// 7. Set up Gin Router with routes and inject services
 	router := api.NewRouter(services, cfg.JWTSecret)
 
-	// 7. Start the Server
+	// 8. Start the Server
 	port := cfg.ServerPort
 	log.Printf("Server listening on port %s", port)
 

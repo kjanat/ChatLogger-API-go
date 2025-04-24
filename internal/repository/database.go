@@ -6,18 +6,37 @@ import (
 	"time"
 
 	"ChatLogger-API-go/internal/domain"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+// DatabaseOptions contains configuration options for database connections.
+type DatabaseOptions struct {
+	// RunMigrations determines whether to run database migrations on connect
+	RunMigrations bool
+}
+
+// DefaultDatabaseOptions returns database options with sensible defaults.
+func DefaultDatabaseOptions() *DatabaseOptions {
+	return &DatabaseOptions{
+		RunMigrations: true, // Default to running migrations
+	}
+}
 
 // Database represents a database connection.
 type Database struct {
 	*gorm.DB
 }
 
-// NewDatabase creates a new database connection.
+// NewDatabase creates a new database connection with default options.
 func NewDatabase(dsn string) (*Database, error) {
+	return NewDatabaseWithOptions(dsn, DefaultDatabaseOptions())
+}
+
+// NewDatabaseWithOptions creates a new database connection with the specified options.
+func NewDatabaseWithOptions(dsn string, options *DatabaseOptions) (*Database, error) {
 	config := &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	}
@@ -37,20 +56,39 @@ func NewDatabase(dsn string) (*Database, error) {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	// Auto migrate the database schema
-	if err := db.AutoMigrate(
-		&domain.Organization{},
-		&domain.APIKey{},
-		&domain.User{},
-		&domain.Chat{},
-		&domain.Message{},
-	); err != nil {
-		return nil, fmt.Errorf("failed to migrate database: %w", err)
+	// Only run migrations if enabled in options
+	if options.RunMigrations {
+		if err := runMigrations(db); err != nil {
+			return nil, err
+		}
+	} else {
+		log.Println("Database connected successfully (migrations skipped)")
 	}
 
-	log.Println("Database connected and migrated successfully")
-
 	return &Database{DB: db}, nil
+}
+
+// runMigrations runs the database schema migrations.
+func runMigrations(db *gorm.DB) error {
+    log.Println("Running database migrations...")
+    
+    // Begin a transaction to group all migration operations
+    return db.Transaction(func(tx *gorm.DB) error {
+        // Auto migrate all models in a single transaction
+        if err := tx.AutoMigrate(
+            &domain.Organization{},
+            &domain.APIKey{},
+            &domain.User{},
+            &domain.Chat{},
+            &domain.Message{},
+            &domain.Export{},
+        ); err != nil {
+            return fmt.Errorf("failed to migrate database: %w", err)
+        }
+        
+        log.Println("Database migrations completed successfully")
+        return nil
+    })
 }
 
 // Close closes the database connection.

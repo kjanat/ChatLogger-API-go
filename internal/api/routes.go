@@ -78,8 +78,21 @@ func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 		dashboardGroup.GET("/analytics/messages", messageHandler.GetMessageStats)
 
 		// Export routes - available to all authenticated users
-		exportHandler := handler.NewExportHandler(services.ChatService, services.MessageService)
-		dashboardGroup.POST("/exports", exportHandler.Export)
+		exportHandler := handler.NewExportHandler(
+			services.ExportService,
+			services.ChatService,
+			services.MessageService,
+			services.Config.ExportDir,
+		)
+
+		// Async export endpoints
+		dashboardGroup.POST("/exports", exportHandler.CreateExport)
+		dashboardGroup.GET("/exports", exportHandler.ListExports)
+		dashboardGroup.GET("/exports/:id", exportHandler.GetExport)
+		dashboardGroup.GET("/exports/:id/download", exportHandler.DownloadExport)
+
+		// Legacy sync export endpoint (for backward compatibility)
+		dashboardGroup.POST("/exports/sync", exportHandler.SyncExport)
 	}
 
 	// Public API routes (API key auth required)
