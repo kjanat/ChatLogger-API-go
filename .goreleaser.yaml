@@ -24,8 +24,9 @@ builds:
       - -w
       - -X main.version={{.Version}}
       - -X github.com/kjanat/ChatLogger-API-go/internal/version.Version={{.Version}}
-      - -X github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime={{.Date}}
+      - -X github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime={{.Timestamp}}
       - -X github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit={{.Commit}}
+      - -X github.com/kjanat/ChatLogger-API-go/internal/version.BuildUser={{.Env.GITHUB_ACTOR}}
 
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"

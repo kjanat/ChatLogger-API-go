@@ -44,13 +44,22 @@ jobs:
         id: create_tag
         run: |
           git fetch --tags
-          if git tag | grep -q "^v${{ steps.extract_version.outputs.version }}$"; then
-            echo "Tag v${{ steps.extract_version.outputs.version }} already exists"
+          VERSION=${{ steps.extract_version.outputs.version }}
+          GIT_COMMIT=${{ steps.extract_version.outputs.git_commit }}
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          
+          if [ "$GIT_COMMIT" != "$CURRENT_COMMIT" ]; then
+            echo "Error: Extracted commit $GIT_COMMIT does not match the current commit $CURRENT_COMMIT."
+            exit 1
+          fi
+          
+          if git tag | grep -q "^v$VERSION$"; then
+            echo "Tag v$VERSION already exists"
             echo "created=false" >> $GITHUB_OUTPUT
           else
-            echo "Creating tag v${{ steps.extract_version.outputs.version }}"
-            git tag "v${{ steps.extract_version.outputs.version }}"
-            git push origin "v${{ steps.extract_version.outputs.version }}"
+            echo "Creating tag v$VERSION"
+            git tag "v$VERSION"
+            git push origin "v$VERSION"
             echo "created=true" >> $GITHUB_OUTPUT
           fi
 
@@ -99,18 +108,18 @@ jobs:
             -X github.com/kjanat/ChatLogger-API-go/internal/version.Version=${{ needs.tag-version.outputs.version }} \
             -X github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime=${{ needs.tag-version.outputs.build_time }} \
             -X github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit=${{ needs.tag-version.outputs.git_commit }}" \
-            -o chatlogger-api-${{ matrix.scripts }}-${{ needs.tag-version.outputs.version }} \
+            -o dist/chatlogger-api-${{ matrix.scripts }}-v${{ needs.tag-version.outputs.version }}.bin \
             ./cmd/${{ matrix.scripts }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: chatlogger-api_${{ matrix.scripts }}_linux-amd64_${{ github.run_id }}
-          path: chatlogger-api-${{ matrix.scripts }}-${{ needs.tag-version.outputs.version }}
+          name: chatlogger-api-${{ matrix.scripts }}-${{ needs.tag-version.outputs.version }}_${{ github.run_id }}
+          path: dist/chatlogger-api-${{ matrix.scripts }}-v${{ needs.tag-version.outputs.version }}.bin
           retention-days: 5
+          overwrite: true
 
   release:
-    name: Trigger Release Workflow
     needs: [tag-version]
     if: needs.tag-version.outputs.created_tag == 'true'
     uses: ./.github/workflows/release.yml
@@ -122,3 +131,7 @@ jobs:
       version: ${{ needs.tag-version.outputs.version }}
       build_time: ${{ needs.tag-version.outputs.build_time }}
       git_commit: ${{ needs.tag-version.outputs.git_commit }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}

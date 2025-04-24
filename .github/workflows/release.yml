@@ -15,6 +15,13 @@ on:
         description: 'Git commit hash of the release'
         required: true
         type: string
+    secrets:
+      COSIGN_PRIVATE_KEY:
+        required: true
+      COSIGN_PASSWORD:
+        required: true
+      GITHUB_TOKEN:
+        required: true
 
 permissions:
   contents: write
@@ -22,7 +29,7 @@ permissions:
   id-token: write
 
 env:
-  IMAGE_NAME: ${{ github.event.repo.name }}
+  IMAGE_NAME: ${{ github.event.repo }}
   IMAGE_TAG: ${{ inputs.git_commit }}
   IMAGE_VERSION: ${{ inputs.version }}
   IMAGE_DESCRIPTION: ${{ github.event.repository.description }}
@@ -81,7 +88,7 @@ jobs:
           files: dist/chatlogger-*,chatlogger-*
 
   docker:
-    name: Publish Docker Image
+    name: Docker Image
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -149,6 +156,7 @@ jobs:
           provenance: mode=max
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
           annotations: ${{ steps.meta.outputs.annotations }}
           labels: ${{ steps.meta.outputs.labels }}
           # tags: |
