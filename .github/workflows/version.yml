@@ -19,6 +19,10 @@ on:
       - '**.md'
       - 'docs/**'
 
+# Define minimum permissions needed for the workflow
+permissions:
+  contents: write  # Needed for pushing version updates and creating tags
+
 jobs:
   bump-version:
     runs-on: ubuntu-latest
@@ -32,6 +36,7 @@ jobs:
           fetch-depth: 0
 
       - name: Import GPG key
+        id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -49,15 +54,18 @@ jobs:
           new_version=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+          git config user.signingkey "${{ steps.import_gpg.outputs.fingerprint }}"
+          git config commit.gpgsign true
+          git config tag.gpgsign true
           git add internal/version/version.go
-          git commit -m "Bump version to $new_version"
+          git commit -S -m "Bump version to $new_version"
           git push
           echo "Version bumped to $new_version"
 
       - name: Create and push tag
         run: |
           VERSION=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
-          git tag "v$VERSION" -m "Release version $VERSION"
+          git tag -s "v$VERSION" -m "Release version $VERSION"
           git push origin "v$VERSION"
           echo "Created and pushed tag v$VERSION"
 
@@ -72,6 +80,7 @@ jobs:
           fetch-depth: 0
 
       - name: Import GPG key
+        id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -84,6 +93,9 @@ jobs:
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+          git config user.signingkey "${{ steps.import_gpg.outputs.fingerprint }}"
+          git config commit.gpgsign true
+          git config tag.gpgsign true
 
           # Get the current commit hash
           COMMIT_HASH=$(git rev-parse HEAD)
@@ -96,7 +108,7 @@ jobs:
           fi
 
           # Create and push the new latest tag pointing to the current commit
-          git tag -a latest -m "Latest stable version"
+          git tag -s latest -m "Latest stable version"
           git push origin latest
 
           echo "Updated 'latest' tag to point to commit $COMMIT_HASH"

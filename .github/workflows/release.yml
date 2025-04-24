@@ -5,13 +5,15 @@ on:
     tags:
       - 'v*'
 
+# Explicitly define permissions needed for release actions
+permissions:
+  contents: write  # Needed for creating releases
+  packages: write  # Needed for pushing to GitHub Container Registry
+  id-token: write  # Needed for Cosign signing
+
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
