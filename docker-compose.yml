@@ -1,27 +1,57 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - VERSION=${VERSION:-}
-        - BUILD_TIME=${BUILD_TIME:-}
-        - GIT_COMMIT=${GIT_COMMIT:-}
+  # Server component - handles API requests
+  server:
+    image: ghcr.io/kjanat/ChatLogger-API-go:server-${VERSION:-latest}
     ports:
       - "8080:8080"
     depends_on:
-      - postgres
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/chatlogger
+      - REDIS_ADDR=redis:6379
       - PORT=8080
-      - JWT_SECRET=your-jwt-secret-replace-in-production
-      - API_KEY_SALT=your-api-key-salt-replace-in-production
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-replace-in-production}
+      - API_KEY_SALT=${API_KEY_SALT:-your-api-key-salt-replace-in-production}
+      - EXPORT_DIR=/app/exports
     restart: unless-stopped
     volumes:
       - ./migrations:/app/migrations
+      - exports_data:/app/exports
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    
+  # Worker component - handles background jobs
+  worker:
+    image: ghcr.io/kjanat/ChatLogger-API-go:worker-${VERSION:-latest}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/chatlogger
+      - REDIS_ADDR=redis:6379
+      - EXPORT_DIR=/app/exports
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-replace-in-production}
+      - API_KEY_SALT=${API_KEY_SALT:-your-api-key-salt-replace-in-production}
+    restart: unless-stopped
+    volumes:
+      - exports_data:/app/exports
+    healthcheck:
+      test: ["CMD", "ps", "aux", "|", "grep", "chatlogger-worker"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  # Using the postgres:alpine image is optional.
-  # You can also replace the DATABASE_URL with a different database URL if needed
+  # Database service
   db:
     image: postgres:alpine
     ports:
@@ -37,6 +67,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  # Redis for job queue
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  redis_data:
+  exports_data:
