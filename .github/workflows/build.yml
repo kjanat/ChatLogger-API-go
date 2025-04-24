@@ -114,6 +114,10 @@ jobs:
     needs: [tag-version]
     if: needs.tag-version.outputs.created_tag == 'true'
     uses: ./.github/workflows/release.yml
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
     with:
       version: ${{ needs.tag-version.outputs.version }}
       build_time: ${{ needs.tag-version.outputs.build_time }}
