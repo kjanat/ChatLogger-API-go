@@ -1,6 +1,7 @@
 FROM alpine:3.21.3
 WORKDIR /app
-COPY chatlogger-worker chatlogger-worker
+COPY ChatLogger-API-go-worker* ChatLogger-API-go-worker
 ENV GIN_MODE=release
 RUN mkdir -p /app/exports
-CMD ["/app/chatlogger-worker"]
+RUN chmod +x /app/ChatLogger-API-go-worker
+CMD ["/app/ChatLogger-API-go-worker"]
