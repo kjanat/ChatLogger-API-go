@@ -61,19 +61,19 @@ nfpms:
 dockers:
   - dockerfile: .github/workflows/docker/Dockerfile.server
     goos: linux
-    goarch: amd64
+    goarch: [amd64, arm64]
     ids: [server]
     image_templates:
-      - ghcr.io/kjanat/chatlogger-api-go-server:latest
-      - ghcr.io/kjanat/chatlogger-api-go-server:{{.Tag}}
-      - ghcr.io/kjanat/chatlogger-api-go-server:{{.Major}}
-      - ghcr.io/kjanat/chatlogger-api-go-server:{{.Major}}.{{.Minor}}
-      - ghcr.io/kjanat/chatlogger-api-go-server:{{.Version}}
+      - ghcr.io/kjanat/chatlogger-api-server:latest
+      - ghcr.io/kjanat/chatlogger-api-server:{{.Tag}}
+      - ghcr.io/kjanat/chatlogger-api-server:{{.Major}}
+      - ghcr.io/kjanat/chatlogger-api-server:{{.Major}}.{{.Minor}}
+      - ghcr.io/kjanat/chatlogger-api-server:{{.Version}}
     build_flag_templates:
       - --pull
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.description={{ .Env.DESCRIPTION }}
-      - --label=org.opencontainers.image.url={{ .Env.URL }}
+      - --label=org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/chatlogger-api-server
       - --label=org.opencontainers.image.source={{ .Env.URL }}
       - --label=org.opencontainers.image.version={{.Version}}
       - --label=org.opencontainers.image.created={{ .Date }}
@@ -83,19 +83,19 @@ dockers:
   
   - dockerfile: .github/workflows/docker/Dockerfile.worker
     goos: linux
-    goarch: amd64
+    goarch: [amd64, arm64]
     ids: [worker]
     image_templates:
-      - ghcr.io/kjanat/chatlogger-api-go-worker:latest
-      - ghcr.io/kjanat/chatlogger-api-go-worker:{{.Tag}}
-      - ghcr.io/kjanat/chatlogger-api-go-worker:{{.Major}}
-      - ghcr.io/kjanat/chatlogger-api-go-worker:{{.Major}}.{{.Minor}}
-      - ghcr.io/kjanat/chatlogger-api-go-worker:{{.Version}}
+      - ghcr.io/kjanat/chatlogger-api-worker:latest
+      - ghcr.io/kjanat/chatlogger-api-worker:{{.Tag}}
+      - ghcr.io/kjanat/chatlogger-api-worker:{{.Major}}
+      - ghcr.io/kjanat/chatlogger-api-worker:{{.Major}}.{{.Minor}}
+      - ghcr.io/kjanat/chatlogger-api-worker:{{.Version}}
     build_flag_templates:
       - --pull
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.description={{ .Env.DESCRIPTION }}
-      - --label=org.opencontainers.image.url={{ .Env.URL }}
+      - --label=org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/chatlogger-api-worker
       - --label=org.opencontainers.image.source={{ .Env.URL }}
       - --label=org.opencontainers.image.version={{.Version}}
       - --label=org.opencontainers.image.created={{ .Date }}
@@ -106,7 +106,7 @@ dockers:
 docker_signs:
   - args:
       - "sign"
-      - "--key=${{ .Env.COSIGN_PRIVATE_KEY }}"
+      - "--key=cosign.key"
       - "--upload=true"
       - "${artifact}"
       - "--yes"
