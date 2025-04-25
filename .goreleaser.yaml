@@ -61,7 +61,7 @@ nfpms:
 dockers:
   - dockerfile: .github/workflows/docker/Dockerfile.server
     goos: linux
-    goarch: [amd64]
+    goarch: amd64
     ids: [server]
     image_templates:
       - ghcr.io/kjanat/chatlogger-api-server:latest
@@ -83,7 +83,7 @@ dockers:
   
   - dockerfile: .github/workflows/docker/Dockerfile.worker
     goos: linux
-    goarch: [amd64]
+    goarch: amd64
     ids: [worker]
     image_templates:
       - ghcr.io/kjanat/chatlogger-api-worker:latest
