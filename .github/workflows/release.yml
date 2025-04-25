@@ -60,14 +60,14 @@ jobs:
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean --verbose --draft
+          args: release --clean --draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COSIGN_PWD: ${{ secrets.COSIGN_PASSWORD }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           DESCRIPTION: ${{ github.event.repository.description }}
-          URL: ${{ github.event.repository.url }}
+          URL: ${{ github.server_url }}/${{ github.repository }}
 
       - name: Upload assets
         uses: actions/upload-artifact@v4

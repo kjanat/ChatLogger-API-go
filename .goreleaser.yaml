@@ -35,9 +35,9 @@ checksum:
 
 nfpms:
   - id: ChatLogger-API-go
-    package_name: "{{.ProjectName}}"
+    package_name: "{{ .ProjectName }}"
     vendor: kjanat
-    homepage: "{{ .env.URL }}"
+    homepage: "{{ .Env.URL }}"
     maintainer: Kaj Kowalski <chatlogger-api-go@kjanat.com>
     description: "{{ .Env.DESCRIPTION }}"
     license: MIT
