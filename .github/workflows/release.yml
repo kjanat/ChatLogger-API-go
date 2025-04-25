@@ -29,6 +29,9 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.24'
+          cache: true
+
+      - run: go mod tidy
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -52,17 +55,21 @@ jobs:
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
+        if: success()
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean
+          args: release --clean --verbose --draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COSIGN_PWD: ${{ secrets.COSIGN_PASSWORD }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          DESCRIPTION: ${{ github.event.repository.description }}
+          URL: ${{ github.event.repository.url }}
 
       - name: Upload assets
         uses: actions/upload-artifact@v4
         with:
-          name: myapp
+          name: ChatLogger-API
           path: dist/*

@@ -4,17 +4,24 @@ project_name: ChatLogger-API-go
 builds:
   - id: server
     main: ./cmd/server
-    binary: chatlogger-server
-    ldflags: ['-s -w -X "ChatLogger-API-go/internal/version.Version={{.Version}}" -X "ChatLogger-API-go/internal/version.BuildTime={{.Date}}" -X "ChatLogger-API-go/internal/version.GitCommit={{.Commit}}"']
+    binary: "{{ .ProjectName }}-server_{{ .Version }}-{{ .Os }}_{{ .Arch }}"
+    ldflags: ['-s -w -X "github.com/kjanat/ChatLogger-API-go/internal/version.Version={{.Version}}" -X "github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime={{.Date}}" -X "github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit={{.Commit}}"']
     goos: [linux, windows, darwin]
     goarch: [amd64, arm64]
+    env: [CGO_ENABLED=0]
 
   - id: worker
     main: ./cmd/worker
-    binary: chatlogger-worker
-    ldflags: ['-s -w -X "ChatLogger-API-go/internal/version.Version={{.Version}}" -X "ChatLogger-API-go/internal/version.BuildTime={{.Date}}" -X "ChatLogger-API-go/internal/version.GitCommit={{.Commit}}"']
+    binary: "{{ .ProjectName }}-worker_{{ .Version }}-{{ .Os }}_{{ .Arch }}"
+    ldflags: ['-s -w -X "github.com/kjanat/ChatLogger-API-go/internal/version.Version={{.Version}}" -X "github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime={{.Date}}" -X "github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit={{.Commit}}"']
     goos: [linux, windows, darwin]
     goarch: [amd64, arm64]
+    env: [CGO_ENABLED=0]
+
+signs:
+  - artifacts: all
+    cmd: gpg2
+    args: ["--batch", "-u", "{{ .Env.GPG_FINGERPRINT }}", "--output", "${signature}", "--detach-sign", "${artifact}"]
 
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
@@ -30,15 +37,14 @@ nfpms:
   - id: ChatLogger-API-go
     package_name: "{{.ProjectName}}"
     vendor: kjanat
-    homepage: https://github.com/kjanat/ChatLogger-API-go
-    maintainer: ChatLogger Maintainers <chatlogger-api-go@kjanat.com>
-    description: |-
-      Multi-tenant backend API for logging and managing chat sessions.
-      Supports authenticated and unauthenticated usage with analytics.
+    homepage: "{{ .env.URL }}"
+    maintainer: Kaj Kowalski <chatlogger-api-go@kjanat.com>
+    description: "{{ .Env.DESCRIPTION }}"
     license: MIT
     formats:
       - deb
       - rpm
+      - apk
     dependencies:
       - postgresql
     contents:
@@ -58,41 +64,45 @@ dockers:
     goarch: amd64
     ids: [server]
     image_templates:
-      - "ghcr.io/kjanat/chatlogger-api-go:server-latest"
-      - "ghcr.io/kjanat/chatlogger-api-go:server-{{.Tag}}"
-      - "ghcr.io/kjanat/chatlogger-api-go:server-{{.Major}}"
-      - "ghcr.io/kjanat/chatlogger-api-go:server-{{.Major}}.{{.Minor}}"
-      - "ghcr.io/kjanat/chatlogger-api-go:server-{{.Version}}"
+      - ghcr.io/kjanat/chatlogger-api-go:server-latest
+      - ghcr.io/kjanat/chatlogger-api-go:server-{{.Tag}}
+      - ghcr.io/kjanat/chatlogger-api-go:server-{{.Major}}
+      - ghcr.io/kjanat/chatlogger-api-go:server-{{.Major}}.{{.Minor}}
+      - ghcr.io/kjanat/chatlogger-api-go:server-{{.Version}}
     build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
+      - --pull
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .Env.DESCRIPTION }}
+      - --label=org.opencontainers.image.url={{ .Env.URL }}
+      - --label=org.opencontainers.image.source={{ .Env.URL }}
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+      - --label=org.opencontainers.image.vendor=kjanat
   
   - dockerfile: .github/workflows/docker/Dockerfile.worker
     goos: linux
     goarch: amd64
     ids: [worker]
     image_templates:
-      - "ghcr.io/kjanat/chatlogger-api-go:worker-latest"
-      - "ghcr.io/kjanat/chatlogger-api-go:worker-{{.Tag}}"
-      - "ghcr.io/kjanat/chatlogger-api-go:worker-{{.Major}}"
-      - "ghcr.io/kjanat/chatlogger-api-go:worker-{{.Major}}.{{.Minor}}"
-      - "ghcr.io/kjanat/chatlogger-api-go:worker-{{.Version}}"
+      - ghcr.io/kjanat/chatlogger-api-go:worker-latest
+      - ghcr.io/kjanat/chatlogger-api-go:worker-{{.Tag}}
+      - ghcr.io/kjanat/chatlogger-api-go:worker-{{.Major}}
+      - ghcr.io/kjanat/chatlogger-api-go:worker-{{.Major}}.{{.Minor}}
+      - ghcr.io/kjanat/chatlogger-api-go:worker-{{.Version}}
     build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
+      - --pull
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.description={{ .Env.DESCRIPTION }}
+      - --label=org.opencontainers.image.url={{ .Env.URL }}
+      - --label=org.opencontainers.image.source={{ .Env.URL }}
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+      - --label=org.opencontainers.image.vendor=kjanat
 
 docker_signs:
-  - id: chatlogger
-    cmd: cosign
-    args:
-      - "sign"
-      - "--key={{ .Env.COSIGN_PRIVATE_KEY }}"
-      - "${artifact}"
-      - "--yes"
-    artifacts: all
+  - artifacts: all
+    stdin: "{{ .Env.COSIGN_PWD }}"
