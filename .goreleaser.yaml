@@ -104,10 +104,5 @@ dockers:
       - --label=org.opencontainers.image.vendor=kjanat
 
 docker_signs:
-  - args:
-      - "sign"
-      - "--key=cosign.key"
-      - "--upload=true"
-      - "${artifact}"
-      - "--yes"
-    artifacts: all
+  - artifacts: all
+    stdin: "{{ .Env.COSIGN_PWD }}"
