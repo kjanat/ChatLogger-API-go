@@ -74,7 +74,7 @@ jobs:
           args: release --clean --draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          COSIGN_PWD: ${{ secrets.COSIGN_PASSWORD }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           DESCRIPTION: ${{ github.event.repository.description }}
