@@ -1,7 +1,7 @@
 FROM alpine:3.21.3
 WORKDIR /app
-COPY ChatLogger-API-go-server* ChatLogger-API-go-server
-RUN chmod +x /app/ChatLogger-API-go-server
+COPY chatlogger-api-go-server* chatlogger-api-go-server
+RUN chmod +x /app/chatlogger-api-go-server
 ENV GIN_MODE=release
 EXPOSE 8080
-CMD ["/app/ChatLogger-API-go-server"]
+CMD ["/app/chatlogger-api-go-server"]

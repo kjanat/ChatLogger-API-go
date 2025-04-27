@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kjanat/ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
 )
 
 // APIKeyService implements the domain.APIKeyService interface.

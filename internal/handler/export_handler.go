@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kjanat/ChatLogger-API-go/internal/domain"
-	"github.com/kjanat/ChatLogger-API-go/internal/middleware"
-	"github.com/kjanat/ChatLogger-API-go/internal/strategy"
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/middleware"
+	"github.com/kjanat/chatlogger-api-go/internal/strategy"
 
 	"github.com/gin-gonic/gin"
 )

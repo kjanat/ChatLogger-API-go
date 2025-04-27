@@ -3,7 +3,7 @@ package repository
 import (
 	"time"
 
-	"github.com/kjanat/ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
 
 	"gorm.io/gorm"
 )

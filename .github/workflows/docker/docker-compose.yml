@@ -1,7 +1,7 @@
 services:
   # Server component - handles API requests
   server:
-    image: ${DOCKER_REGISTRY:-ghcr.io/kjanat}/ChatLogger-API-go:server-${VERSION:-latest}
+    image: ${DOCKER_REGISTRY:-ghcr.io/kjanat}/chatlogger-api-go:server-${VERSION:-latest}
     build:
       context: .
       dockerfile: ./github/workflows/docker/Dockerfile.server
@@ -36,7 +36,7 @@ services:
     
   # Worker component - handles background jobs
   worker:
-    image: ${DOCKER_REGISTRY:-ghcr.io/kjanat}/ChatLogger-API-go:worker-${VERSION:-latest}
+    image: ${DOCKER_REGISTRY:-ghcr.io/kjanat}/chatlogger-api-go:worker-${VERSION:-latest}
     build:
       context: .
       dockerfile: ./github/workflows/docker/Dockerfile.worker

@@ -6,12 +6,12 @@ package main
 import (
 	"log"
 
-	"github.com/kjanat/ChatLogger-API-go/internal/api"
-	"github.com/kjanat/ChatLogger-API-go/internal/config"
-	"github.com/kjanat/ChatLogger-API-go/internal/jobs"
-	"github.com/kjanat/ChatLogger-API-go/internal/repository"
-	"github.com/kjanat/ChatLogger-API-go/internal/service"
-	"github.com/kjanat/ChatLogger-API-go/internal/version"
+	"github.com/kjanat/chatlogger-api-go/internal/api"
+	"github.com/kjanat/chatlogger-api-go/internal/config"
+	"github.com/kjanat/chatlogger-api-go/internal/jobs"
+	"github.com/kjanat/chatlogger-api-go/internal/repository"
+	"github.com/kjanat/chatlogger-api-go/internal/service"
+	"github.com/kjanat/chatlogger-api-go/internal/version"
 )
 
 func main() {

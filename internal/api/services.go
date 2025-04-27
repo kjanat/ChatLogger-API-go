@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/kjanat/ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
 )
 
 // AppConfig contains application configuration values

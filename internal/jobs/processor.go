@@ -10,8 +10,8 @@ import (
 
 	"github.com/hibiken/asynq"
 
-	"github.com/kjanat/ChatLogger-API-go/internal/domain"
-	"github.com/kjanat/ChatLogger-API-go/internal/strategy"
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/strategy"
 )
 
 // ExportProcessor handles processing of export jobs

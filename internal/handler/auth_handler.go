@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kjanat/ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )

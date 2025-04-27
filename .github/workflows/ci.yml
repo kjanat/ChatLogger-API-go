@@ -72,4 +72,4 @@ jobs:
         with:
           files: ./coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: kjanat/ChatLogger-API-go
+          slug: kjanat/chatlogger-api-go

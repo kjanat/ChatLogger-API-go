@@ -1,11 +1,11 @@
 version: 2
 
-project_name: ChatLogger-API-go
+project_name: chatlogger-api-go
 builds:
   - id: server
     main: ./cmd/server
     binary: "{{ .ProjectName }}-server_{{ .Version }}-{{ .Os }}_{{ .Arch }}"
-    ldflags: ['-s -w -X "github.com/kjanat/ChatLogger-API-go/internal/version.Version={{.Version}}" -X "github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime={{.Date}}" -X "github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit={{.Commit}}"']
+    ldflags: ['-s -w -X "github.com/kjanat/chatlogger-api-go/internal/version.Version={{.Version}}" -X "github.com/kjanat/chatlogger-api-go/internal/version.BuildTime={{.Date}}" -X "github.com/kjanat/chatlogger-api-go/internal/version.GitCommit={{.Commit}}"']
     goos: [linux, windows, darwin]
     goarch: [amd64, arm64]
     env: [CGO_ENABLED=0]
@@ -13,7 +13,7 @@ builds:
   - id: worker
     main: ./cmd/worker
     binary: "{{ .ProjectName }}-worker_{{ .Version }}-{{ .Os }}_{{ .Arch }}"
-    ldflags: ['-s -w -X "github.com/kjanat/ChatLogger-API-go/internal/version.Version={{.Version}}" -X "github.com/kjanat/ChatLogger-API-go/internal/version.BuildTime={{.Date}}" -X "github.com/kjanat/ChatLogger-API-go/internal/version.GitCommit={{.Commit}}"']
+    ldflags: ['-s -w -X "github.com/kjanat/chatlogger-api-go/internal/version.Version={{.Version}}" -X "github.com/kjanat/chatlogger-api-go/internal/version.BuildTime={{.Date}}" -X "github.com/kjanat/chatlogger-api-go/internal/version.GitCommit={{.Commit}}"']
     goos: [linux, windows, darwin]
     goarch: [amd64, arm64]
     env: [CGO_ENABLED=0]
@@ -34,7 +34,7 @@ checksum:
   name_template: "{{ .ProjectName }}_checksums.txt"
 
 nfpms:
-  - id: ChatLogger-API-go
+  - id: chatlogger-api-go
     package_name: "{{ .ProjectName }}"
     vendor: kjanat
     homepage: "{{ .Env.URL }}"

@@ -3,10 +3,10 @@ package api
 import (
 	"net/http"
 
-	"github.com/kjanat/ChatLogger-API-go/internal/domain"
-	"github.com/kjanat/ChatLogger-API-go/internal/handler"
-	"github.com/kjanat/ChatLogger-API-go/internal/middleware"
-	"github.com/kjanat/ChatLogger-API-go/internal/version"
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/handler"
+	"github.com/kjanat/chatlogger-api-go/internal/middleware"
+	"github.com/kjanat/chatlogger-api-go/internal/version"
 
 	"github.com/gin-gonic/gin"
 )

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kjanat/ChatLogger-API-go/internal/version"
+	"github.com/kjanat/chatlogger-api-go/internal/version"
 )
 
 // VersionHeader adds the API version to response headers.

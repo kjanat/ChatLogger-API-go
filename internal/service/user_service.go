@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kjanat/ChatLogger-API-go/internal/domain"
-	"github.com/kjanat/ChatLogger-API-go/internal/hash"
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/hash"
 
 	"github.com/golang-jwt/jwt/v5"
 )

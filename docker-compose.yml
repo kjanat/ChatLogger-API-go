@@ -1,7 +1,7 @@
 services:
   # Server component - handles API requests
   server:
-    image: ghcr.io/kjanat/ChatLogger-API-go:server-${VERSION:-latest}
+    image: ghcr.io/kjanat/chatlogger-api-go:server-${VERSION:-latest}
     ports:
       - "8080:8080"
     depends_on:
@@ -29,7 +29,7 @@ services:
     
   # Worker component - handles background jobs
   worker:
-    image: ghcr.io/kjanat/ChatLogger-API-go:worker-${VERSION:-latest}
+    image: ghcr.io/kjanat/chatlogger-api-go:worker-${VERSION:-latest}
     depends_on:
       db:
         condition: service_healthy
