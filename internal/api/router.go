@@ -3,7 +3,7 @@
 package api
 
 import (
-	"ChatLogger-API-go/internal/middleware"
+	"github.com/kjanat/ChatLogger-API-go/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )

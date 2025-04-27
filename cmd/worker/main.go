@@ -10,9 +10,9 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/joho/godotenv"
 
-	"ChatLogger-API-go/internal/jobs"
-	"ChatLogger-API-go/internal/repository"
-	"ChatLogger-API-go/internal/service"
+	"github.com/kjanat/ChatLogger-API-go/internal/jobs"
+	"github.com/kjanat/ChatLogger-API-go/internal/repository"
+	"github.com/kjanat/ChatLogger-API-go/internal/service"
 )
 
 // CustomLogger wraps the standard logger to implement asynq.Logger

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/ChatLogger-API-go/internal/domain"
 )
 
 // Exporter defines the interface for export strategies.

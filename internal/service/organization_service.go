@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/ChatLogger-API-go/internal/domain"
 )
 
 // OrganizationService implements the domain.OrganizationService interface.

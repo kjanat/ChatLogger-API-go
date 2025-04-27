@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/ChatLogger-API-go/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )

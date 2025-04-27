@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/ChatLogger-API-go/internal/domain"
 )
 
 // MessageService implements the domain.MessageService interface.

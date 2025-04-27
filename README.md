@@ -2,8 +2,9 @@
 <!-- ![ChatLogger API](https://raw.githubusercontent.com/kjanat/ChatLogger-API-go/master/assets/logo.png) -->
 
 [![Go version](https://img.shields.io/github/go-mod/go-version/kjanat/ChatLogger-API-go?logo=Go&logoColor=white)](go.mod)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kjanat/chatlogger-api-go)][Go report] <!-- WTF Can't I Capitalize GO?... [![Go Report](https://img.shields.io/badge/Go%20report-A+-brightgreen.svg)][Go report] -->
-[![Tag](https://img.shields.io/github/v/tag/kjanat/ChatLogger-API-go?sort=semver&label=Tag)](https://github.com/kjanat/ChatLogger-API-go/tags) <!-- [![Release Date](https://img.shields.io/github/release-date/kjanat/ChatLogger-API-go?label=Release%20date)][Latest release] -->
+[![Go Report Card](https://goreportcard.com/badge/github.com/kjanat/ChatLogger-API-go)][Go report] <!-- WTF Can't I Capitalize GO?... [![Go Report](https://img.shields.io/badge/Go%20report-A+-brightgreen.svg)][Go report] -->
+[![Tag](https://img.shields.io/github/v/tag/kjanat/ChatLogger-API-go?sort=semver&label=Tag)](https://github.com/kjanat/ChatLogger-API-go/tags)
+[![Release Date](https://img.shields.io/github/release-date/kjanat/ChatLogger-API-go?label=Release%20date)][Latest release]
 [![License: MIT](https://img.shields.io/github/license/kjanat/ChatLogger-API-go?label=License)](LICENSE)
 [![Commit activity](https://img.shields.io/github/commit-activity/m/kjanat/ChatLogger-API-go?label=Commit%20activity)][Commits]
 [![Last commit](https://img.shields.io/github/last-commit/kjanat/ChatLogger-API-go?label=Last%20commit)][Commits]
@@ -27,7 +28,7 @@ A multi-tenant backend API for logging and managing chat sessions, supporting bo
 
 ## 🛠️ Tech Stack
 
-- **Language**: Go 1.24.2+
+- **Language**: [Go 1.24.2+](https://github.com/kjanat/ChatLogger-API-go/blob/master/go.mod#L3)
 - **Web Framework**: [Gin][Gin]
 - **ORM**: [GORM][Gorm] with PostgreSQL
 - **Authentication**: JWT using [golang-jwt/jwt][JWT]

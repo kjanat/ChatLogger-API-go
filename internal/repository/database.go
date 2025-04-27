@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/ChatLogger-API-go/internal/domain"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -70,25 +70,25 @@ func NewDatabaseWithOptions(dsn string, options *DatabaseOptions) (*Database, er
 
 // runMigrations runs the database schema migrations.
 func runMigrations(db *gorm.DB) error {
-    log.Println("Running database migrations...")
-    
-    // Begin a transaction to group all migration operations
-    return db.Transaction(func(tx *gorm.DB) error {
-        // Auto migrate all models in a single transaction
-        if err := tx.AutoMigrate(
-            &domain.Organization{},
-            &domain.APIKey{},
-            &domain.User{},
-            &domain.Chat{},
-            &domain.Message{},
-            &domain.Export{},
-        ); err != nil {
-            return fmt.Errorf("failed to migrate database: %w", err)
-        }
-        
-        log.Println("Database migrations completed successfully")
-        return nil
-    })
+	log.Println("Running database migrations...")
+
+	// Begin a transaction to group all migration operations
+	return db.Transaction(func(tx *gorm.DB) error {
+		// Auto migrate all models in a single transaction
+		if err := tx.AutoMigrate(
+			&domain.Organization{},
+			&domain.APIKey{},
+			&domain.User{},
+			&domain.Chat{},
+			&domain.Message{},
+			&domain.Export{},
+		); err != nil {
+			return fmt.Errorf("failed to migrate database: %w", err)
+		}
+
+		log.Println("Database migrations completed successfully")
+		return nil
+	})
 }
 
 // Close closes the database connection.

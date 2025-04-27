@@ -1,4 +1,4 @@
-module ChatLogger-API-go
+module github.com/kjanat/ChatLogger-API-go
 
 go 1.24.2
 

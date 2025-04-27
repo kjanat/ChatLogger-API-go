@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"ChatLogger-API-go/internal/domain"
-	"ChatLogger-API-go/internal/jobs"
+	"github.com/kjanat/ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/ChatLogger-API-go/internal/jobs"
 )
 
 // ExportService implements domain.ExportService

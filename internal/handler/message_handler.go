@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"ChatLogger-API-go/internal/domain"
+	"github.com/kjanat/ChatLogger-API-go/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )
