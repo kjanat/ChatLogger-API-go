@@ -1,3 +1,8 @@
+// Package jobs provides asynchronous job processing capabilities for the ChatLogger API.
+// It defines job types, payloads, and processors for handling background tasks
+// such as exporting chat data in different formats (JSON, CSV).
+// This file contains the export processor implementation which handles
+// processing of export jobs asynchronously.
 package jobs
 
 import (

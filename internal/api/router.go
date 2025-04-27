@@ -1,11 +1,12 @@
-// Package api handles the API routes, middleware configuration, and API initialization
-// for the ChatLogger application. It defines both public and authenticated routes.
+// Package api implements the REST API router and routes for the ChatLogger API.
+// This file sets up the Gin router with middleware, route groups, and injects
+// dependencies for handlers.
 package api
 
 import (
-	"github.com/kjanat/chatlogger-api-go/internal/middleware"
-
 	"github.com/gin-gonic/gin"
+
+	"github.com/kjanat/chatlogger-api-go/internal/middleware"
 )
 
 // NewRouter sets up the Gin router with defined routes.

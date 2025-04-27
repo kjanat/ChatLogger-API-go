@@ -1,3 +1,6 @@
+// Package jobs provides asynchronous job processing capabilities for the ChatLogger API.
+// This file implements a job queue system based on Asynq, providing methods to
+// enqueue and process background tasks like data exports.
 package jobs
 
 import (

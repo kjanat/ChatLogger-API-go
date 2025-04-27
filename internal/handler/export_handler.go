@@ -1,3 +1,6 @@
+// Package handler provides HTTP request handlers for the ChatLogger API.
+// This file implements handlers for chat data export functionality, supporting both
+// synchronous and asynchronous export operations in different formats (JSON, CSV).
 package handler
 
 import (

@@ -1,3 +1,8 @@
+// Package main implements the ChatLogger API worker process.
+// This worker handles asynchronous background jobs like chat exports,
+// connecting to Redis for job processing and PostgreSQL for data access.
+// It uses the asynq library for job queue management with graceful shutdown
+// handling for production reliability.
 package main
 
 import (

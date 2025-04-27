@@ -1,16 +1,17 @@
-// Package middleware provides HTTP middleware for the ChatLogger API,
-// including authentication, authorization, versioning, and request processing.
+// Package middleware provides HTTP middleware for the ChatLogger API.
+// This file implements authentication middleware including JWT-based auth for 
+// the dashboard UI and API key-based auth for external integrations.
 package middleware
 
 import (
 	"fmt"
 	"net/http"
 
-	"github.com/kjanat/chatlogger-api-go/internal/domain"
-	"github.com/kjanat/chatlogger-api-go/internal/service"
-
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/kjanat/chatlogger-api-go/internal/domain"
+	"github.com/kjanat/chatlogger-api-go/internal/service"
 )
 
 // Context keys for values stored in Gin context

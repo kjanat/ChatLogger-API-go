@@ -1,3 +1,7 @@
+// Package api implements the REST API router and routes for the ChatLogger API.
+// This file defines the AppServices and AppConfig structures used for dependency injection
+// throughout the application. It centralizes all service dependencies in one place
+// making them available to handlers and middleware.
 package api
 
 import (

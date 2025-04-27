@@ -1,5 +1,7 @@
-// Package main provides a command-line tool for generating bcrypt password hashes
-// with configurable cost parameters for the ChatLogger API application.
+// Package main implements a utility tool to generate password hashes.
+// This command-line tool takes a plaintext password as input and outputs
+// its bcrypt hash, which is useful for creating test users or for
+// manually setting passwords in the database.
 package main
 
 import (
@@ -8,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	"golang.org/x/crypto/bcrypt"
+	"github.com/kjanat/chatlogger-api-go/internal/hash"
 )
 
 func main() {
@@ -47,7 +49,7 @@ func main() {
 	}
 
 	// Generate hash
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	hashedPassword, err := hash.GeneratePasswordHash(password, cost)
 	if err != nil {
 		log.Fatalf("Error generating hash: %v", err)
 	}

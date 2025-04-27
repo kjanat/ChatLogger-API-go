@@ -1,5 +1,6 @@
-// Package config provides configuration loading and management for the ChatLogger API.
-// It uses environment variables to configure database connections, JWT secrets, and server settings.
+// Package config handles application configuration loading and validation.
+// It provides functionality to load configuration from environment variables,
+// with sensible defaults for development environments.
 package config
 
 import (

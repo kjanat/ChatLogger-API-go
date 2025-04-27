@@ -1,5 +1,7 @@
-// Package strategy implements the strategy design pattern for various
-// pluggable components of the ChatLogger API.
+// Package strategy implements the Strategy Pattern for the ChatLogger API.
+// This file defines exporters that implement different strategies for data export
+// formats (JSON, CSV). It follows the Strategy Pattern to allow for runtime selection
+// of different export formats while maintaining a consistent interface.
 package strategy
 
 import (
