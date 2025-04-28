@@ -8,8 +8,7 @@
 [![License: MIT](https://img.shields.io/github/license/kjanat/chatlogger-api-go?label=License)](LICENSE)
 [![Commit activity](https://img.shields.io/github/commit-activity/m/kjanat/chatlogger-api-go?label=Commit%20activity)][Commits]
 [![Last commit](https://img.shields.io/github/last-commit/kjanat/chatlogger-api-go?label=Last%20commit)][Commits]
-[![CI](https://img.shields.io/github/actions/workflow/status/kjanat/chatlogger-api-go/ci.yml?logo=github&label=CI)](https://github.com/kjanat/chatlogger-api-go/actions/workflows/ci.yml)
-[![Build status](https://img.shields.io/github/actions/workflow/status/kjanat/chatlogger-api-go/release.yml?logo=github&label=Build%20and%20Release)](https://github.com/kjanat/chatlogger-api-go/actions/workflows/release.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/kjanat/chatlogger-api-go/chatlogger-pipeline.yml?logo=github&label=CI)][Build]
 [![Codecov](https://img.shields.io/codecov/c/gh/kjanat/chatlogger-api-go?token=QUop5QdCOv&logo=codecov&logoColor=%23F01F7A&label=Coverage)][Codecov] <!-- https://codecov.io/gh/kjanat/chatlogger-api-go/graph/badge.svg?token=QUop5QdCOv -->
 [![Issues](https://img.shields.io/github/issues/kjanat/chatlogger-api-go?label=Issues)][Issues]
 
@@ -306,3 +305,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 [JWT]: https://github.com/golang-jwt/jwt/tree/v5
 [Asynq]: https://github.com/hibiken/asynq
 [Codecov]: https://codecov.io/gh/kjanat/chatlogger-api-go
+[Build]: https://github.com/kjanat/chatlogger-api-go/actions/workflows/chatlogger-pipeline.yml
