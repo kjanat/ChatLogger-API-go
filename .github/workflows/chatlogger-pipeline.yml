@@ -1,0 +1,189 @@
+name: ChatLogger Pipeline
+
+on:
+  push:
+    branches: [master, development]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'docs/**'
+    tags: ['v*']                    # build when a tag is pushed
+
+  pull_request:
+    branches: [master, development]
+
+  # manual version bump
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Which version part to bump'
+        type: choice
+        default: 'patch'
+        options: [patch, minor, major]
+
+env:                        # ── shared env keeps YAML short ──
+  GO_VERSION: '1.24'
+  DB_URL: postgresql://test:test@localhost:5432/test
+
+permissions:                # default
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # for manual bump (no PRs)
+
+# ───────────────────────────────────────────────────────────────
+jobs:
+# -------- CI ---------------------------------------------------
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER:     test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB:       test
+        ports: ['tcp/5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with: { go-version: "${{ env.GO_VERSION }}", cache: true }
+
+      - uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
+          skip-cache: false
+
+      - run: go test -v -race -coverprofile=coverage.txt ./...
+        env:
+          DATABASE_URL: ${{ env.DB_URL }}
+
+      - uses: codecov/codecov-action@v5
+        with:
+          files: coverage.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ${{ github.repository }}
+
+# -------- Release (tag push OR manual bump) --------------------
+  release:
+    needs: ci
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-go@v5
+        with: { go-version: "${{ env.GO_VERSION }}", cache: true }
+
+      # 1) import GPG and setup git-------------------------------
+      - name: Import GPG key
+        id: gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key:   ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase:        ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Setup git
+        run: |
+          git config --global user.name  "${{ secrets.ACTIONS_USERNAME }}"
+          git config --global user.email "${{ secrets.ACTIONS_EMAIL }}"
+          git config --global user.signingkey "${{ steps.gpg.outputs.fingerprint }}"
+          git config --global commit.gpgsign true
+          git config --global tag.gpgsign true
+
+      # 2) (opt) manual bump – **only** on workflow_dispatch -----
+      - name: Manual bump & tag
+        id: manual_bump
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          chmod +x ./scripts/version.sh
+          ./scripts/version.sh "${{ github.event.inputs.version_type }}"
+          NEW=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
+
+          git add internal/version/version.go
+          git commit -S -m "chore(release): bump version to v${NEW}"
+
+          git tag -s "v${NEW}" -m "Release v${NEW}"
+          git push --follow-tags origin HEAD "v${NEW}"
+
+          echo "tag_created=true"  >> $GITHUB_OUTPUT
+          echo "Created and pushed signed tag v${NEW}"
+
+      # 3) auto-tag if version.go changed on master/dev ----------
+      - name: Ensure version tag exists
+        id: ensure_tag
+        if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/')
+        run: |
+          VER=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
+          [ -z "$VER" ] && { echo "::error ::unable to read version"; exit 1; }
+          TAG=v${VER}
+          if git show-ref --tags --verify "refs/tags/$TAG" -q; then
+            echo "tag_created=false" >> $GITHUB_OUTPUT
+            echo "Tag $TAG already exists."
+          else
+            git tag -s "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+            echo "tag_created=true"  >> $GITHUB_OUTPUT
+            echo "Created and pushed signed tag $TAG"
+          fi
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@v3.8.2
+
+      # 4) GoReleaser – run only if we *have* a tag --------------
+      - uses: goreleaser/goreleaser-action@v6
+        if: |
+          startsWith(github.ref,'refs/tags/v') ||
+          steps.manual_bump.outputs.tag_created == 'true' ||
+          steps.ensure_tag.outputs.tag_created == 'true'
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean # --draft
+        env:
+          GITHUB_TOKEN:       ${{ secrets.GITHUB_TOKEN }}
+          COSIGN_PASSWORD:    ${{ secrets.COSIGN_PASSWORD }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          GPG_FINGERPRINT:    ${{ steps.gpg.outputs.fingerprint }}
+          DESCRIPTION:        ${{ github.event.repository.description }}
+          URL:                ${{ github.server_url }}/${{ github.repository }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chatlogger-api
+          path: dist/*
+          retention-days: 5
+
+      # 5) move/force 'latest' tag (unchanged) -------------------
+      - name: Move signed 'latest' tag
+        run: |
+          git tag -fs latest -m "Latest stable version"
+          git push --force origin latest

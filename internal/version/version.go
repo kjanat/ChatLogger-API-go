@@ -5,7 +5,7 @@ package version
 // Version information.
 var (
 	// Version is the current version of the application.
-	Version = "0.2.17"
+	Version = "0.3.0"
 
 	// BuildTime is the time the binary was built.
 	BuildTime = "unknown"
