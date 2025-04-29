@@ -1,0 +1,4 @@
+# at repo root
+* text=auto eol=lf
+*.sh  eol=lf
+*.go  eol=lf

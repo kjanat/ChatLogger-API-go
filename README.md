@@ -25,6 +25,10 @@ A multi-tenant backend API for logging and managing chat sessions, supporting bo
 - **Strategy Pattern**: Used for exporter formats (JSON, CSV) and other pluggable components
 - **Asynchronous Jobs**: Background processing with Redis and Asynq
 
+> [!TIP]
+> View the package documentation for more details on the API endpoints and usage.
+> [pkg.go.dev](https://pkg.go.dev/github.com/kjanat/chatlogger-api-go#section-readme)
+
 ## 🛠️ Tech Stack
 
 - **Language**: [Go 1.24.2+](https://github.com/kjanat/chatlogger-api-go/blob/master/go.mod#L3)

@@ -1,5 +1,5 @@
 // Package middleware provides HTTP middleware for the ChatLogger API.
-// This file implements authentication middleware including JWT-based auth for 
+// This file implements authentication middleware including JWT-based auth for
 // the dashboard UI and API key-based auth for external integrations.
 package middleware
 

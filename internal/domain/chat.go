@@ -1,8 +1,25 @@
 package domain
 
 import (
+	"encoding/json"
 	"time"
 )
+
+// ChatMetadata represents extended information about a chat session.
+type ChatMetadata struct {
+	IPAddress        string  `json:"ip_address,omitempty"`
+	CountryCode      string  `json:"country_code,omitempty"`      // ISO-3166 country code (e.g., "NL")
+	LanguageCode     string  `json:"language_code,omitempty"`     // ISO-639 language code (e.g., "tr")
+	SessionID        string  `json:"session_id,omitempty"`
+	Sentiment        string  `json:"sentiment,omitempty"`
+	IsEscalated      bool    `json:"is_escalated,omitempty"`
+	IsForwardedToHR  bool    `json:"is_forwarded_to_hr,omitempty"`
+	TranscriptLink   string  `json:"transcript_link,omitempty"`
+	TokenCount       int     `json:"token_count,omitempty"`       // Total tokens for the chat session
+	AvgResponseTime  float64 `json:"avg_response_time,omitempty"` // In seconds
+	QuestionCategory string  `json:"question_category,omitempty"`
+	UserRating       *int    `json:"user_rating,omitempty"`       // Optional user rating
+}
 
 // Chat represents a conversation session.
 type Chat struct {
@@ -12,11 +29,58 @@ type Chat struct {
 	UserID         *uint64      `                                 json:"user_id,omitempty"` // Nullable for anonymous chats
 	User           *User        `gorm:"foreignKey:UserID"         json:"-"`
 	Title          string       `gorm:"size:255"                  json:"title"`
-	Tags           string       `gorm:"type:jsonb"                json:"tags"`     // JSON array of tags
-	Metadata       string       `gorm:"type:jsonb"                json:"metadata"` // Additional JSON metadata
+	Tags           string       `gorm:"type:jsonb"                json:"tags"`              // JSON array of tags as string
+	Metadata       string       `gorm:"type:jsonb"                json:"metadata"`          // Store ChatMetadata as JSON string
 	CreatedAt      time.Time    `                                 json:"created_at"`
 	UpdatedAt      time.Time    `                                 json:"updated_at"`
 	Messages       []Message    `gorm:"foreignKey:ChatID"         json:"messages,omitempty"`
+}
+
+// GetTags parses the JSON tags string into a slice.
+func (c *Chat) GetTags() ([]string, error) {
+	var tags []string
+	if c.Tags == "" || c.Tags == "null" {
+		return []string{}, nil
+	}
+	err := json.Unmarshal([]byte(c.Tags), &tags)
+	return tags, err
+}
+
+// SetTags converts a slice of tags into a JSON string.
+func (c *Chat) SetTags(tags []string) error {
+	if tags == nil {
+		tags = []string{} // Ensure empty array instead of null
+	}
+	tagsJSON, err := json.Marshal(tags)
+	if err != nil {
+		return err
+	}
+	c.Tags = string(tagsJSON)
+	return nil
+}
+
+// GetMetadata parses the JSON metadata string into the ChatMetadata struct.
+func (c *Chat) GetMetadata() (*ChatMetadata, error) {
+	var metadata ChatMetadata
+	if c.Metadata == "" || c.Metadata == "null" {
+		return &metadata, nil // Return empty struct if no metadata
+	}
+	err := json.Unmarshal([]byte(c.Metadata), &metadata)
+	return &metadata, err
+}
+
+// SetMetadata converts the ChatMetadata struct into a JSON string.
+func (c *Chat) SetMetadata(metadata *ChatMetadata) error {
+	if metadata == nil {
+		c.Metadata = "{}" // Store empty JSON object if nil
+		return nil
+	}
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+	c.Metadata = string(metadataJSON)
+	return nil
 }
 
 // ChatRepository defines the interface for chat data operations.
@@ -41,5 +105,5 @@ type ChatService interface {
 	UpdateChat(chat *Chat) error
 	DeleteChat(id uint64) error
 	// Analytics methods
-	GetChatStats(orgID uint64, start, end time.Time) (map[string]interface{}, error)
+	GetChatStats(orgID uint64, start, end time.Time) (map[string]any, error)
 }

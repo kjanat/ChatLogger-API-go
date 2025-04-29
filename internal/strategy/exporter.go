@@ -94,8 +94,17 @@ func (c *CSVExporter) Export(data interface{}) ([]byte, error) {
 			role := string(message.Role)
 			content := message.Content
 			timestamp := message.CreatedAt.Format(time.RFC3339)
-			tokenCount := fmt.Sprintf("%d", message.TokenCount)
-			latency := fmt.Sprintf("%d", message.Latency)
+
+			// Extract token count and latency from metadata
+			meta, err := message.GetMetadata()
+			var tokenCount, latency string
+			if err == nil && meta != nil {
+				tokenCount = fmt.Sprintf("%d", meta.TokenCount)
+				latency = fmt.Sprintf("%.2f", meta.ResponseTime)
+			} else {
+				tokenCount = ""
+				latency = ""
+			}
 
 			row := []string{
 				chatID, orgID, userID, title, createdAt,

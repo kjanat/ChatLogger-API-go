@@ -60,24 +60,10 @@ func (s *MessageService) GetMessageStats(
 		return nil, fmt.Errorf("error getting role stats: %w", err)
 	}
 
-	// Get latency statistics
-	latencyStats, err := s.messageRepo.GetLatencyStats(orgID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting latency stats: %w", err)
-	}
-
-	// Get token count statistics
-	tokenStats, err := s.messageRepo.GetTokenCountStats(orgID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting token stats: %w", err)
-	}
-
 	// Combine statistics
 	stats := map[string]interface{}{
 		"total_messages": messageCount,
 		"by_role":        roleStats,
-		"latency":        latencyStats,
-		"tokens":         tokenStats,
 		"date_range": map[string]string{
 			"start": start.Format(time.RFC3339),
 			"end":   end.Format(time.RFC3339),
