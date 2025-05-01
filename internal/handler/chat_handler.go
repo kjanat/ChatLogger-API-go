@@ -36,6 +36,21 @@ type CreateChatRequest struct {
 }
 
 // CreateChat handles the request to create a new chat.
+//	@Summary		Create Chat
+//	@Description	Creates a new chat session for the organization. Can be called via Dashboard (JWT) or Public API (API Key).
+//	@Tags			Chats
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		CreateChatRequest		true	"Chat Details"
+//	@Param			slug	path		string					false	"Organization Slug (Required for Public API)"
+//	@Success		201		{object}	map[string]interface{}	"message: Chat created successfully, chat_id: uint64"
+//	@Failure		400		{object}	map[string]string		"Invalid request data"
+//	@Failure		401		{object}	map[string]string		"Unauthorized (JWT or API Key invalid/missing, or Org ID not found)"
+//	@Failure		403		{object}	map[string]string		"Forbidden (API Key doesn't match slug)"
+//	@Failure		500		{object}	map[string]string		"Failed to create chat or process tags/metadata"
+//	@Security		BearerAuth || ApiKeyAuth
+//	@Router			/api/v1/chats [post]
+//	@Router			/api/v1/orgs/{slug}/chats [post]
 func (h *ChatHandler) CreateChat(c *gin.Context) {
 	var req CreateChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -103,6 +118,20 @@ type GetChatResponse struct {
 }
 
 // GetChat handles the request to get a chat by ID.
+//	@Summary		Get Chat by ID
+//	@Description	Retrieves details for a specific chat session, optionally including messages.
+//	@Tags			Chats
+//	@Produce		json
+//	@Param			chatID				path		uint64				true	"Chat ID"
+//	@Param			include_messages	query		bool				false	"Include messages in the response"	default(false)
+//	@Success		200					{object}	GetChatResponse		"Chat details"
+//	@Failure		400					{object}	map[string]string	"Invalid chat ID"
+//	@Failure		401					{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
+//	@Failure		403					{object}	map[string]string	"Permission denied (Chat doesn't belong to user's org)"
+//	@Failure		404					{object}	map[string]string	"Chat not found"
+//	@Failure		500					{object}	map[string]string	"Failed to get chat or messages"
+//	@Security		BearerAuth
+//	@Router			/api/v1/chats/{chatID} [get]
 func (h *ChatHandler) GetChat(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")
@@ -174,6 +203,17 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 }
 
 // ListChats handles the request to list chats for the current organization.
+//	@Summary		List Chats
+//	@Description	Retrieves a paginated list of chat sessions for the user's organization.
+//	@Tags			Chats
+//	@Produce		json
+//	@Param			limit	query		int					false	"Number of chats per page"	default(20)
+//	@Param			offset	query		int					false	"Offset for pagination"		default(0)
+//	@Success		200		{array}		domain.Chat			"List of chats"
+//	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
+//	@Failure		500		{object}	map[string]string	"Failed to list chats"
+//	@Security		BearerAuth
+//	@Router			/api/v1/chats [get]
 func (h *ChatHandler) ListChats(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")
@@ -204,6 +244,21 @@ type UpdateChatRequest struct {
 }
 
 // UpdateChat handles the request to update a chat.
+//	@Summary		Update Chat
+//	@Description	Updates the title, tags, or metadata of an existing chat session.
+//	@Tags			Chats
+//	@Accept			json
+//	@Produce		json
+//	@Param			chatID	path		uint64				true	"Chat ID"
+//	@Param			request	body		UpdateChatRequest	true	"Fields to update"
+//	@Success		200		{object}	GetChatResponse		"Updated chat details"
+//	@Failure		400		{object}	map[string]string	"Invalid chat ID or request data"
+//	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
+//	@Failure		403		{object}	map[string]string	"Permission denied (Chat doesn't belong to user's org)"
+//	@Failure		404		{object}	map[string]string	"Chat not found"
+//	@Failure		500		{object}	map[string]string	"Failed to get or update chat, or process tags/metadata"
+//	@Security		BearerAuth
+//	@Router			/api/v1/chats/{chatID} [patch]
 func (h *ChatHandler) UpdateChat(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")
@@ -294,6 +349,19 @@ func (h *ChatHandler) UpdateChat(c *gin.Context) {
 }
 
 // DeleteChat handles the request to delete a chat.
+//	@Summary		Delete Chat
+//	@Description	Deletes a chat session and its associated messages.
+//	@Tags			Chats
+//	@Produce		json
+//	@Param			chatID	path		uint64				true	"Chat ID"
+//	@Success		200		{object}	map[string]string	"Chat deleted successfully"
+//	@Failure		400		{object}	map[string]string	"Invalid chat ID"
+//	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
+//	@Failure		403		{object}	map[string]string	"Permission denied (Chat doesn't belong to user's org)"
+//	@Failure		404		{object}	map[string]string	"Chat not found"
+//	@Failure		500		{object}	map[string]string	"Failed to get or delete chat"
+//	@Security		BearerAuth
+//	@Router			/api/v1/chats/{chatID} [delete]
 func (h *ChatHandler) DeleteChat(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")

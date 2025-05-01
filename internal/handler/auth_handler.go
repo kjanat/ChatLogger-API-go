@@ -28,6 +28,16 @@ type LoginRequest struct {
 }
 
 // Login handles user login.
+//	@Summary		User Login
+//	@Description	Authenticates a user with email and password, returns user info and sets an HTTP-only auth cookie.
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		LoginRequest			true	"Login Credentials"
+//	@Success		200		{object}	map[string]interface{}	"message: Login successful, user: domain.User"
+//	@Failure		400		{object}	map[string]string		"Invalid request data"
+//	@Failure		401		{object}	map[string]string		"Invalid email or password"
+//	@Router			/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -69,6 +79,15 @@ type RegisterRequest struct {
 }
 
 // Register handles user registration.
+//	@Summary		User Registration
+//	@Description	Registers a new user. In a real app, this might require admin privileges or an invitation system.
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		RegisterRequest			true	"User Registration Details"
+//	@Success		201		{object}	map[string]interface{}	"message: User registered successfully, user_id: uint64"
+//	@Failure		400		{object}	map[string]string		"Invalid request data or registration failed (e.g., email exists)"
+//	@Router			/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -107,6 +126,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 // Logout handles user logout.
+//	@Summary		User Logout
+//	@Description	Logs out the current user by clearing the authentication cookie.
+//	@Tags			Authentication
+//	@Produce		json
+//	@Success		200	{object}	map[string]string	"Logout successful"
+//	@Router			/auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// Clear the auth cookie
 	c.SetCookie(

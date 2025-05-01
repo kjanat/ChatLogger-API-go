@@ -30,6 +30,18 @@ type GenerateKeyRequest struct {
 }
 
 // GenerateKey handles the request to generate a new API key.
+//	@Summary		Generate API Key
+//	@Description	Generates a new API key for the organization associated with the authenticated user.
+//	@Tags			API Keys (Admin)
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		GenerateKeyRequest	true	"API Key Label"
+//	@Success		201		{object}	map[string]string	"API key generated successfully"
+//	@Failure		400		{object}	map[string]string	"Invalid request data"
+//	@Failure		401		{object}	map[string]string	"Unauthorized or Org ID not found"
+//	@Failure		500		{object}	map[string]string	"Failed to generate API key"
+//	@Security		BearerAuth
+//	@Router			/api/v1/orgs/me/apikeys [post]
 func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 	var req GenerateKeyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -60,6 +72,15 @@ func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 }
 
 // ListKeys handles the request to list API keys for an organization.
+//	@Summary		List API Keys
+//	@Description	Lists all API keys for the organization associated with the authenticated user.
+//	@Tags			API Keys (Admin)
+//	@Produce		json
+//	@Success		200	{array}		domain.APIKey
+//	@Failure		401	{object}	map[string]string	"Unauthorized or Org ID not found"
+//	@Failure		500	{object}	map[string]string	"Failed to list API keys"
+//	@Security		BearerAuth
+//	@Router			/api/v1/orgs/me/apikeys [get]
 func (h *APIKeyHandler) ListKeys(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")
@@ -127,6 +148,19 @@ func (h *APIKeyHandler) validateKeyAccess(c *gin.Context, actionName string) (ui
 }
 
 // RevokeKey handles the request to revoke an API key.
+//	@Summary		Revoke API Key
+//	@Description	Revokes an existing API key by its ID.
+//	@Tags			API Keys (Admin)
+//	@Produce		json
+//	@Param			id	path		uint64				true	"API Key ID"
+//	@Success		200	{object}	map[string]string	"API key revoked successfully"
+//	@Failure		400	{object}	map[string]string	"Invalid API key ID"
+//	@Failure		401	{object}	map[string]string	"Unauthorized or Org ID not found"
+//	@Failure		403	{object}	map[string]string	"Permission denied"
+//	@Failure		404	{object}	map[string]string	"API key not found"
+//	@Failure		500	{object}	map[string]string	"Failed to revoke API key"
+//	@Security		BearerAuth
+//	@Router			/api/v1/orgs/me/apikeys/{id} [delete] // Note: Swag uses the path for DELETE, often mapped to revoke
 func (h *APIKeyHandler) RevokeKey(c *gin.Context) {
 	id, _, ok := h.validateKeyAccess(c, "revoke")
 	if !ok {
@@ -143,6 +177,19 @@ func (h *APIKeyHandler) RevokeKey(c *gin.Context) {
 }
 
 // DeleteKey handles the request to delete an API key.
+//	@Summary		Delete API Key (Not typically exposed, Revoke is preferred)
+//	@Description	Deletes an API key permanently. Use RevokeKey for standard deactivation.
+//	@Tags			API Keys (Admin)
+//	@Produce		json
+//	@Param			id	path		uint64				true	"API Key ID"
+//	@Success		200	{object}	map[string]string	"API key deleted successfully"
+//	@Failure		400	{object}	map[string]string	"Invalid API key ID"
+//	@Failure		401	{object}	map[string]string	"Unauthorized or Org ID not found"
+//	@Failure		403	{object}	map[string]string	"Permission denied"
+//	@Failure		404	{object}	map[string]string	"API key not found"
+//	@Failure		500	{object}	map[string]string	"Failed to delete API key"
+//	@Security		BearerAuth
+//	@Router			/api/v1/orgs/me/apikeys/{id}/delete [delete] // Example distinct path if needed
 func (h *APIKeyHandler) DeleteKey(c *gin.Context) {
 	id, _, ok := h.validateKeyAccess(c, "delete")
 	if !ok {

@@ -2,6 +2,7 @@
 <!-- ![ChatLogger API](https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/assets/logo.png) -->
 
 [![Go version](https://img.shields.io/github/go-mod/go-version/kjanat/chatlogger-api-go?logo=Go&logoColor=white)](go.mod)
+[![Go Doc](https://godoc.org/github.com/kjanat/chatlogger-api-go?status.svg)][Package documentation]
 [![Go Report Card](https://goreportcard.com/badge/github.com/kjanat/chatlogger-api-go)][Go report] <!-- WTF Can't I Capitalize GO?... [![Go Report](https://img.shields.io/badge/Go%20report-A+-brightgreen.svg)][Go report] -->
 [![Tag](https://img.shields.io/github/v/tag/kjanat/chatlogger-api-go?sort=semver&label=Tag)](https://github.com/kjanat/chatlogger-api-go/tags)
 [![Release Date](https://img.shields.io/github/release-date/kjanat/chatlogger-api-go?label=Release%20date)][Latest release]
@@ -27,7 +28,7 @@ A multi-tenant backend API for logging and managing chat sessions, supporting bo
 
 > [!TIP]
 > View the package documentation for more details on the API endpoints and usage.
-> [pkg.go.dev](https://pkg.go.dev/github.com/kjanat/chatlogger-api-go#section-readme)
+> [godoc.org][Package documentation]
 
 ## 🛠️ Tech Stack
 
@@ -310,3 +311,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 [Asynq]: https://github.com/hibiken/asynq
 [Codecov]: https://codecov.io/gh/kjanat/chatlogger-api-go
 [Build]: https://github.com/kjanat/chatlogger-api-go/actions/workflows/chatlogger-pipeline.yml
+[Package documentation]: https://godoc.org/github.com/kjanat/chatlogger-api-go

@@ -35,6 +35,22 @@ type CreateMessageRequest struct {
 }
 
 // CreateMessage handles the request to create a new message in a chat.
+//	@Summary		Create Message
+//	@Description	Adds a new message to an existing chat session. Can be called via Public API (API Key).
+//	@Tags			Messages
+//	@Accept			json
+//	@Produce		json
+//	@Param			slug	path		string					true	"Organization Slug"
+//	@Param			chatID	path		uint64					true	"Chat ID"
+//	@Param			request	body		CreateMessageRequest	true	"Message Details (role, content, metadata)"
+//	@Success		201		{object}	map[string]interface{}	"message: Message created successfully, message_id: uint64"
+//	@Failure		400		{object}	map[string]string		"Invalid chat ID or request data (role, content, metadata validation)"
+//	@Failure		401		{object}	map[string]string		"Unauthorized (API Key invalid/missing or Org ID not found)"
+//	@Failure		403		{object}	map[string]string		"Forbidden (API Key doesn't match slug or chat doesn't belong to org)"
+//	@Failure		404		{object}	map[string]string		"Chat not found"
+//	@Failure		500		{object}	map[string]string		"Failed to get chat or create message"
+//	@Security		ApiKeyAuth
+//	@Router			/api/v1/orgs/{slug}/chats/{chatID}/messages [post]
 func (h *MessageHandler) CreateMessage(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")
@@ -133,6 +149,19 @@ type GetMessageResponse struct {
 }
 
 // GetMessages handles the request to get all messages for a chat.
+//	@Summary		Get Chat Messages
+//	@Description	Retrieves all messages associated with a specific chat session.
+//	@Tags			Messages
+//	@Produce		json
+//	@Param			chatID	path		uint64				true	"Chat ID"
+//	@Success		200		{array}		GetMessageResponse	"List of messages with parsed metadata"
+//	@Failure		400		{object}	map[string]string	"Invalid chat ID"
+//	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
+//	@Failure		403		{object}	map[string]string	"Permission denied (Chat doesn't belong to user's org)"
+//	@Failure		404		{object}	map[string]string	"Chat not found"
+//	@Failure		500		{object}	map[string]string	"Failed to get chat or messages"
+//	@Security		BearerAuth
+//	@Router			/api/v1/chats/{chatID}/messages [get]
 func (h *MessageHandler) GetMessages(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")
@@ -209,6 +238,18 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 }
 
 // GetMessageStats handles the request to get message statistics for an organization.
+//	@Summary		Get Message Statistics
+//	@Description	Retrieves aggregated statistics about messages within a specified date range for the user's organization.
+//	@Tags			Analytics
+//	@Produce		json
+//	@Param			start	query		string					false	"Start date (RFC3339 format, e.g., 2023-01-01T00:00:00Z). Defaults to 30 days ago."
+//	@Param			end		query		string					false	"End date (RFC3339 format, e.g., 2023-01-31T23:59:59Z). Defaults to now."
+//	@Success		200		{object}	map[string]interface{}	"Aggregated message statistics"
+//	@Failure		400		{object}	map[string]string		"Invalid date format"
+//	@Failure		401		{object}	map[string]string		"Unauthorized (JWT invalid/missing or Org ID not found)"
+//	@Failure		500		{object}	map[string]string		"Failed to get message statistics"
+//	@Security		BearerAuth
+//	@Router			/api/v1/analytics/messages [get]
 func (h *MessageHandler) GetMessageStats(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")
