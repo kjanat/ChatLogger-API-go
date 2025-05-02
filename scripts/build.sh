@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 go build \
     -ldflags \
     -X "chatlogger-api-go/internal/version.Version=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)" \

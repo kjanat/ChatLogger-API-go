@@ -26,10 +26,19 @@ A multi-tenant backend API for logging and managing chat sessions, supporting bo
 - **Strategy Pattern**: Used for exporter formats (JSON, CSV) and other pluggable components
 - **Asynchronous Jobs**: Background processing with Redis and Asynq
 
+## Documentation
+
+The API is documented using Swagger/OpenAPI:
+
+1. Generate documentation: `./scripts/gendocs.sh`
+2. Start the server: `go run cmd/server/main.go`
+3. Open browser: http://localhost:8080/swagger/index.html
+
 > [!TIP]
 > View the package documentation for more details on the API endpoints and usage.
 > [godoc.org][Package documentation]
 
+Note: You must regenerate documentation after making API changes by running the documentation script.
 ## 🛠️ Tech Stack
 
 - **Language**: [Go 1.24.2+](https://github.com/kjanat/chatlogger-api-go/blob/master/go.mod#L3)

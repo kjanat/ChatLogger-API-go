@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Semantic version management
 
 VERSION_FILE="internal/version/version.go"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # version_update.sh - A script to update the version in internal/version/version.go
 
 # Check for the version argument

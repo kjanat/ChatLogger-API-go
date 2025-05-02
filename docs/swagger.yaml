@@ -1,0 +1,1513 @@
+basePath: /api/v1
+definitions:
+  domain.APIKey:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      label:
+        type: string
+      organization_id:
+        type: integer
+      revoked_at:
+        type: string
+    type: object
+  domain.Chat:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      messages:
+        items:
+          $ref: '#/definitions/domain.Message'
+        type: array
+      metadata:
+        description: Store ChatMetadata as JSON string
+        type: string
+      organization_id:
+        type: integer
+      tags:
+        description: JSON array of tags as string
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        description: Nullable for anonymous chats
+        type: integer
+    type: object
+  domain.ChatMetadata:
+    properties:
+      avg_response_time:
+        description: In seconds
+        type: number
+      country_code:
+        description: ISO-3166 country code (e.g., "NL")
+        type: string
+      ip_address:
+        type: string
+      is_escalated:
+        type: boolean
+      is_forwarded_to_hr:
+        type: boolean
+      language_code:
+        description: ISO-639 language code (e.g., "tr")
+        type: string
+      question_category:
+        type: string
+      sentiment:
+        type: string
+      session_id:
+        type: string
+      token_count:
+        description: Total tokens for the chat session
+        type: integer
+      transcript_link:
+        type: string
+      user_rating:
+        description: Optional user rating
+        type: integer
+    type: object
+  domain.Export:
+    properties:
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      error:
+        type: string
+      file_path:
+        type: string
+      format:
+        $ref: '#/definitions/domain.ExportFormat'
+      id:
+        type: integer
+      organization_id:
+        type: integer
+      status:
+        $ref: '#/definitions/domain.ExportStatus'
+      type:
+        $ref: '#/definitions/domain.ExportType'
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  domain.ExportFormat:
+    enum:
+    - json
+    - csv
+    type: string
+    x-enum-varnames:
+    - ExportFormatJSON
+    - ExportFormatCSV
+  domain.ExportStatus:
+    enum:
+    - pending
+    - processing
+    - completed
+    - failed
+    type: string
+    x-enum-varnames:
+    - ExportStatusPending
+    - ExportStatusProcessing
+    - ExportStatusCompleted
+    - ExportStatusFailed
+  domain.ExportType:
+    enum:
+    - chats
+    - messages
+    - all
+    type: string
+    x-enum-varnames:
+    - ExportTypeChats
+    - ExportTypeMessages
+    - ExportTypeAll
+  domain.Message:
+    properties:
+      chat_id:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      metadata:
+        description: Store MessageMetadata as JSON string
+        type: string
+      role:
+        $ref: '#/definitions/domain.MessageRole'
+    type: object
+  domain.MessageMetadata:
+    properties:
+      response_time:
+        description: In milliseconds
+        type: number
+      token_count:
+        type: integer
+    type: object
+  domain.MessageRole:
+    enum:
+    - user
+    - assistant
+    - system
+    type: string
+    x-enum-varnames:
+    - MessageRoleUser
+    - MessageRoleAssistant
+    - MessageRoleSystem
+  domain.Role:
+    enum:
+    - superadmin
+    - admin
+    - user
+    - viewer
+    type: string
+    x-enum-comments:
+      RoleAdmin: Can manage own org
+      RoleSuperAdmin: Can manage all orgs
+      RoleUser: Regular user
+      RoleViewer: Read-only user
+    x-enum-varnames:
+    - RoleSuperAdmin
+    - RoleAdmin
+    - RoleUser
+    - RoleViewer
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_login_at:
+        type: string
+      last_name:
+        type: string
+      organization_id:
+        type: integer
+      role:
+        $ref: '#/definitions/domain.Role'
+      updated_at:
+        type: string
+    type: object
+  handler.ChangePasswordRequest:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        minLength: 8
+        type: string
+    required:
+    - current_password
+    - new_password
+    type: object
+  handler.CreateChatRequest:
+    properties:
+      metadata:
+        allOf:
+        - $ref: '#/definitions/domain.ChatMetadata'
+        description: Use the structured type
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      user_id:
+        description: Optional, for anonymous chats
+        type: integer
+    type: object
+  handler.CreateMessageRequest:
+    properties:
+      content:
+        type: string
+      metadata:
+        allOf:
+        - $ref: '#/definitions/domain.MessageMetadata'
+        description: Use structured type
+      role:
+        $ref: '#/definitions/domain.MessageRole'
+    required:
+    - content
+    - role
+    type: object
+  handler.ExportRequest:
+    properties:
+      format:
+        enum:
+        - json
+        - csv
+        type: string
+      type:
+        enum:
+        - chats
+        - messages
+        - all
+        type: string
+    required:
+    - format
+    - type
+    type: object
+  handler.GenerateKeyRequest:
+    properties:
+      label:
+        type: string
+    required:
+    - label
+    type: object
+  handler.GetChatResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      messages:
+        items:
+          $ref: '#/definitions/domain.Message'
+        type: array
+      metadata:
+        allOf:
+        - $ref: '#/definitions/domain.ChatMetadata'
+        description: Parsed metadata
+      organization_id:
+        type: integer
+      tags:
+        description: Parsed tags
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        description: Nullable for anonymous chats
+        type: integer
+    type: object
+  handler.GetMessageResponse:
+    properties:
+      chat_id:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      metadata:
+        allOf:
+        - $ref: '#/definitions/domain.MessageMetadata'
+        description: Parsed metadata
+      role:
+        $ref: '#/definitions/domain.MessageRole'
+    type: object
+  handler.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.RegisterRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      organization_id:
+        description: 'Made optional, otherwise: `binding:"required"`'
+        type: integer
+      password:
+        minLength: 8
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+    required:
+    - email
+    - password
+    type: object
+  handler.UpdateChatRequest:
+    properties:
+      metadata:
+        allOf:
+        - $ref: '#/definitions/domain.ChatMetadata'
+        description: Use the structured type
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    type: object
+  handler.UpdateMeRequest:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+    type: object
+externalDocs:
+  description: GitHub Wiki
+  url: https://github.com/kjanat/chatlogger-api-go/wiki
+host: localhost:8080
+info:
+  contact:
+    email: chatlogger-api-go@kjanat.com
+    name: API Support
+    url: https://github.com/kjanat/chatlogger-api-go/issues
+  description: API for logging and managing chat sessions.
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://github.com/kjanat/chatlogger-api-go#terms-of-service
+  title: ChatLogger API (Go)
+paths:
+  /api/v1/analytics/messages:
+    get:
+      description: Retrieves aggregated statistics about messages within a specified
+        date range for the user's organization.
+      parameters:
+      - description: Start date (RFC3339 format, e.g., 2023-01-01T00:00:00Z). Defaults
+          to 30 days ago.
+        in: query
+        name: start
+        type: string
+      - description: End date (RFC3339 format, e.g., 2023-01-31T23:59:59Z). Defaults
+          to now.
+        in: query
+        name: end
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Aggregated message statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid date format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get message statistics
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Message Statistics
+      tags:
+      - Analytics
+  /api/v1/chats:
+    get:
+      description: Retrieves a paginated list of chat sessions for the user's organization.
+      parameters:
+      - default: 20
+        description: Number of chats per page
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of chats
+          schema:
+            items:
+              $ref: '#/definitions/domain.Chat'
+            type: array
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to list chats
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List Chats
+      tags:
+      - Chats
+    post:
+      consumes:
+      - application/json
+      description: Creates a new chat session for the organization. Can be called
+        via Dashboard (JWT) or Public API (API Key).
+      parameters:
+      - description: Chat Details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateChatRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'message: Chat created successfully, chat_id: uint64'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT or API Key invalid/missing, or Org ID not
+            found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden (API Key doesn't match slug)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to create chat or process tags/metadata
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+        BearerAuth: []
+      summary: Create Chat
+      tags:
+      - Chats
+  /api/v1/chats/{chatID}:
+    delete:
+      description: Deletes a chat session and its associated messages.
+      parameters:
+      - description: Chat ID
+        in: path
+        name: chatID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid chat ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Permission denied (Chat doesn't belong to user's org)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Chat not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get or delete chat
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Chat
+      tags:
+      - Chats
+    get:
+      description: Retrieves details for a specific chat session, optionally including
+        messages.
+      parameters:
+      - description: Chat ID
+        in: path
+        name: chatID
+        required: true
+        type: integer
+      - default: false
+        description: Include messages in the response
+        in: query
+        name: include_messages
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat details
+          schema:
+            $ref: '#/definitions/handler.GetChatResponse'
+        "400":
+          description: Invalid chat ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Permission denied (Chat doesn't belong to user's org)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Chat not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get chat or messages
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Chat by ID
+      tags:
+      - Chats
+    patch:
+      consumes:
+      - application/json
+      description: Updates the title, tags, or metadata of an existing chat session.
+      parameters:
+      - description: Chat ID
+        in: path
+        name: chatID
+        required: true
+        type: integer
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateChatRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated chat details
+          schema:
+            $ref: '#/definitions/handler.GetChatResponse'
+        "400":
+          description: Invalid chat ID or request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Permission denied (Chat doesn't belong to user's org)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Chat not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get or update chat, or process tags/metadata
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Chat
+      tags:
+      - Chats
+  /api/v1/chats/{chatID}/messages:
+    get:
+      description: Retrieves all messages associated with a specific chat session.
+      parameters:
+      - description: Chat ID
+        in: path
+        name: chatID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of messages with parsed metadata
+          schema:
+            items:
+              $ref: '#/definitions/handler.GetMessageResponse'
+            type: array
+        "400":
+          description: Invalid chat ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Permission denied (Chat doesn't belong to user's org)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Chat not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get chat or messages
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Chat Messages
+      tags:
+      - Messages
+  /api/v1/exports:
+    get:
+      description: Retrieves a paginated list of asynchronous export jobs for the
+        user's organization.
+      parameters:
+      - default: 10
+        description: Number of exports per page
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of export jobs
+          schema:
+            items:
+              $ref: '#/definitions/domain.Export'
+            type: array
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to fetch exports
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List Export Jobs
+      tags:
+      - Exports
+    post:
+      consumes:
+      - application/json
+      description: Initiates an asynchronous job to export chat data (chats, messages,
+        or all) in JSON or CSV format for the user's organization.
+      parameters:
+      - description: Export parameters (format, type)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ExportRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: 'export_id: uint64, status: domain.ExportStatus, message: string'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data (format/type)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing, Org or User ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to create export job
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Asynchronous Export Job
+      tags:
+      - Exports
+  /api/v1/exports/{id}:
+    get:
+      description: Retrieves the status and details of a specific asynchronous export
+        job.
+      parameters:
+      - description: Export Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Export job details
+          schema:
+            $ref: '#/definitions/domain.Export'
+        "400":
+          description: Invalid export ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Export not found or doesn't belong to user's org
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Export Job Status
+      tags:
+      - Exports
+  /api/v1/exports/{id}/download:
+    get:
+      description: Downloads the file generated by a completed asynchronous export
+        job.
+      parameters:
+      - description: Export Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Export file (JSON or CSV)
+          schema:
+            type: file
+        "400":
+          description: Invalid export ID or export not ready
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Export not found or doesn't belong to user's org
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Export file path not found or file missing on disk
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Download Export File
+      tags:
+      - Exports
+  /api/v1/exports/sync:
+    post:
+      consumes:
+      - application/json
+      description: Immediately generates and returns an export file (JSON or CSV)
+        containing chat data. Use async export for large datasets.
+      parameters:
+      - description: Export parameters (format, type)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ExportRequest'
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Export file (JSON or CSV)
+          schema:
+            type: file
+        "400":
+          description: Invalid request data (format/type)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to retrieve data or generate export
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Synchronous Export (Legacy)
+      tags:
+      - Exports (Legacy)
+  /api/v1/orgs/{slug}/chats:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new chat session for the organization. Can be called
+        via Dashboard (JWT) or Public API (API Key).
+      parameters:
+      - description: Chat Details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateChatRequest'
+      - description: Organization Slug (Required for Public API)
+        in: path
+        name: slug
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'message: Chat created successfully, chat_id: uint64'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT or API Key invalid/missing, or Org ID not
+            found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden (API Key doesn't match slug)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to create chat or process tags/metadata
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+        BearerAuth: []
+      summary: Create Chat
+      tags:
+      - Chats
+  /api/v1/orgs/{slug}/chats/{chatID}/messages:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new message to an existing chat session. Can be called via
+        Public API (API Key).
+      parameters:
+      - description: Organization Slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Chat ID
+        in: path
+        name: chatID
+        required: true
+        type: integer
+      - description: Message Details (role, content, metadata)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'message: Message created successfully, message_id: uint64'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid chat ID or request data (role, content, metadata validation)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (API Key invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden (API Key doesn't match slug or chat doesn't belong
+            to org)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Chat not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get chat or create message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Create Message
+      tags:
+      - Messages
+  /api/v1/orgs/me/apikeys:
+    get:
+      description: Lists all API keys for the organization associated with the authenticated
+        user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.APIKey'
+            type: array
+        "401":
+          description: Unauthorized or Org ID not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to list API keys
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List API Keys
+      tags:
+      - API Keys (Admin)
+    post:
+      consumes:
+      - application/json
+      description: Generates a new API key for the organization associated with the
+        authenticated user.
+      parameters:
+      - description: API Key Label
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.GenerateKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: API key generated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized or Org ID not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to generate API key
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Generate API Key
+      tags:
+      - API Keys (Admin)
+  /api/v1/orgs/me/apikeys/{id}:
+    delete:
+      description: Revokes an existing API key by its ID.
+      parameters:
+      - description: API Key ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API key revoked successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid API key ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized or Org ID not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Permission denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: API key not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to revoke API key
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Revoke API Key
+      tags:
+      - API Keys (Admin)
+  /api/v1/orgs/me/apikeys/{id}/delete:
+    delete:
+      description: Deletes an API key permanently. Use RevokeKey for standard deactivation.
+      parameters:
+      - description: API Key ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API key deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid API key ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized or Org ID not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Permission denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: API key not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to delete API key
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete API Key (Not typically exposed, Revoke is preferred)
+      tags:
+      - API Keys (Admin)
+  /api/v1/orgs/me/users:
+    get:
+      description: Retrieves a paginated list of all users belonging to the authenticated
+        user's organization. Requires admin role.
+      parameters:
+      - default: 20
+        description: Number of users per page
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users in the organization
+          schema:
+            items:
+              $ref: '#/definitions/domain.User'
+            type: array
+        "401":
+          description: Unauthorized (JWT invalid/missing or Org ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: "Forbidden (User does not have admin role)\"\t//\tAssuming\tRoleRequired\tmiddleware\thandles\tthis"
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get users
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List Organization Users (Admin)
+      tags:
+      - Users (Admin)
+  /api/v1/users/me:
+    get:
+      description: Retrieves the profile information for the currently authenticated
+        user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Current user's profile
+          schema:
+            $ref: '#/definitions/domain.User'
+        "401":
+          description: Unauthorized (JWT invalid/missing or User ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get user
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Current User
+      tags:
+      - Users
+    patch:
+      consumes:
+      - application/json
+      description: Updates the first name and last name for the currently authenticated
+        user.
+      parameters:
+      - description: User fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateMeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated user profile
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or User ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to get or update user
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Current User
+      tags:
+      - Users
+  /api/v1/users/me/password:
+    post:
+      consumes:
+      - application/json
+      description: Allows the currently authenticated user to change their password.
+      parameters:
+      - description: Current and new password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request data or password change failed (e.g., wrong
+            current password)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized (JWT invalid/missing or User ID not found)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change Password
+      tags:
+      - Users
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user with email and password, returns user info
+        and sets an HTTP-only auth cookie.
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Login successful, user: domain.User'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid email or password
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User Login
+      tags:
+      - Authentication
+  /auth/logout:
+    post:
+      description: Logs out the current user by clearing the authentication cookie.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User Logout
+      tags:
+      - Authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user. In a real app, this might require admin privileges
+        or an invitation system.
+      parameters:
+      - description: User Registration Details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'message: User registered successfully, user_id: uint64'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data or registration failed (e.g., email exists)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User Registration
+      tags:
+      - Authentication
+schemes:
+- http
+- https
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: x-organization-api-key
+    type: apiKey
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

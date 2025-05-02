@@ -5,8 +5,6 @@ package main
 
 import (
 	"log"
-
-	"github.com/kjanat/chatlogger-api-go/cmd/docs"
 	"github.com/kjanat/chatlogger-api-go/internal/api"
 	"github.com/kjanat/chatlogger-api-go/internal/config"
 	"github.com/kjanat/chatlogger-api-go/internal/jobs"
@@ -17,7 +15,7 @@ import (
 
 // @title          ChatLogger API (Go)
 // @description    API for logging and managing chat sessions.
-// @termsOfService https://no-tos.com
+// @termsOfService https://github.com/kjanat/chatlogger-api-go#terms-of-service
 
 // @contact.name   API Support
 // @contact.url    https://github.com/kjanat/chatlogger-api-go/issues
@@ -26,7 +24,9 @@ import (
 // @license.name   MIT License
 // @license.url    https://opensource.org/licenses/MIT
 
-// @servers        http://localhost:8080/
+// @host           localhost:8080
+// @BasePath       /api/v1
+// @schemes        http https
 
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
@@ -40,9 +40,6 @@ import (
 // @externalDocs.description  GitHub Wiki
 // @externalDocs.url          https://github.com/kjanat/chatlogger-api-go/wiki
 func main() {
-	// Dynamically set Swagger info from version package
-	docs.SwaggerInfo.Version = version.Version
-
 	// Log version information at startup
 	log.Printf("Starting ChatLogger API v%s (built: %s, commit: %s)",
 		version.Version, version.BuildTime, version.GitCommit)
