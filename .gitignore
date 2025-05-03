@@ -20,7 +20,11 @@ coverage.txt
 
 # Editor
 .vscode/
+.vs/
 .idea/
+
+# Temporary files
+*.tmp
 .temp/
 
 # Go workspace file
@@ -34,3 +38,9 @@ exports/
 # Environment/credential files
 .env
 cosign.key
+
+# GitHub secret scanning
+.cache_ggshield
+
+# Go modules
+.golangci.reference.yml

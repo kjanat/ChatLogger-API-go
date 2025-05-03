@@ -5,16 +5,20 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-
+	"github.com/kjanat/chatlogger-api-go/internal/config"
 	"github.com/kjanat/chatlogger-api-go/internal/middleware"
+	"github.com/kjanat/chatlogger-api-go/internal/version"
 )
 
 // NewRouter sets up the Gin router with defined routes.
-func NewRouter(services *AppServices, jwtSecret string) *gin.Engine {
+func NewRouter(services *AppServices, jwtSecret string, config *config.Config) *gin.Engine {
 	router := gin.Default()
 
 	// Apply global middlewares
 	router.Use(middleware.VersionHeader())
+
+	// Set up API documentation routes
+	setupSwaggerRoutes(router, version.Version, config.ServerHost, config.ServerPort)
 
 	// Add API routes
 	addRoutes(router, services, jwtSecret)

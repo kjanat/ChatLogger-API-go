@@ -4,16 +4,38 @@
 package main
 
 import (
-	"log"
-
 	"github.com/kjanat/chatlogger-api-go/internal/api"
 	"github.com/kjanat/chatlogger-api-go/internal/config"
 	"github.com/kjanat/chatlogger-api-go/internal/jobs"
 	"github.com/kjanat/chatlogger-api-go/internal/repository"
 	"github.com/kjanat/chatlogger-api-go/internal/service"
 	"github.com/kjanat/chatlogger-api-go/internal/version"
+	"log"
 )
 
+// @title          ChatLogger API (Go)
+// @description    API for logging and managing chat sessions.
+// @termsOfService https://github.com/kjanat/chatlogger-api-go#terms-of-service
+
+// @contact.name   ChatLogger
+// @contact.url    https://github.com/kjanat/chatlogger-api-go/issues
+// @contact.email  chatlogger-api-go+swagger@kjanat.com
+
+// @license.name   MIT License
+// @license.url    https://github.com/kjanat/chatlogger-api-go/blob/master/LICENSE
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in             header
+// @name           x-organization-api-key
+
+// @securityDefinitions.apikey BearerAuth
+// @in             header
+// @name           Authorization
+// @description    Type "Bearer" followed by a space and JWT token.
+
+// @externalDocs.description  GitHub Wiki
+// @externalDocs.url          https://github.com/kjanat/chatlogger-api-go/wiki
+// @externalDocs.name         Wiki
 func main() {
 	// Log version information at startup
 	log.Printf("Starting ChatLogger API v%s (built: %s, commit: %s)",
@@ -83,7 +105,7 @@ func main() {
 	}
 
 	// 7. Set up Gin Router with routes and inject services
-	router := api.NewRouter(services, cfg.JWTSecret)
+	router := api.NewRouter(services, cfg.JWTSecret, cfg)
 
 	// 8. Start the Server
 	port := cfg.ServerPort

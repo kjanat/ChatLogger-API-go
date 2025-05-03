@@ -1,0 +1,13 @@
+version: "2"
+linters:
+  exclusions:
+    paths:
+      - docs/
+      - docs-v3/
+      - vendor/
+      - .github/
+      - .git/
+      - .idea/
+      - .vscode/
+      - scripts/
+      - migrations/

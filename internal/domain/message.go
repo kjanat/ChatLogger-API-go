@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 )
@@ -28,16 +29,45 @@ func (r MessageRole) IsValid() bool {
 	return false
 }
 
+// MessageMetadata represents extended information about a message.
+type MessageMetadata struct {
+	TokenCount   int     `json:"token_count,omitempty"`
+	ResponseTime float64 `json:"response_time,omitempty"` // In milliseconds
+	// Add other message-specific metadata fields here if needed
+}
+
 // Message represents a single message in a chat.
 type Message struct {
-	ID         uint64      `gorm:"primaryKey"         json:"id"`
-	ChatID     uint64      `gorm:"not null"           json:"chat_id"`
-	Role       MessageRole `gorm:"size:20;not null"   json:"role"`
-	Content    string      `gorm:"type:text;not null" json:"content"`
-	Metadata   string      `gorm:"type:jsonb"         json:"metadata"`    // Additional JSON metadata
-	Latency    int         `                          json:"latency"`     // Response time in milliseconds
-	TokenCount int         `                          json:"token_count"` // Number of tokens in the message
-	CreatedAt  time.Time   `                          json:"created_at"`
+	ID        uint64      `gorm:"primaryKey"         json:"id"`
+	ChatID    uint64      `gorm:"not null"           json:"chat_id"`
+	Role      MessageRole `gorm:"size:20;not null"   json:"role"`
+	Content   string      `gorm:"type:text;not null" json:"content"`
+	Metadata  string      `gorm:"type:jsonb"         json:"metadata"` // Store MessageMetadata as JSON string
+	CreatedAt time.Time   `                          json:"created_at"`
+}
+
+// GetMetadata parses the JSON metadata string into the MessageMetadata struct.
+func (m *Message) GetMetadata() (*MessageMetadata, error) {
+	var metadata MessageMetadata
+	if m.Metadata == "" || m.Metadata == "null" {
+		return &metadata, nil // Return empty struct if no metadata
+	}
+	err := json.Unmarshal([]byte(m.Metadata), &metadata)
+	return &metadata, err
+}
+
+// SetMetadata converts the MessageMetadata struct into a JSON string.
+func (m *Message) SetMetadata(metadata *MessageMetadata) error {
+	if metadata == nil {
+		m.Metadata = "{}" // Store empty JSON object if nil
+		return nil
+	}
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+	m.Metadata = string(metadataJSON)
+	return nil
 }
 
 // Validate performs validation on the message structure.
@@ -48,6 +78,7 @@ func (m *Message) Validate() error {
 
 	if m.Content == "" {
 		return errors.New("message content cannot be empty")
+
 	}
 
 	return nil
@@ -60,8 +91,9 @@ type MessageRepository interface {
 	FindByChatID(chatID uint64) ([]Message, error)
 	CountByOrgIDAndDateRange(orgID uint64, start, end time.Time) (int64, error)
 	GetRoleStats(orgID uint64) (map[MessageRole]int64, error)
-	GetLatencyStats(orgID uint64) (map[string]float64, error)  // min, max, avg
-	GetTokenCountStats(orgID uint64) (map[string]int64, error) // total, avg
+	// Remove or update methods related to deprecated fields if they exist
+	// GetLatencyStats(orgID uint64) (map[string]float64, error)  // min, max, avg
+	// GetTokenCountStats(orgID uint64) (map[string]int64, error) // total, avg
 }
 
 // MessageService defines the interface for message business logic.

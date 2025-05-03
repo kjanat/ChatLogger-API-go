@@ -4,6 +4,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/kjanat/chatlogger-api-go/internal/domain"
@@ -12,20 +13,74 @@ import (
 	"github.com/kjanat/chatlogger-api-go/internal/version"
 
 	"github.com/gin-gonic/gin"
+
+	docs "github.com/kjanat/chatlogger-api-go/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// setupSwaggerRoutes configures the OpenAPI/Swagger documentation routes.
+func setupSwaggerRoutes(router *gin.Engine, version, host, port string) {
+	log.Printf("Starting ChatLogger API v%s (host: %s, port: %s)",
+		version, host, port)
+
+	docs.SwaggerInfoOpenAPI.Version = version
+	docs.SwaggerInfoOpenAPI.Host = host + ":" + port
+	docs.SwaggerInfoOpenAPI.BasePath = "/api/v1"
+	docs.SwaggerInfoOpenAPI.Schemes = []string{"http", "https"}
+	docs.SwaggerInfoOpenAPI.InfoInstanceName = "OpenAPI"
+
+	// Static files for documentation
+	router.StaticFile("/docs/api.json", "./docs/OpenAPI_swagger.json")
+	router.StaticFile("/docs/api.yaml", "./docs/OpenAPI_swagger.yaml")
+
+	router.GET("/openapi/*any",
+		ginSwagger.WrapHandler(
+			swaggerFiles.Handler,
+			ginSwagger.DocExpansion("list"),
+			ginSwagger.URL("/docs/api.json"),
+		),
+	)
+
+	router.GET("/swagger/*any",
+		ginSwagger.WrapHandler(
+			swaggerFiles.Handler,
+			ginSwagger.DocExpansion("list"),
+			ginSwagger.URL("/docs/api.json"),
+		),
+	)
+}
 
 // addRoutes adds API routes to the router.
 func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 	// Public health and version endpoints
+
+	// @Summary      Health Check
+	// @Description  Simple health check endpoint that returns status ok when the API is running
+	// @Tags         System
+	// @Produce      json
+	// @Success      200  {object}  map[string]string  "Status OK"
+	// @Router       /health [get]
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	// @Summary      Version Information
+	// @Description  Returns version information about the API including build time and git commit
+	// @Tags         System
+	// @Produce      json
+	// @Success      200  {object}  map[string]interface{}  "Version information"
+	// @Router       /version [get]
 	router.GET("/version", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		c.IndentedJSON(http.StatusOK, gin.H{
 			"version":    version.Version,
 			"build_time": version.BuildTime,
 			"git_commit": version.GitCommit,
+			"docs": gin.H{
+				"gui":  "/swagger/index.html",
+				"json": "/docs/api.json",
+				"yaml": "/docs/api.yaml",
+			},
 		})
 	})
 

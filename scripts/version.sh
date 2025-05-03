@@ -1,5 +1,5 @@
-#!/bin/bash
-# version.sh - Semantic version management
+#!/usr/bin/env bash
+# Semantic version management
 
 VERSION_FILE="internal/version/version.go"
 VERSION_REGEX='Version = "([0-9]+)\.([0-9]+)\.([0-9]+)"'

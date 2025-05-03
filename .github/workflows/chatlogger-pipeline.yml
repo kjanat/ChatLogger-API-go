@@ -21,12 +21,12 @@ on:
         type: choice
         default: 'patch'
         options: [patch, minor, major]
+      release_notes:
+        description: 'Brief release notes or changes for this version'
+        type: string
+        required: false
 
-env:                        # ── shared env keeps YAML short ──
-  GO_VERSION: '1.24'
-  DB_URL: postgresql://test:test@localhost:5432/test
-
-permissions:                # default
+permissions: # default
   contents: read
 
 concurrency:
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
-        with: { go-version: "${{ env.GO_VERSION }}", cache: true }
+        with: { go-version-file: 'go.mod', cache: true }
 
       - uses: golangci/golangci-lint-action@v7
         with:
@@ -65,7 +65,7 @@ jobs:
 
       - run: go test -v -race -coverprofile=coverage.txt ./...
         env:
-          DATABASE_URL: ${{ env.DB_URL }}
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
 
       - uses: codecov/codecov-action@v5
         with:
@@ -88,9 +88,9 @@ jobs:
         with: { fetch-depth: 0 }
 
       - uses: actions/setup-go@v5
-        with: { go-version: "${{ env.GO_VERSION }}", cache: true }
+        with: { go-version-file: 'go.mod', cache: true }
 
-      # 1) import GPG and setup git-------------------------------
+      # 1) import GPG and setup git
       - name: Import GPG key
         id: gpg
         uses: crazy-max/ghaction-import-gpg@v6
@@ -106,7 +106,7 @@ jobs:
           git config --global commit.gpgsign true
           git config --global tag.gpgsign true
 
-      # 2) (opt) manual bump – **only** on workflow_dispatch -----
+      # 2) (opt) manual bump – **only** on workflow_dispatch
       - name: Manual bump & tag
         id: manual_bump
         if: github.event_name == 'workflow_dispatch'
@@ -114,17 +114,34 @@ jobs:
           chmod +x ./scripts/version.sh
           ./scripts/version.sh "${{ github.event.inputs.version_type }}"
           NEW=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
+          
+          # Construct a detailed commit message
+          COMMIT_MSG="chore(release): bump ${{ github.event.inputs.version_type }} version to v${NEW}"
+          
+          # Add release notes if provided
+          if [ ! -z "${{ github.event.inputs.release_notes }}" ]; then
+            COMMIT_MSG="${COMMIT_MSG}\n\n${{ github.event.inputs.release_notes }}"
+          fi
+          
+          # Add reference to the workflow run
+          COMMIT_MSG="${COMMIT_MSG}\n\nTriggered by workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           git add internal/version/version.go
-          git commit -S -m "chore(release): bump version to v${NEW}"
+          git commit -S -m "$COMMIT_MSG"
 
-          git tag -s "v${NEW}" -m "Release v${NEW}"
+          # Create a more detailed tag message
+          TAG_MSG="Release v${NEW}: ${{ github.event.inputs.version_type }} version update"
+          if [ ! -z "${{ github.event.inputs.release_notes }}" ]; then
+            TAG_MSG="${TAG_MSG}\n\n${{ github.event.inputs.release_notes }}"
+          fi
+
+          git tag -s "v${NEW}" -m "$TAG_MSG"
           git push --follow-tags origin HEAD "v${NEW}"
 
           echo "tag_created=true"  >> $GITHUB_OUTPUT
           echo "Created and pushed signed tag v${NEW}"
 
-      # 3) auto-tag if version.go changed on master/dev ----------
+      # 3) auto-tag if version.go changed on master/dev
       - name: Ensure version tag exists
         id: ensure_tag
         if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/')
@@ -144,6 +161,10 @@ jobs:
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
+        if: |
+          startsWith(github.ref,'refs/tags/v') ||
+          steps.manual_bump.outputs.tag_created == 'true' ||
+          steps.ensure_tag.outputs.tag_created == 'true'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -151,14 +172,26 @@ jobs:
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        if: |
+          startsWith(github.ref,'refs/tags/v') ||
+          steps.manual_bump.outputs.tag_created == 'true' ||
+          steps.ensure_tag.outputs.tag_created == 'true'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        if: |
+          startsWith(github.ref,'refs/tags/v') ||
+          steps.manual_bump.outputs.tag_created == 'true' ||
+          steps.ensure_tag.outputs.tag_created == 'true'
 
       - name: Set up cosign
         uses: sigstore/cosign-installer@v3.8.2
+        if: |
+          startsWith(github.ref,'refs/tags/v') ||
+          steps.manual_bump.outputs.tag_created == 'true' ||
+          steps.ensure_tag.outputs.tag_created == 'true'
 
-      # 4) GoReleaser – run only if we *have* a tag --------------
+      # 4) GoReleaser – run only if we *have* a tag
       - uses: goreleaser/goreleaser-action@v6
         if: |
           startsWith(github.ref,'refs/tags/v') ||
@@ -177,13 +210,17 @@ jobs:
           URL:                ${{ github.server_url }}/${{ github.repository }}
 
       - uses: actions/upload-artifact@v4
+        if: |
+          startsWith(github.ref,'refs/tags/v') ||
+          steps.manual_bump.outputs.tag_created == 'true' ||
+          steps.ensure_tag.outputs.tag_created == 'true'
         with:
           name: chatlogger-api
           path: dist/*
           retention-days: 5
 
-      # 5) move/force 'latest' tag (unchanged) -------------------
-      - name: Move signed 'latest' tag
-        run: |
-          git tag -fs latest -m "Latest stable version"
-          git push --force origin latest
+      # # 5) move/force 'latest' tag
+      # - name: Move signed 'latest' tag
+      #   run: |
+      #     git tag -fs latest -m "Latest stable version"
+      #     git push --force origin latest

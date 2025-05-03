@@ -21,6 +21,17 @@ func NewUserHandler(userService domain.UserService) *UserHandler {
 }
 
 // GetMe handles the request to get the current user's info.
+//
+//	@Summary		Get Current User
+//	@Description	Retrieves the profile information for the currently authenticated user.
+//	@Tags			Users
+//	@Produce		json
+//	@Success		200	{object}	domain.User			"Current user's profile"
+//	@Failure		401	{object}	map[string]string	"Unauthorized (JWT invalid/missing or User ID not found)"
+//	@Failure		404	{object}	map[string]string	"User not found"
+//	@Failure		500	{object}	map[string]string	"Failed to get user"
+//	@Security		BearerAuth
+//	@Router			/api/v1/users/me [get]
 func (h *UserHandler) GetMe(c *gin.Context) {
 	// Get user ID from context (set by JWTAuth middleware)
 	userID, exists := c.Get("userID")
@@ -54,6 +65,20 @@ type UpdateMeRequest struct {
 }
 
 // UpdateMe handles the request to update the current user's info.
+//
+//	@Summary		Update Current User
+//	@Description	Updates the first name and last name for the currently authenticated user.
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		UpdateMeRequest		true	"User fields to update"
+//	@Success		200		{object}	domain.User			"Updated user profile"
+//	@Failure		400		{object}	map[string]string	"Invalid request data"
+//	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or User ID not found)"
+//	@Failure		404		{object}	map[string]string	"User not found"
+//	@Failure		500		{object}	map[string]string	"Failed to get or update user"
+//	@Security		BearerAuth
+//	@Router			/api/v1/users/me [patch]
 func (h *UserHandler) UpdateMe(c *gin.Context) {
 	var req UpdateMeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -105,6 +130,18 @@ type ChangePasswordRequest struct {
 }
 
 // ChangePassword handles the request to change the current user's password.
+//
+//	@Summary		Change Password
+//	@Description	Allows the currently authenticated user to change their password.
+//	@Tags			Users
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		ChangePasswordRequest	true	"Current and new password"
+//	@Success		200		{object}	map[string]string		"Password changed successfully"
+//	@Failure		400		{object}	map[string]string		"Invalid request data or password change failed (e.g., wrong current password)"
+//	@Failure		401		{object}	map[string]string		"Unauthorized (JWT invalid/missing or User ID not found)"
+//	@Security		BearerAuth
+//	@Router			/api/v1/users/me/password [post]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	var req ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -133,6 +170,19 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 }
 
 // ListOrgUsers handles the request to list all users in the current organization.
+//
+//	@Summary		List Organization Users (Admin)
+//	@Description	Retrieves a paginated list of all users belonging to the authenticated user's organization. Requires admin role.
+//	@Tags			Users (Admin)
+//	@Produce		json
+//	@Param			limit	query		int					false	"Number of users per page"	default(20)
+//	@Param			offset	query		int					false	"Offset for pagination"		default(0)
+//	@Success		200		{array}		domain.User			"List of users in the organization"
+//	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
+//	@Failure		403		{object}	map[string]string	"Forbidden (User does not have admin role)"	//	Assuming	RoleRequired	middleware	handles	this
+//	@Failure		500		{object}	map[string]string	"Failed to get users"
+//	@Security		BearerAuth
+//	@Router			/api/v1/orgs/me/users [get] // Assuming this route exists and is admin-protected
 func (h *UserHandler) ListOrgUsers(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")
