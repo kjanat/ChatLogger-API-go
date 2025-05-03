@@ -23,6 +23,16 @@ builds:
     goarch: [amd64, arm64]
     env: [CGO_ENABLED=0]
 
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+      - migrations/*
+
+checksum:
+  name_template: "{{ .ProjectName }}_checksums.txt"
+
 signs:
   - artifacts: all
     cmd: cosign
@@ -33,16 +43,6 @@ signs:
       - --output-signature=${signature}
       - ${artifact}
     stdin: ""
-
-archives:
-  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    files:
-      - LICENSE
-      - README.md
-      - migrations/*
-
-checksum:
-  name_template: "{{ .ProjectName }}_checksums.txt"
 
 nfpms:
   - id: chatlogger-api-go
@@ -89,8 +89,6 @@ kos:
       - "{{.Major}}"
       - "{{.Major}}.{{.Minor}}"
       - "{{.Version}}"
-    bare: true
-    preserve_import_paths: false
     platforms:
       - linux/amd64
       - linux/arm64
@@ -119,8 +117,6 @@ kos:
       - "{{.Major}}"
       - "{{.Major}}.{{.Minor}}"
       - "{{.Version}}"
-    bare: true
-    preserve_import_paths: false
     platforms:
       - linux/amd64
       - linux/arm64
