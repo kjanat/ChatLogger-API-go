@@ -44,3 +44,6 @@ cosign.key
 
 # Go modules
 .golangci.reference.yml
+
+# Copied files
+*?copy.*

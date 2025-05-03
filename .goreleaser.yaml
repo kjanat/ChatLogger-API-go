@@ -1,6 +1,11 @@
 version: 2
 
 project_name: chatlogger-api-go
+
+before:
+  hooks:
+    - go mod tidy
+
 builds:
   - id: server
     main: ./cmd/server
@@ -64,53 +69,69 @@ nfpms:
       postinstall: "./scripts/package/postinstall.sh"
       preremove: "./scripts/package/preremove.sh"
 
-dockers:
-  - dockerfile: .github/workflows/docker/Dockerfile.server
-    goos: linux
-    goarch: amd64
-    ids: [server]
-    image_templates:
-      - ghcr.io/kjanat/chatlogger-api-server:latest
-      - ghcr.io/kjanat/chatlogger-api-server:{{.Tag}}
-      - ghcr.io/kjanat/chatlogger-api-server:{{.Major}}
-      - ghcr.io/kjanat/chatlogger-api-server:{{.Major}}.{{.Minor}}
-      - ghcr.io/kjanat/chatlogger-api-server:{{.Version}}
-    build_flag_templates:
-      - --pull
-      - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.description={{ .Env.DESCRIPTION }}
-      - --label=org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/chatlogger-api-server
-      - --label=org.opencontainers.image.source={{ .Env.URL }}
-      - --label=org.opencontainers.image.version={{.Version}}
-      - --label=org.opencontainers.image.created={{ .Date }}
-      - --label=org.opencontainers.image.revision={{ .FullCommit }}
-      - --label=org.opencontainers.image.licenses=MIT
-      - --label=org.opencontainers.image.vendor=kjanat
-  
-  - dockerfile: .github/workflows/docker/Dockerfile.worker
-    goos: linux
-    goarch: amd64
-    ids: [worker]
-    image_templates:
-      - ghcr.io/kjanat/chatlogger-api-worker:latest
-      - ghcr.io/kjanat/chatlogger-api-worker:{{.Tag}}
-      - ghcr.io/kjanat/chatlogger-api-worker:{{.Major}}
-      - ghcr.io/kjanat/chatlogger-api-worker:{{.Major}}.{{.Minor}}
-      - ghcr.io/kjanat/chatlogger-api-worker:{{.Version}}
-    build_flag_templates:
-      - --pull
-      - --label=org.opencontainers.image.title={{ .ProjectName }}
-      - --label=org.opencontainers.image.description={{ .Env.DESCRIPTION }}
-      - --label=org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/chatlogger-api-worker
-      - --label=org.opencontainers.image.source={{ .Env.URL }}
-      - --label=org.opencontainers.image.version={{.Version}}
-      - --label=org.opencontainers.image.created={{ .Date }}
-      - --label=org.opencontainers.image.revision={{ .FullCommit }}
-      - --label=org.opencontainers.image.licenses=MIT
-      - --label=org.opencontainers.image.vendor=kjanat
+kos:
+  - id: server
+    build: server
+    repositories: [ghcr.io/kjanat/chatlogger-api-server]
+    labels:
+      title: "{{ .ProjectName }}"
+      description: "{{ .Env.DESCRIPTION }}"
+      url: "https://github.com/users/kjanat/packages/container/package/chatlogger-api-server"
+      source: "{{ .Env.URL }}"
+      version: "{{.Version}}"
+      created: "{{ .Date }}"
+      revision: "{{ .FullCommit }}"
+      licenses: "MIT"
+      vendor: "kjanat"
+    tags:
+      - latest
+      - "{{.Tag}}"
+      - "{{.Major}}"
+      - "{{.Major}}.{{.Minor}}"
+      - "{{.Version}}"
+    bare: true
+    preserve_import_paths: false
+    platforms:
+      - linux/amd64
+      - linux/arm64
+      - darwin/amd64
+      - darwin/arm64
+    ko_data_creation_time: "{{.CommitTimestamp}}"
+    env:
+      - GIN_MODE=release
+
+  - id: worker
+    build: worker
+    repositories: [ghcr.io/kjanat/chatlogger-api-worker]
+    labels:
+      title: "{{ .ProjectName }}"
+      description: "{{ .Env.DESCRIPTION }}"
+      url: "https://github.com/users/kjanat/packages/container/package/chatlogger-api-worker"
+      source: "{{ .Env.URL }}"
+      version: "{{.Version}}"
+      created: "{{ .Date }}"
+      revision: "{{ .FullCommit }}"
+      licenses: "MIT"
+      vendor: "kjanat"
+    tags:
+      - latest
+      - "{{.Tag}}"
+      - "{{.Major}}"
+      - "{{.Major}}.{{.Minor}}"
+      - "{{.Version}}"
+    bare: true
+    preserve_import_paths: false
+    platforms:
+      - linux/amd64
+      - linux/arm64
+      - darwin/amd64
+      - darwin/arm64
+    ko_data_creation_time: "{{.CommitTimestamp}}"
+    env:
+      - GIN_MODE=release
 
 docker_signs:
-  - artifacts: all
+  - artifacts: manifests
     args:
       - sign
       - --key=env://COSIGN_PRIVATE_KEY

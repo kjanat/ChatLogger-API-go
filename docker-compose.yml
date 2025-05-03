@@ -1,7 +1,7 @@
 services:
   # Server component - handles API requests
   server:
-    image: ghcr.io/kjanat/chatlogger-api-go:server-${VERSION:-latest}
+    image: ghcr.io/kjanat/chatlogger-api-server:${VERSION:-latest}
     ports:
       - "8080:8080"
     depends_on:
@@ -12,24 +12,24 @@ services:
     environment:
       - DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/chatlogger
       - REDIS_ADDR=redis:6379
+      - HOST=0.0.0.0
       - PORT=8080
       - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-replace-in-production}
-      - API_KEY_SALT=${API_KEY_SALT:-your-api-key-salt-replace-in-production}
       - EXPORT_DIR=/app/exports
     restart: unless-stopped
     volumes:
       - ./migrations:/app/migrations
-      - exports_data:/app/exports
+      - cl_exports_data:/app/exports
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 5s
-    
+
   # Worker component - handles background jobs
   worker:
-    image: ghcr.io/kjanat/chatlogger-api-go:worker-${VERSION:-latest}
+    image: ghcr.io/kjanat/chatlogger-api-worker${VERSION:-latest}
     depends_on:
       db:
         condition: service_healthy
@@ -40,16 +40,29 @@ services:
       - REDIS_ADDR=redis:6379
       - EXPORT_DIR=/app/exports
       - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-replace-in-production}
-      - API_KEY_SALT=${API_KEY_SALT:-your-api-key-salt-replace-in-production}
     restart: unless-stopped
     volumes:
-      - exports_data:/app/exports
+      - cl_exports_data:/app/exports
     healthcheck:
       test: ["CMD", "ps", "aux", "|", "grep", "chatlogger-worker"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  # Redis for job queue
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - cl_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   # Database service
   db:
@@ -61,7 +74,7 @@ services:
       - POSTGRES_PASSWORD=dbpassword
       - POSTGRES_DB=chatlogger
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - cl_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dbuser"]
       interval: 5s
@@ -69,21 +82,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Redis for job queue
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
 volumes:
-  postgres_data:
-  redis_data:
-  exports_data:
+  cl_postgres_data:
+  cl_redis_data:
+  cl_exports_data:
