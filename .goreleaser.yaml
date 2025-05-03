@@ -80,9 +80,9 @@ nfpms:
 kos:
   - id: server
     build: server
-    bare: true
-    preserve_import_paths: false
-    base_import_paths: false
+    bare: false # may not work properly with --tags
+    preserve_import_paths: true
+    base_import_paths: false # may not work properly with --tags
     repositories:
       - ghcr.io/kjanat/chatlogger-api-server
     tags:
@@ -113,8 +113,8 @@ kos:
 
   - id: worker
     build: worker
-    bare: true
-    preserve_import_paths: false
+    bare: false
+    preserve_import_paths: true
     base_import_paths: false
     repositories:
       - ghcr.io/kjanat/chatlogger-api-worker

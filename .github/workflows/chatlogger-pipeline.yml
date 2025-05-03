@@ -22,7 +22,7 @@ on:
         default: 'patch'
         options: [patch, minor, major]
       release_notes:
-        description: 'Brief release notes or changes for this version'
+        description: 'Release notes/changes'
         type: string
         required: false
 
@@ -37,7 +37,9 @@ concurrency:
 jobs:
 # -------- CI ---------------------------------------------------
   ci:
+    name: Test & Lint
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch'
     services:
       postgres:
         image: postgres:16-alpine
@@ -76,7 +78,7 @@ jobs:
         with:
           files: coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: ${{ github.repository }}
+          slug:  ${{ github.repository }}
 
 # -------- Release (tag push OR manual bump) --------------------
   release:
