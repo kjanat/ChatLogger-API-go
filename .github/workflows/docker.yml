@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        # Define the packages to build: 
+        # Define the packages to build:
         # 'server' represents the main API backend, and 'worker' represents the background job processor.
         packages: [server, worker]
         platforms: [linux/amd64, linux/arm64, linux/arm/v7]
@@ -59,18 +59,29 @@ jobs:
         uses: sigstore/cosign-installer@v3.8.1
       - name: Check cosign install!
         run: cosign version
-        
+
       - name: Extract version components
         id: version
         run: |
-          VERSION=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
+          VERSION_NO_V=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
+          VERSION=v$VERSION_NO_V
           MAJOR=$(echo $VERSION | cut -d. -f1)
           MINOR=$(echo $VERSION | cut -d. -f2)
           COMMIT_DATE=$(git log -1 --format=%cd --date=iso-strict)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "MAJOR=$MAJOR" >> $GITHUB_ENV
-          echo "MINOR=$MINOR" >> $GITHUB_ENV
-          echo "COMMIT_DATE=$COMMIT_DATE" >> $GITHUB_ENV
+
+          echo "VERSION_NO_V=$VERSION_NO_V" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "MAJOR=$MAJOR" >> "$GITHUB_ENV"
+          echo "MINOR=$MINOR" >> "$GITHUB_ENV"
+          echo "COMMIT_DATE=$COMMIT_DATE" >> "$GITHUB_ENV"
+
+          echo "VERSION_NO_V=$VERSION_NO_V" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "MAJOR=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "MINOR=$MINOR" >> "$GITHUB_OUTPUT"
+          echo "COMMIT_DATE=$COMMIT_DATE" >> "$GITHUB_OUTPUT"
+
+          echo "Version without v: $VERSION_NO_V"
           echo "Version: $VERSION"
           echo "Major: $MAJOR"
           echo "Minor: $MINOR"
@@ -81,11 +92,6 @@ jobs:
         name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
-        env:
-          VERSION: $VERSION
-          MAJOR: $MAJOR
-          MINOR: $MINOR
-          COMMIT_DATE: $COMMIT_DATE
         with:
           images: ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
           tags: |
@@ -93,6 +99,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }},priority=900
             type=schedule,pattern=nightly,enable=${{ github.ref != format('refs/heads/{0}', 'master') && github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/v') }},priority=900
             type=edge,enable={{is_default_branch}},priority=800
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.VERSION_NO_V }},priority=800
             type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=800
             type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }},priority=700
             type=semver,pattern={{major}}.{{minor}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=700
@@ -101,33 +108,19 @@ jobs:
             type=ref,event=branch
             type=sha
           labels: |
-            'org.opencontainers.image.created=${{ env.COMMIT_DATE }}'
-            'org.opencontainers.image.authors=${{ github.actor }}'
-            'org.opencontainers.image.url=${{ github.event.repository.html_url }}'
-            'org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/'
-            'org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}'
-            'org.opencontainers.image.version=${{ env.VERSION }}'
-            'org.opencontainers.image.revision=${{ github.sha }}'
-            'org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}'
-            'org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}'
-            'org.opencontainers.image.ref.name=${{ github.ref_name }}'
-            'org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}'
-            'org.opencontainers.image.description=${{ github.event.repository.description }}'
-            'org.opencontainers.image.base.name=ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:${{ env.VERSION }}'
-          # annotations: |
-          #   org.opencontainers.image.created=${{ env.COMMIT_DATE }}
-          #   org.opencontainers.image.authors=${{ github.actor }}
-          #   org.opencontainers.image.url='${{ github.event.repository.html_url }}'
-          #   org.opencontainers.image.documentation='https://chatlogger-api-docs.kjanat.com/'
-          #   org.opencontainers.image.source='${{ github.server_url }}/${{ github.repository }}'
-          #   org.opencontainers.image.version=${{ env.VERSION }}
-          #   org.opencontainers.image.revision=${{ github.sha }}
-          #   org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
-          #   org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
-          #   org.opencontainers.image.ref.name=${{ github.ref_name }}
-          #   org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
-          #   org.opencontainers.image.description='${{ github.event.repository.description }}'
-          #   org.opencontainers.image.base.name=${{ github.event.repository.name }}
+            org.opencontainers.image.created=${{ steps.version.outputs.COMMIT_DATE }}
+            org.opencontainers.image.authors=${{ github.actor }}
+            org.opencontainers.image.url=${{ github.event.repository.html_url }}
+            org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.version.outputs.VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
+            org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
+            org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
+            org.opencontainers.image.description='${{ github.event.repository.description }}'
+            org.opencontainers.image.base.name=ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:${{ steps.version.outputs.VERSION_NO_V }}
 
       # Build and push common platforms
       - name: Build and push
@@ -135,7 +128,7 @@ jobs:
         uses: docker/build-push-action@v6
         env:
           GIN_MODE: release
-          VERSION: ${{ env.VERSION }}
+          VERSION: ${{ env.VERSION_NO_V }}
         with:
           context: .
           file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}
@@ -147,6 +140,7 @@ jobs:
           # cache-from: type=gha
           # cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}
           annotations: ${{ steps.meta.outputs.labels }}
+          no-cache: true
           build-args: |
             VERSION=${{ env.VERSION }}
             BUILD_TIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
@@ -179,7 +173,7 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          VERSION: $VERSION
+          VERSION: $VERSION_NO_V
           MAJOR: $MAJOR
           MINOR: $MINOR
           DIGEST: ${{ steps.push.outputs.digest }}
