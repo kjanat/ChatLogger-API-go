@@ -32,11 +32,12 @@ jobs:
   docker-build-publish:
     name: Build and Publish Docker Images
     runs-on: ubuntu-latest
-    if: |
-      github.ref_type == 'tag' ||
-      github.event_name == 'workflow_dispatch' ||
-      github.ref == 'refs/heads/master' ||
-      github.ref == 'refs/heads/development'
+    if: false
+    # if: |
+    #   github.ref_type == 'tag' ||
+    #   github.event_name == 'workflow_dispatch' ||
+    #   github.ref == 'refs/heads/master' ||
+    #   github.ref == 'refs/heads/development'
 
     strategy:
       fail-fast: true
@@ -162,6 +163,10 @@ jobs:
       - name: Build and push ${{ matrix.packages }} image
         id: docker_build_server
         uses: docker/build-push-action@v5
+        env:
+          VERSION: $VERSION
+          BUILD_TIME: $BUILD_DATE
+          GIT_COMMIT: $GIT_COMMIT
         with:
           context: .
           file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}

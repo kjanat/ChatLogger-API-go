@@ -1,0 +1,173 @@
+name: Docker CI/CD
+
+on:
+  schedule:
+    - cron: "31 11 * * *" # Daily at 11:31 UTC (Coordinated Universal Time)
+  push:
+    branches: ["master"]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-platforms:
+    name: Build images
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1 # Enable BuildKit, which is required for Buildx
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: true
+      matrix:
+        # Define the packages to build: 
+        # 'server' represents the main API backend, and 'worker' represents the background job processor.
+        packages: [server, worker]
+        platforms: [linux/amd64, linux/arm64, linux/arm/v7]
+    steps:
+      - # Login to GitHub Container Registry
+        name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@main
+        
+      - name: Extract version components
+        if: ${{ github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v') }}
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "MAJOR=$MAJOR" >> $GITHUB_ENV
+          echo "MINOR=$MINOR" >> $GITHUB_ENV
+
+      - # Extract metadata for Docker tags
+        name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }},priority=1000
+            type=semver,pattern={{raw}},priority=900
+            type=schedule,pattern=nightly,enable=${{ github.ref != format('refs/heads/{0}', 'master') && github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/v') }},priority=900
+            type=edge,enable={{is_default_branch}},priority=800
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=800
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }},priority=700
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=700
+            type=schedule,pattern={{date 'YYYYMMDD-hhmmss' tz='Europe/Amsterdam'}},prefix={{version}}-,enable=${{ github.ref != format('refs/heads/{0}', 'master') }},priority=200
+            type=sha,enable=true,prefix=sha-,format=short,priority=100
+            type=ref,event=branch
+            type=sha
+          labels: |
+            org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
+            org.opencontainers.image.authors=${{ github.actor }}
+            org.opencontainers.image.url=${{ github.event.repository.html_url }}
+            org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version={{version}}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
+            org.opencontainers.image.licenses=${{ github.event.repository.license }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
+            org.opencontainers.image.title=${{ github.event.repository.name }}-${{ matrix.packages }}
+            org.opencontainers.image.description=${{ github.event.repository.description }}
+            org.opencontainers.image.base.name=${{ github.event.repository.name }}
+          annotations: |
+            org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
+            org.opencontainers.image.authors=${{ github.actor }}
+            org.opencontainers.image.url=${{ github.event.repository.html_url }}
+            org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version={{version}}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
+            org.opencontainers.image.licenses=${{ github.event.repository.license }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
+            org.opencontainers.image.title=${{ github.event.repository.name }}-${{ matrix.packages }}
+            org.opencontainers.image.description=${{ github.event.repository.description }}
+            org.opencontainers.image.base.name=${{ github.event.repository.name }}
+
+      # Build and push common platforms
+      - name: Build and push fast platforms
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}
+          platforms: ${{ matrix.platforms }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          annotations: ${{ steps.meta.outputs.annotations }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            BUILD_TIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            GIT_COMMIT=${{ github.sha }}
+            GIT_TAG=${{ github.ref_name }}
+            GIT_BRANCH=${{ github.ref }}
+          outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
+        env:
+          GIN_MODE: release
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      # Sign the images (GitHub Container Registry only)
+      # There are repository secrets for COSIGN_PRIVATE_KEY and COSIGN_PASSWORD, and the repo contains cosign.pub
+      - name: Sign the published Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        id: sign
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:latest
+          # cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:$VERSION
+          # cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:v$MAJOR
+          # cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:v$MAJOR.$MINOR
+          cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:sha-$DIGEST
+        shell: bash
+
+      - name: Check images
+        continue-on-error: true
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          docker buildx imagetools inspect ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
+          docker pull ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
+          cosign verify --key cosign.pub ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
