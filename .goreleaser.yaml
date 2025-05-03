@@ -44,6 +44,14 @@ signs:
       - ${artifact}
     stdin: ""
 
+# metadata:
+#   mod_timestamp: "{{ .CommitTimestamp }}"
+#   maintainers:
+#     - "Kaj Kowalski <chatlogger-api-go@kjanat.com>"
+#   license: "MIT"
+#   homepage: "https://github.com/kjanat/chatlogger-api-go"
+#   description: "{{ .Env.DESCRIPTION }}"
+
 nfpms:
   - id: chatlogger-api-go
     package_name: "{{ .ProjectName }}"
@@ -72,23 +80,28 @@ nfpms:
 kos:
   - id: server
     build: server
-    repositories: [ghcr.io/kjanat/chatlogger-api-server]
+    bare: true
+    preserve_import_paths: false
+    base_import_paths: false
+    repositories:
+      - ghcr.io/kjanat/chatlogger-api-server
+    tags:
+      - latest
+      - "{{.Tag}}"
+      - "v{{.Major}}"
+      - "v{{.Major}}.{{.Minor}}"
+      - "{{.Version}}"
+    # Labels for the image.
     labels:
       title: "{{ .ProjectName }}"
       description: "{{ .Env.DESCRIPTION }}"
       url: "https://github.com/users/kjanat/packages/container/package/chatlogger-api-server"
       source: "{{ .Env.URL }}"
-      version: "{{.Version}}"
+      version: "{{ .Version }}"
       created: "{{ .Date }}"
       revision: "{{ .FullCommit }}"
       licenses: "MIT"
       vendor: "kjanat"
-    tags:
-      - latest
-      - "{{.Tag}}"
-      - "{{.Major}}"
-      - "{{.Major}}.{{.Minor}}"
-      - "{{.Version}}"
     platforms:
       - linux/amd64
       - linux/arm64
@@ -100,23 +113,27 @@ kos:
 
   - id: worker
     build: worker
-    repositories: [ghcr.io/kjanat/chatlogger-api-worker]
+    bare: true
+    preserve_import_paths: false
+    base_import_paths: false
+    repositories:
+      - ghcr.io/kjanat/chatlogger-api-worker
+    tags:
+      - latest
+      - "{{.Tag}}"
+      - "v{{.Major}}"
+      - "v{{.Major}}.{{.Minor}}"
+      - "{{.Version}}"
     labels:
       title: "{{ .ProjectName }}"
       description: "{{ .Env.DESCRIPTION }}"
       url: "https://github.com/users/kjanat/packages/container/package/chatlogger-api-worker"
       source: "{{ .Env.URL }}"
-      version: "{{.Version}}"
+      version: "{{ .Version }}"
       created: "{{ .Date }}"
       revision: "{{ .FullCommit }}"
       licenses: "MIT"
       vendor: "kjanat"
-    tags:
-      - latest
-      - "{{.Tag}}"
-      - "{{.Major}}"
-      - "{{.Major}}.{{.Minor}}"
-      - "{{.Version}}"
     platforms:
       - linux/amd64
       - linux/arm64
