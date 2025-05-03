@@ -164,7 +164,11 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Organization ID not found in context"})
 		return
 	}
-	orgID := orgIDAny.(uint64)
+	orgID, ok := orgIDAny.(uint64)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Organization ID type in context"})
+		return
+	}
 
 	if chat.OrganizationID != orgID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this chat"})
