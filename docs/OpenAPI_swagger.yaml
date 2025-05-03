@@ -1593,6 +1593,37 @@ paths:
       summary: User Registration
       tags:
       - Authentication
+  /health:
+    get:
+      description: Simple health check endpoint that returns status ok when the API
+        is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health Check
+      tags:
+      - System
+  /version:
+    get:
+      description: Returns version information about the API including build time
+        and git commit
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Version information
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Version Information
+      tags:
+      - System
 securityDefinitions:
   ApiKeyAuth:
     in: header

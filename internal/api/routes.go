@@ -54,10 +54,23 @@ func setupSwaggerRoutes(router *gin.Engine, version, host, port string) {
 // addRoutes adds API routes to the router.
 func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 	// Public health and version endpoints
+
+	// @Summary      Health Check
+	// @Description  Simple health check endpoint that returns status ok when the API is running
+	// @Tags         System
+	// @Produce      json
+	// @Success      200  {object}  map[string]string  "Status OK"
+	// @Router       /health [get]
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	// @Summary      Version Information
+	// @Description  Returns version information about the API including build time and git commit
+	// @Tags         System
+	// @Produce      json
+	// @Success      200  {object}  map[string]interface{}  "Version information"
+	// @Router       /version [get]
 	router.GET("/version", func(c *gin.Context) {
 		c.IndentedJSON(http.StatusOK, gin.H{
 			"version":    version.Version,
