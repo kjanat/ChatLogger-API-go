@@ -71,6 +71,8 @@ jobs:
         name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
+        env:
+          VERSION: $VERSION
         with:
           images: ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
           tags: |
@@ -91,7 +93,7 @@ jobs:
             org.opencontainers.image.url=${{ github.event.repository.html_url }}
             org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=$VERSION
+            org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
@@ -105,7 +107,7 @@ jobs:
             org.opencontainers.image.url=${{ github.event.repository.html_url }}
             org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=$VERSION
+            org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
