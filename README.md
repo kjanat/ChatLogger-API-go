@@ -4,6 +4,7 @@
 [![Go version](https://img.shields.io/github/go-mod/go-version/kjanat/chatlogger-api-go?logo=Go&logoColor=white)](go.mod)
 [![Go Doc](https://godoc.org/github.com/kjanat/chatlogger-api-go?status.svg)][Package documentation]
 [![Go Report Card](https://goreportcard.com/badge/github.com/kjanat/chatlogger-api-go)][Go report] <!-- WTF Can't I Capitalize GO?... [![Go Report](https://img.shields.io/badge/Go%20report-A+-brightgreen.svg)][Go report] -->
+[![Static Badge](https://img.shields.io/badge/Bump.sh-API--Docs-blue?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48ZyBjbGlwLXBhdGg9InVybCgjcHJlZml4X19hKSI%2BPHBhdGggZmlsbD0iI2ZmZiIgZD0iTTI1NC43MzQgMTAwLjQ2NWMtLjE2Ny0zNi4yMS0yNi4xNC01OC4zMS02My4zODItNTguMzEtMzcuMjQzIDAtNjMuMTEzIDIyLjQzNi02My4xNTIgNTguMDkxIDAgMS42MzktLjE0MiAxNC41MDktLjMyMyAzMS4wMzMtLjAxMyAxLjI3OC0xLjgyIDEuNTEtMi4xNTUuMjcxLTYuOTA3LTI2LjIwNS0zMC4xNDMtNDEuNjMyLTYxLjI2Ny00MS42MzItMzcuMzg1IDAtNjMuMTY0IDIyLjQ3NS02My4xNjQgNTguMTk1IDAgLjc0OC0xLjI5MSA2NS43MzItMS4yOTEgNjUuNzMyaDI1NnMtMS4wMDctMTA4LjgzNi0xLjI1Mi0xMTMuMzh6Ii8%2BPC9nPjxkZWZzPjxjbGlwUGF0aCBpZD0icHJlZml4X19hIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCAwaDI1NnYyNTZIMHoiLz48L2NsaXBQYXRoPjwvZGVmcz48L3N2Zz4%3D&link=https%3A%2F%2Fchatlogger-api-docs.kjanat.com%2F)][API Docs]
 [![Tag](https://img.shields.io/github/v/tag/kjanat/chatlogger-api-go?sort=semver&label=Tag)](https://github.com/kjanat/chatlogger-api-go/tags)
 [![Release Date](https://img.shields.io/github/release-date/kjanat/chatlogger-api-go?label=Release%20date)][Latest release]
 [![License: MIT](https://img.shields.io/github/license/kjanat/chatlogger-api-go?label=License)](LICENSE)
@@ -19,26 +20,26 @@ A multi-tenant backend API for logging and managing chat sessions, supporting bo
 
 - **Multi-tenancy**: Separate organizations with isolated data
 - **Dual Authentication**: API key for chat plugins and JWT for dashboard users
-- **Role-based Access Control**: Superadmin, admin, user, and viewer roles
-- **Analytics**: Usage metrics per organization
+- **Role-based Access Control**: Superadmin, admin, user, and viewer roles with specific permissions
+- **Analytics**: Usage metrics per organization with customizable reporting
 - **Export Capabilities**: Export chat data in multiple formats (CSV, JSON) with both sync and async options
-- **Clean Architecture**: Separation of concerns with layered design
+- **Clean Architecture**: Separation of concerns with layered design (handler → service → repository)
 - **Strategy Pattern**: Used for exporter formats (JSON, CSV) and other pluggable components
-- **Asynchronous Jobs**: Background processing with Redis and Asynq
+- **Dependency Injection**: Constructor-based DI for improved testability and maintainability
+- **Asynchronous Jobs**: Background processing with Redis and Asynq for resource-intensive tasks
 
 ## Documentation
 
 The API is documented using Swagger/OpenAPI:
 
-1. Generate documentation: `./scripts/gendocs.sh`
+1. Generate documentation: `./scripts/docs_generate.sh` or `./scripts/docs_generate.ps1`
 2. Start the server: `go run cmd/server/main.go`
-3. Open browser: http://localhost:8080/swagger/index.html
+3. Open browser: [`http://localhost:8080/swagger/index.html`](http://localhost:8080/swagger/index.html)
 
 > [!TIP]
 > View the package documentation for more details on the API endpoints and usage.
 > [godoc.org][Package documentation]
-
-Note: You must regenerate documentation after making API changes by running the documentation script.
+> The API documentation is also available online at [chatlogger-api-docs.kjanat.com][API Docs].
 
 ## 🛠️ Tech Stack
 
@@ -143,6 +144,19 @@ curl -X GET \
   -b cookies.txt
 ```
 
+## 🔒 Role-Based Access Control
+
+The API implements a comprehensive role-based access control system:
+
+| Role         | Description                                                  | Capabilities                                               |
+|:-------------|:-------------------------------------------------------------|:-----------------------------------------------------------|
+| `superadmin` | System-wide administrator with unrestricted access           | Full access to all endpoints and organizations              |
+| `admin`      | Organization administrator                                   | Full access within their organization including API keys    |
+| `user`       | Regular organization user                                    | Access to own chats/messages and basic functionality        |
+| `viewer`     | Read-only user                                               | View-only access to permitted resources                     |
+
+RBAC is implemented via middleware that checks the user's role before allowing access to protected resources.
+
 ## 📁 Project Structure
 
 ```plaintext
@@ -168,34 +182,62 @@ curl -X GET \
 
 ## 📊 API Endpoints
 
-### Public API (Chat Plugin)
+### System Endpoints
 
-| Method   | Endpoint                                     | Description                |
-|:---------|:---------------------------------------------|:---------------------------|
-| `POST`   | `/api/v1/orgs/:slug/chats`                   | Create a new chat session  |
-| `POST`   | `/api/v1/orgs/:slug/chats/:chatID/messages`  | Add a message to a chat    |
+| Method   | Endpoint                      | Description                  |
+|:---------|:------------------------------|:-----------------------------|
+| `GET`    | `/health`                     | Health check endpoint        |
+| `GET`    | `/version`                    | API version information      |
+| `GET`    | `/swagger/*any`               | Swagger UI documentation     |
+| `GET`    | `/openapi/*any`               | OpenAPI documentation        |
 
-### Dashboard API (Authenticated)
+### Auth Endpoints
 
 | Method   | Endpoint                      | Description                  |
 |:---------|:------------------------------|:-----------------------------|
 | `POST`   | `/auth/login`                 | Login and get JWT cookie     |
-| `GET`    | `/users/me`                   | Get current user info        |
-| `PATCH`  | `/users/me`                   | Update current user          |
-| `GET`    | `/orgs/me/apikeys`            | List organization API keys   |
-| `POST`   | `/orgs/me/apikeys`            | Create new API key           |
-| `DELETE` | `/orgs/me/apikeys/:id`        | Revoke an API key            |
-| `GET`    | `/analytics/orgs/me/summary`  | Get organization analytics   |
+| `POST`   | `/auth/register`              | Register a new user          |
+| `POST`   | `/auth/logout`                | Logout and clear JWT cookie  |
 
-### Export Endpoints
+### Dashboard API (Authenticated with JWT)
 
-| Method   | Endpoint                      | Description                  |
-|:---------|:------------------------------|:-----------------------------|
-| `POST`   | `/exports/orgs/me`            | Create async export job      |
-| `GET`    | `/exports/orgs/me/:id`        | Get export job status        |
-| `GET`    | `/exports/orgs/me/:id/download` | Download completed export  |
-| `GET`    | `/exports/orgs/me`            | List export jobs             |
-| `POST`   | `/exports/orgs/me/sync`       | Create synchronous export    |
+| Method   | Endpoint                          | Description                      |
+|:---------|:----------------------------------|:---------------------------------|
+| `GET`    | `/api/v1/users/me`                | Get current user profile         |
+| `PATCH`  | `/api/v1/users/me`                | Update current user profile      |
+| `POST`   | `/api/v1/users/me/password`       | Change current user's password   |
+| `POST`   | `/api/v1/chats`                   | Create a new chat                |
+| `GET`    | `/api/v1/chats`                   | List user's chats                |
+| `GET`    | `/api/v1/chats/:chatID`           | Get a specific chat              |
+| `PATCH`  | `/api/v1/chats/:chatID`           | Update a chat                    |
+| `DELETE` | `/api/v1/chats/:chatID`           | Delete a chat                    |
+| `GET`    | `/api/v1/chats/:chatID/messages`  | Get messages from a chat         |
+| `GET`    | `/api/v1/analytics/messages`      | Get message analytics            |
+
+### Admin-Only Endpoints (JWT + Admin Role)
+
+| Method   | Endpoint                          | Description                      |
+|:---------|:----------------------------------|:---------------------------------|
+| `GET`    | `/api/v1/orgs/me/apikeys`         | List organization API keys       |
+| `POST`   | `/api/v1/orgs/me/apikeys`         | Generate a new API key           |
+| `DELETE` | `/api/v1/orgs/me/apikeys/:id`     | Revoke an API key                |
+
+### Export Endpoints (JWT Auth)
+
+| Method   | Endpoint                          | Description                      |
+|:---------|:----------------------------------|:---------------------------------|
+| `POST`   | `/api/v1/exports`                 | Create async export job          |
+| `GET`    | `/api/v1/exports`                 | List export jobs                 |
+| `GET`    | `/api/v1/exports/:id`             | Get export job status            |
+| `GET`    | `/api/v1/exports/:id/download`    | Download completed export        |
+| `POST`   | `/api/v1/exports/sync`            | Create synchronous export        |
+
+### Public API (API Key Auth)
+
+| Method   | Endpoint                                   | Description                |
+|:---------|:-------------------------------------------|:---------------------------|
+| `POST`   | `/api/v1/orgs/:slug/chats`                 | Create a new chat session  |
+| `POST`   | `/api/v1/orgs/:slug/chats/:chatID/messages`| Add a message to a chat    |
 
 ## 🔧 Configuration
 
@@ -291,11 +333,14 @@ Here are some potential enhancements planned for future development:
 
 - [x] **Export Features**: Implemented export functionality as a strategy pattern (JSON/CSV)
 - [x] **Async Exports**: Added background processing for large exports
-- [ ] **Pagination**: Add more robust pagination to list endpoints
-- [ ] **Testing**: Add unit and integration tests
-- [ ] **Documentation**: Generate API documentation with Swagger
-- [ ] **Monitoring**: Add logging and metrics collection
+- [x] **Documentation**: Generated API documentation with Swagger/OpenAPI
+- [ ] **Pagination**: Add cursor-based pagination to list endpoints
+- [ ] **Enhanced Testing**: Expand unit and integration test coverage
+- [ ] **Monitoring**: Add structured logging and metrics collection
 - [ ] **Real-time notifications**: Add WebSocket support for live updates
+- [ ] **Multi-factor Authentication**: Add 2FA support for dashboard users
+- [ ] **Improved Analytics**: More detailed analytics dashboards and reports
+- [ ] **Search Capabilities**: Add full-text search for chat messages
 
 ## 📄 License
 
@@ -322,3 +367,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 [Codecov]: https://codecov.io/gh/kjanat/chatlogger-api-go
 [Build]: https://github.com/kjanat/chatlogger-api-go/actions/workflows/chatlogger-pipeline.yml
 [Package documentation]: https://godoc.org/github.com/kjanat/chatlogger-api-go
+[API Docs]: https://chatlogger-api-docs.kjanat.com/

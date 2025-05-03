@@ -24,9 +24,9 @@ jobs:
       - name: Deploy API documentation
         uses: bump-sh/github-action@v1
         with:
-          doc: ${{ vars.BUMP_SLUG }}
+          doc: ${{ vars.BUMP_DOCID }}
           token: ${{ secrets.BUMP_TOKEN }}
-          file: docs-v3/OpenAPIv3_swagger.yaml
+          file: ${{ vars.BUMP_YAML_LOC }}
           branch: ${{ github.ref_name }}
   api-diff:
     if: ${{ github.event_name == 'pull_request' }}
@@ -38,9 +38,9 @@ jobs:
       - name: Comment pull request with API diff
         uses: bump-sh/github-action@v1
         with:
-          doc: ${{ vars.BUMP_SLUG }}
+          doc: ${{ vars.BUMP_DOCID }}
           token: ${{ secrets.BUMP_TOKEN }}
-          file: docs-v3/OpenAPIv3_swagger.yaml
+          file: ${{ vars.BUMP_YAML_LOC }}
           branch: ${{ github.ref_name }}
           command: diff
         env:
