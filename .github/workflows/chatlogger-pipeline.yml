@@ -53,21 +53,26 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with: { go-version-file: 'go.mod', cache: true }
 
-      - uses: golangci/golangci-lint-action@v7
+      - name: Lint
+        uses: golangci/golangci-lint-action@v7
         with:
           version: latest
           skip-cache: false
 
-      - run: go test -v -race -coverprofile=coverage.txt ./...
+      - name: Run Tests
+        run: go test -v -race -coverprofile=coverage.txt ./...
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/test
 
-      - uses: codecov/codecov-action@v5
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v5
         with:
           files: coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -75,6 +80,7 @@ jobs:
 
 # -------- Release (tag push OR manual bump) --------------------
   release:
+    name: Release
     needs: ci
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -147,7 +153,7 @@ jobs:
       # 3) auto-tag if version.go changed on master/dev
       - name: Ensure version tag exists
         id: ensure_tag
-        if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/') || steps.manual_bump.outputs.tag_created == 'true'
+        if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/') # || steps.manual_bump.outputs.tag_created == 'true'
         run: |
           VER=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
           [ -z "$VER" ] && { echo "::error ::unable to read version"; exit 1; }
