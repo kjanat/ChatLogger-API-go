@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build-platforms:
-    name: Build ${{ matrix.packages }} image #for ${{ matrix.platforms }}
+    name: Build ${{ matrix.packages }} image on ${{ matrix.platforms }}
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1 # Enable BuildKit, which is required for Buildx
@@ -99,30 +99,30 @@ jobs:
           labels: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
             org.opencontainers.image.authors=${{ github.actor }}
-            org.opencontainers.image.url="${{ github.event.repository.html_url }}"
-            org.opencontainers.image.documentation="https://chatlogger-api-docs.kjanat.com/"
-            org.opencontainers.image.source="${{ github.server_url }}/${{ github.repository }}"
+            org.opencontainers.image.url='${{ github.event.repository.html_url }}'
+            org.opencontainers.image.documentation='https://chatlogger-api-docs.kjanat.com/'
+            org.opencontainers.image.source='${{ github.server_url }}/${{ github.repository }}'
             org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
             org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
-            org.opencontainers.image.description="${{ github.event.repository.description }}"
+            org.opencontainers.image.description='${{ github.event.repository.description }}'
             org.opencontainers.image.base.name=${{ github.event.repository.name }}
           annotations: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
             org.opencontainers.image.authors=${{ github.actor }}
-            org.opencontainers.image.url="${{ github.event.repository.html_url }}"
-            org.opencontainers.image.documentation="https://chatlogger-api-docs.kjanat.com/"
-            org.opencontainers.image.source="${{ github.server_url }}/${{ github.repository }}"
+            org.opencontainers.image.url='${{ github.event.repository.html_url }}'
+            org.opencontainers.image.documentation='https://chatlogger-api-docs.kjanat.com/'
+            org.opencontainers.image.source='${{ github.server_url }}/${{ github.repository }}'
             org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
             org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
-            org.opencontainers.image.description="${{ github.event.repository.description }}"
+            org.opencontainers.image.description='${{ github.event.repository.description }}'
             org.opencontainers.image.base.name=${{ github.event.repository.name }}
 
       # Build and push common platforms
