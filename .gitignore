@@ -41,3 +41,6 @@ cosign.key
 
 # GitHub secret scanning
 .cache_ggshield
+
+# Go modules
+.golangci.reference.yml

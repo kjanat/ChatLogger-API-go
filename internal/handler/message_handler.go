@@ -35,6 +35,7 @@ type CreateMessageRequest struct {
 }
 
 // CreateMessage handles the request to create a new message in a chat.
+//
 //	@Summary		Create Message
 //	@Description	Adds a new message to an existing chat session. Can be called via Public API (API Key).
 //	@Tags			Messages
@@ -149,6 +150,7 @@ type GetMessageResponse struct {
 }
 
 // GetMessages handles the request to get all messages for a chat.
+//
 //	@Summary		Get Chat Messages
 //	@Description	Retrieves all messages associated with a specific chat session.
 //	@Tags			Messages
@@ -238,6 +240,7 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 }
 
 // GetMessageStats handles the request to get message statistics for an organization.
+//
 //	@Summary		Get Message Statistics
 //	@Description	Retrieves aggregated statistics about messages within a specified date range for the user's organization.
 //	@Tags			Analytics

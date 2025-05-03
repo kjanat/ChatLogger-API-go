@@ -1,4 +1,3 @@
-basePath: /api/v1
 definitions:
   domain.APIKey:
     properties:
@@ -12,6 +11,12 @@ definitions:
         type: integer
       revoked_at:
         type: string
+    required:
+    - created_at
+    - id
+    - label
+    - organization_id
+    - revoked_at
     type: object
   domain.Chat:
     properties:
@@ -38,6 +43,16 @@ definitions:
       user_id:
         description: Nullable for anonymous chats
         type: integer
+    required:
+    - created_at
+    - id
+    - messages
+    - metadata
+    - organization_id
+    - tags
+    - title
+    - updated_at
+    - user_id
     type: object
   domain.ChatMetadata:
     properties:
@@ -70,6 +85,19 @@ definitions:
       user_rating:
         description: Optional user rating
         type: integer
+    required:
+    - avg_response_time
+    - country_code
+    - ip_address
+    - is_escalated
+    - is_forwarded_to_hr
+    - language_code
+    - question_category
+    - sentiment
+    - session_id
+    - token_count
+    - transcript_link
+    - user_rating
     type: object
   domain.Export:
     properties:
@@ -95,6 +123,18 @@ definitions:
         type: string
       user_id:
         type: integer
+    required:
+    - completed_at
+    - created_at
+    - error
+    - file_path
+    - format
+    - id
+    - organization_id
+    - status
+    - type
+    - updated_at
+    - user_id
     type: object
   domain.ExportFormat:
     enum:
@@ -141,6 +181,13 @@ definitions:
         type: string
       role:
         $ref: '#/definitions/domain.MessageRole'
+    required:
+    - chat_id
+    - content
+    - created_at
+    - id
+    - metadata
+    - role
     type: object
   domain.MessageMetadata:
     properties:
@@ -149,6 +196,9 @@ definitions:
         type: number
       token_count:
         type: integer
+    required:
+    - response_time
+    - token_count
     type: object
   domain.MessageRole:
     enum:
@@ -197,6 +247,16 @@ definitions:
         $ref: '#/definitions/domain.Role'
       updated_at:
         type: string
+    required:
+    - created_at
+    - email
+    - first_name
+    - id
+    - last_login_at
+    - last_name
+    - organization_id
+    - role
+    - updated_at
     type: object
   handler.ChangePasswordRequest:
     properties:
@@ -224,6 +284,11 @@ definitions:
       user_id:
         description: Optional, for anonymous chats
         type: integer
+    required:
+    - metadata
+    - tags
+    - title
+    - user_id
     type: object
   handler.CreateMessageRequest:
     properties:
@@ -237,6 +302,7 @@ definitions:
         $ref: '#/definitions/domain.MessageRole'
     required:
     - content
+    - metadata
     - role
     type: object
   handler.ExportRequest:
@@ -291,6 +357,18 @@ definitions:
       user_id:
         description: Nullable for anonymous chats
         type: integer
+    required:
+    - created_at
+    - id
+    - messages
+    - metadata
+    - metadata
+    - organization_id
+    - tags
+    - tags
+    - title
+    - updated_at
+    - user_id
     type: object
   handler.GetMessageResponse:
     properties:
@@ -308,6 +386,14 @@ definitions:
         description: Parsed metadata
       role:
         $ref: '#/definitions/domain.MessageRole'
+    required:
+    - chat_id
+    - content
+    - created_at
+    - id
+    - metadata
+    - metadata
+    - role
     type: object
   handler.LoginRequest:
     properties:
@@ -337,7 +423,11 @@ definitions:
         $ref: '#/definitions/domain.Role'
     required:
     - email
+    - first_name
+    - last_name
+    - organization_id
     - password
+    - role
     type: object
   handler.UpdateChatRequest:
     properties:
@@ -351,6 +441,10 @@ definitions:
         type: array
       title:
         type: string
+    required:
+    - metadata
+    - tags
+    - title
     type: object
   handler.UpdateMeRequest:
     properties:
@@ -358,20 +452,22 @@ definitions:
         type: string
       last_name:
         type: string
+    required:
+    - first_name
+    - last_name
     type: object
 externalDocs:
   description: GitHub Wiki
   url: https://github.com/kjanat/chatlogger-api-go/wiki
-host: localhost:8080
 info:
   contact:
-    email: chatlogger-api-go@kjanat.com
-    name: API Support
+    email: chatlogger-api-go+swagger@kjanat.com
+    name: ChatLogger
     url: https://github.com/kjanat/chatlogger-api-go/issues
   description: API for logging and managing chat sessions.
   license:
     name: MIT License
-    url: https://opensource.org/licenses/MIT
+    url: https://github.com/kjanat/chatlogger-api-go/blob/master/LICENSE
   termsOfService: https://github.com/kjanat/chatlogger-api-go#terms-of-service
   title: ChatLogger API (Go)
 paths:
@@ -1497,9 +1593,6 @@ paths:
       summary: User Registration
       tags:
       - Authentication
-schemes:
-- http
-- https
 securityDefinitions:
   ApiKeyAuth:
     in: header

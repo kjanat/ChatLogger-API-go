@@ -21,6 +21,7 @@ func NewUserHandler(userService domain.UserService) *UserHandler {
 }
 
 // GetMe handles the request to get the current user's info.
+//
 //	@Summary		Get Current User
 //	@Description	Retrieves the profile information for the currently authenticated user.
 //	@Tags			Users
@@ -64,6 +65,7 @@ type UpdateMeRequest struct {
 }
 
 // UpdateMe handles the request to update the current user's info.
+//
 //	@Summary		Update Current User
 //	@Description	Updates the first name and last name for the currently authenticated user.
 //	@Tags			Users
@@ -128,6 +130,7 @@ type ChangePasswordRequest struct {
 }
 
 // ChangePassword handles the request to change the current user's password.
+//
 //	@Summary		Change Password
 //	@Description	Allows the currently authenticated user to change their password.
 //	@Tags			Users
@@ -167,6 +170,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 }
 
 // ListOrgUsers handles the request to list all users in the current organization.
+//
 //	@Summary		List Organization Users (Admin)
 //	@Description	Retrieves a paginated list of all users belonging to the authenticated user's organization. Requires admin role.
 //	@Tags			Users (Admin)

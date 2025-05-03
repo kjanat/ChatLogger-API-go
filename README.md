@@ -39,6 +39,7 @@ The API is documented using Swagger/OpenAPI:
 > [godoc.org][Package documentation]
 
 Note: You must regenerate documentation after making API changes by running the documentation script.
+
 ## 🛠️ Tech Stack
 
 - **Language**: [Go 1.24.2+](https://github.com/kjanat/chatlogger-api-go/blob/master/go.mod#L3)

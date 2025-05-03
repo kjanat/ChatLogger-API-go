@@ -14,6 +14,8 @@ import (
 type Config struct {
 	// ServerPort is the HTTP port the server will listen on
 	ServerPort string
+	// ServerHost is the hostname for the server
+	ServerHost string
 	// DatabaseURL is the connection string for the PostgreSQL database
 	DatabaseURL string
 	// JWTSecret is the secret key used for JWT token signing and validation
@@ -36,6 +38,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	cfg := &Config{
+		ServerHost:  os.Getenv("HOST"),
 		ServerPort:  os.Getenv("PORT"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		JWTSecret:   os.Getenv("JWT_SECRET"),
@@ -46,25 +49,34 @@ func LoadConfig() (*Config, error) {
 
 	// Basic validation (can be expanded)
 	if cfg.ServerPort == "" {
+		log.Println("Warning: PORT not set, using default 8080")
 		cfg.ServerPort = "8080" // Default port
 	}
 
-	if cfg.DatabaseURL == "" {
-		// In a real app, this should probably be an error unless using embedded DB
-		log.Println("Warning: DATABASE_URL not set.")
+	// Set default host if not provided
+	if cfg.ServerHost == "" {
+		log.Println("Warning: HOST not set, using default localhost")
+		cfg.ServerHost = "localhost" // Default host
 	}
 
+	// Check if database URL is set, if not, return an error
+	if cfg.DatabaseURL == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
+
+	// Check if JWT secret is set
 	if cfg.JWTSecret == "" {
 		cfg.JWTSecret = "development-jwt-secret" // Default for development
-
 		log.Println("Warning: Using default JWT secret. Set JWT_SECRET for production.")
 	}
 
+	// Check if Redis address is set
 	if cfg.RedisAddr == "" {
 		cfg.RedisAddr = "localhost:6379" // Default Redis address
 		log.Println("Warning: Using default Redis address. Set REDIS_ADDR for production.")
 	}
 
+	// Check if export directory is set
 	if cfg.ExportDir == "" {
 		cfg.ExportDir = "./exports" // Default export directory
 		log.Println("Warning: Using default export directory. Set EXPORT_DIR for production.")

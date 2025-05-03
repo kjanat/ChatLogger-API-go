@@ -4,60 +4,62 @@
 package api
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
-    "log" //new
-    "net/http" //new
-    "os" //new
-
+	"github.com/kjanat/chatlogger-api-go/internal/config"
 	"github.com/kjanat/chatlogger-api-go/internal/middleware"
-
-    // Import the generated Swagger docs
 	"github.com/kjanat/chatlogger-api-go/internal/version"
 
-    docs "github.com/kjanat/chatlogger-api-go/docs"
-    swaggerFiles "github.com/swaggo/files"
-    ginSwagger "github.com/swaggo/gin-swagger"
+	docs "github.com/kjanat/chatlogger-api-go/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // NewRouter sets up the Gin router with defined routes.
-func NewRouter(services *AppServices, jwtSecret string) *gin.Engine {
-    // Set Swagger info dynamically from version package
-    docs.SwaggerInfo.Version = version.Version
-    docs.SwaggerInfo.Host = "localhost:8080"
-    docs.SwaggerInfo.BasePath = "/api/v1"
-    docs.SwaggerInfo.Schemes = []string{"http", "https"}
-
+func NewRouter(services *AppServices, jwtSecret string, config *config.Config) *gin.Engine {
 	router := gin.Default()
 
 	// Apply global middlewares
 	router.Use(middleware.VersionHeader())
-    
-    // Add debug handler for swagger docs to diagnose the issue
-    router.GET("/docs/swagger.json", func(c *gin.Context) {
-        // Try to read the swagger.json file directly
-        data, err := os.ReadFile("./docs/swagger.json")
-        if err != nil {
-            log.Printf("Error reading swagger file: %v", err)
-            c.JSON(http.StatusInternalServerError, gin.H{
-                "error": err.Error(),
-                "docs_exists": false,
-            })
-            return
-        }
-        
-        // If found, return the raw JSON for debugging
-        c.Header("Content-Type", "application/json")
-        c.String(http.StatusOK, string(data))
-    })
-    
-    // Fix the Swagger documentation route
-    router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler,
-        ginSwagger.URL("/docs/swagger.json"),
-        ginSwagger.DefaultModelsExpandDepth(-1),
-    ))
+
+	// Set up API documentation routes
+	setupSwaggerRoutes(router, version.Version, config.ServerHost, config.ServerPort)
 
 	// Add API routes
 	addRoutes(router, services, jwtSecret)
 
 	return router
+}
+
+// setupSwaggerRoutes configures the OpenAPI/Swagger documentation routes.
+func setupSwaggerRoutes(router *gin.Engine, version, host, port string) {
+	log.Printf("Starting ChatLogger API v%s (host: %s, port: %s)",
+		version, host, port)
+
+	docs.SwaggerInfoOpenAPI.Version = version
+	docs.SwaggerInfoOpenAPI.Host = host + ":" + port
+	docs.SwaggerInfoOpenAPI.BasePath = "/api/v1"
+	docs.SwaggerInfoOpenAPI.Schemes = []string{"http", "https"}
+	docs.SwaggerInfoOpenAPI.InfoInstanceName = "OpenAPI"
+
+	// Static files for documentation
+	router.StaticFile("/docs/api.json", "./docs/OpenAPI_swagger.json")
+	router.StaticFile("/docs/api.yaml", "./docs/OpenAPI_swagger.yaml")
+
+	router.GET("/openapi/*any",
+		ginSwagger.WrapHandler(
+			swaggerFiles.Handler,
+			ginSwagger.DocExpansion("list"),
+			ginSwagger.URL("/docs/api.json"),
+		),
+	)
+
+	router.GET("/swagger/*any",
+		ginSwagger.WrapHandler(
+			swaggerFiles.Handler,
+			ginSwagger.DocExpansion("list"),
+			ginSwagger.URL("/docs/api.json"),
+		),
+	)
 }

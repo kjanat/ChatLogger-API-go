@@ -28,6 +28,7 @@ type LoginRequest struct {
 }
 
 // Login handles user login.
+//
 //	@Summary		User Login
 //	@Description	Authenticates a user with email and password, returns user info and sets an HTTP-only auth cookie.
 //	@Tags			Authentication
@@ -79,6 +80,7 @@ type RegisterRequest struct {
 }
 
 // Register handles user registration.
+//
 //	@Summary		User Registration
 //	@Description	Registers a new user. In a real app, this might require admin privileges or an invitation system.
 //	@Tags			Authentication
@@ -126,6 +128,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 // Logout handles user logout.
+//
 //	@Summary		User Logout
 //	@Description	Logs out the current user by clearing the authentication cookie.
 //	@Tags			Authentication

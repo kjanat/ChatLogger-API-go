@@ -30,6 +30,7 @@ type GenerateKeyRequest struct {
 }
 
 // GenerateKey handles the request to generate a new API key.
+//
 //	@Summary		Generate API Key
 //	@Description	Generates a new API key for the organization associated with the authenticated user.
 //	@Tags			API Keys (Admin)
@@ -72,6 +73,7 @@ func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 }
 
 // ListKeys handles the request to list API keys for an organization.
+//
 //	@Summary		List API Keys
 //	@Description	Lists all API keys for the organization associated with the authenticated user.
 //	@Tags			API Keys (Admin)
@@ -148,6 +150,7 @@ func (h *APIKeyHandler) validateKeyAccess(c *gin.Context, actionName string) (ui
 }
 
 // RevokeKey handles the request to revoke an API key.
+//
 //	@Summary		Revoke API Key
 //	@Description	Revokes an existing API key by its ID.
 //	@Tags			API Keys (Admin)
@@ -177,6 +180,7 @@ func (h *APIKeyHandler) RevokeKey(c *gin.Context) {
 }
 
 // DeleteKey handles the request to delete an API key.
+//
 //	@Summary		Delete API Key (Not typically exposed, Revoke is preferred)
 //	@Description	Deletes an API key permanently. Use RevokeKey for standard deactivation.
 //	@Tags			API Keys (Admin)

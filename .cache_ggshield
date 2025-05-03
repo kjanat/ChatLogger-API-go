@@ -1,1 +1,1 @@
-{"last_found_secrets": [{"match": "ce2e310e09cc55357d6c0ed51c4a456a9c73621c79d08b437830186ffc6a8363", "name": "Generic High Entropy Secret - c:\\Users\\kjana\\Projects\\chatlogger-api-go\\.env.example"}]}
+{"last_found_secrets": [{"name": "Generic High Entropy Secret - c:\\Users\\kjana\\Projects\\ChatLogger\\ChatLogger-API-go\\.github\\workflows\\bump.yml", "match": "0c98ed93ceed51ffacbea95646c59eff6b30a0e55a5bfaec8bd82a145452325f"}]}

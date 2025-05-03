@@ -36,6 +36,7 @@ type CreateChatRequest struct {
 }
 
 // CreateChat handles the request to create a new chat.
+//
 //	@Summary		Create Chat
 //	@Description	Creates a new chat session for the organization. Can be called via Dashboard (JWT) or Public API (API Key).
 //	@Tags			Chats
@@ -118,6 +119,7 @@ type GetChatResponse struct {
 }
 
 // GetChat handles the request to get a chat by ID.
+//
 //	@Summary		Get Chat by ID
 //	@Description	Retrieves details for a specific chat session, optionally including messages.
 //	@Tags			Chats
@@ -203,6 +205,7 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 }
 
 // ListChats handles the request to list chats for the current organization.
+//
 //	@Summary		List Chats
 //	@Description	Retrieves a paginated list of chat sessions for the user's organization.
 //	@Tags			Chats
@@ -244,6 +247,7 @@ type UpdateChatRequest struct {
 }
 
 // UpdateChat handles the request to update a chat.
+//
 //	@Summary		Update Chat
 //	@Description	Updates the title, tags, or metadata of an existing chat session.
 //	@Tags			Chats
@@ -349,6 +353,7 @@ func (h *ChatHandler) UpdateChat(c *gin.Context) {
 }
 
 // DeleteChat handles the request to delete a chat.
+//
 //	@Summary		Delete Chat
 //	@Description	Deletes a chat session and its associated messages.
 //	@Tags			Chats

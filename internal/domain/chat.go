@@ -8,8 +8,8 @@ import (
 // ChatMetadata represents extended information about a chat session.
 type ChatMetadata struct {
 	IPAddress        string  `json:"ip_address,omitempty"`
-	CountryCode      string  `json:"country_code,omitempty"`      // ISO-3166 country code (e.g., "NL")
-	LanguageCode     string  `json:"language_code,omitempty"`     // ISO-639 language code (e.g., "tr")
+	CountryCode      string  `json:"country_code,omitempty"`  // ISO-3166 country code (e.g., "NL")
+	LanguageCode     string  `json:"language_code,omitempty"` // ISO-639 language code (e.g., "tr")
 	SessionID        string  `json:"session_id,omitempty"`
 	Sentiment        string  `json:"sentiment,omitempty"`
 	IsEscalated      bool    `json:"is_escalated,omitempty"`
@@ -18,7 +18,7 @@ type ChatMetadata struct {
 	TokenCount       int     `json:"token_count,omitempty"`       // Total tokens for the chat session
 	AvgResponseTime  float64 `json:"avg_response_time,omitempty"` // In seconds
 	QuestionCategory string  `json:"question_category,omitempty"`
-	UserRating       *int    `json:"user_rating,omitempty"`       // Optional user rating
+	UserRating       *int    `json:"user_rating,omitempty"` // Optional user rating
 }
 
 // Chat represents a conversation session.
@@ -29,8 +29,8 @@ type Chat struct {
 	UserID         *uint64      `                                 json:"user_id,omitempty"` // Nullable for anonymous chats
 	User           *User        `gorm:"foreignKey:UserID"         json:"-"`
 	Title          string       `gorm:"size:255"                  json:"title"`
-	Tags           string       `gorm:"type:jsonb"                json:"tags"`              // JSON array of tags as string
-	Metadata       string       `gorm:"type:jsonb"                json:"metadata"`          // Store ChatMetadata as JSON string
+	Tags           string       `gorm:"type:jsonb"                json:"tags"`     // JSON array of tags as string
+	Metadata       string       `gorm:"type:jsonb"                json:"metadata"` // Store ChatMetadata as JSON string
 	CreatedAt      time.Time    `                                 json:"created_at"`
 	UpdatedAt      time.Time    `                                 json:"updated_at"`
 	Messages       []Message    `gorm:"foreignKey:ChatID"         json:"messages,omitempty"`

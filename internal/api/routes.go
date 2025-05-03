@@ -22,10 +22,15 @@ func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 	})
 
 	router.GET("/version", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		c.IndentedJSON(http.StatusOK, gin.H{
 			"version":    version.Version,
 			"build_time": version.BuildTime,
 			"git_commit": version.GitCommit,
+			"docs": gin.H{
+				"gui":  "/swagger/index.html",
+				"json": "/docs/api.json",
+				"yaml": "/docs/api.yaml",
+			},
 		})
 	})
 
@@ -44,7 +49,7 @@ func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 	{
 		// User routes
 		userHandler := handler.NewUserHandler(services.UserService)
-		userGroup := dashboardGroup.Group("/users")
+		userGroup :=  dashboardGroup.Group("/users")
 		{
 			userGroup.GET("/me", userHandler.GetMe)
 			userGroup.PATCH("/me", userHandler.UpdateMe)
