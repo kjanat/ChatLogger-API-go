@@ -80,6 +80,23 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug:  ${{ github.repository }}
 
+# -------- Deploy API documentation --------------------
+  bump-sh:
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    name: Deploy API documentation on Bump.sh
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy API documentation
+        uses: bump-sh/github-action@v1
+        with:
+          doc: ${{ vars.BUMP_DOCID }}
+          token: ${{ secrets.BUMP_TOKEN }}
+          file: ${{ vars.BUMP_YAML_LOC }}
+          branch: ${{ github.ref_name }}
+          command: ${{ github.event_name == 'pull_request' && 'diff' || 'bump' }}
+
 # -------- Release (tag push OR manual bump) --------------------
   release:
     name: Release
@@ -181,25 +198,25 @@ jobs:
           username: ${{ vars.GH_USERNAME }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        if: |
-          startsWith(github.ref,'refs/tags/v') ||
-          steps.manual_bump.outputs.tag_created == 'true' ||
-          steps.ensure_tag.outputs.tag_created == 'true'
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
+      #   if: |
+      #     startsWith(github.ref,'refs/tags/v') ||
+      #     steps.manual_bump.outputs.tag_created == 'true' ||
+      #     steps.ensure_tag.outputs.tag_created == 'true'
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        if: |
-          startsWith(github.ref,'refs/tags/v') ||
-          steps.manual_bump.outputs.tag_created == 'true' ||
-          steps.ensure_tag.outputs.tag_created == 'true'
-      - name: Set up ko
-        uses: ko-build/setup-ko@v0.9
-        if: |
-          startsWith(github.ref,'refs/tags/v') ||
-          steps.manual_bump.outputs.tag_created == 'true' ||
-          steps.ensure_tag.outputs.tag_created == 'true'
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
+      #   if: |
+      #     startsWith(github.ref,'refs/tags/v') ||
+      #     steps.manual_bump.outputs.tag_created == 'true' ||
+      #     steps.ensure_tag.outputs.tag_created == 'true'
+      # - name: Set up ko
+      #   uses: ko-build/setup-ko@v0.9
+      #   if: |
+      #     startsWith(github.ref,'refs/tags/v') ||
+      #     steps.manual_bump.outputs.tag_created == 'true' ||
+      #     steps.ensure_tag.outputs.tag_created == 'true'
 
       - name: Set up cosign
         uses: sigstore/cosign-installer@v3.8.2
