@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build-platforms:
-    name: Build ${{ matrix.packages }} for ${{ matrix.platforms }}
+    name: Build ${{ matrix.packages }} image #for ${{ matrix.platforms }}
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1 # Enable BuildKit, which is required for Buildx
@@ -56,7 +56,11 @@ jobs:
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@main
+        uses: sigstore/cosign-installer@v3.8.1
+        with:
+          cosign-release: main
+      - name: Check cosign install!
+        run: cosign version
         
       - name: Extract version components
         id: version
@@ -74,6 +78,8 @@ jobs:
         uses: docker/metadata-action@v5
         env:
           VERSION: $VERSION
+          MAJOR: $MAJOR
+          MINOR: $MINOR
         with:
           images: ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
           tags: |
@@ -99,7 +105,7 @@ jobs:
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
-            org.opencontainers.image.title=${{ github.event.repository.name }}: ${{ matrix.packages }}
+            org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
             org.opencontainers.image.base.name=${{ github.event.repository.name }}
           annotations: |
@@ -113,7 +119,7 @@ jobs:
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
-            org.opencontainers.image.title=${{ github.event.repository.name }}: ${{ matrix.packages }}
+            org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
             org.opencontainers.image.base.name=${{ github.event.repository.name }}
 
@@ -124,7 +130,8 @@ jobs:
         with:
           context: .
           file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}
-          platforms: ${{ matrix.platforms }}
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          # platforms: ${{ matrix.platforms }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -140,7 +147,7 @@ jobs:
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
         env:
           GIN_MODE: release
-          VERSION: ${{ env.VERSION }}
+          VERSION: $VERSION
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
@@ -158,12 +165,14 @@ jobs:
           DIGEST: ${{ steps.push.outputs.digest }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          VERSION: ${{ github.ref_name }}
+          VERSION: $VERSION
+          MAJOR: $MAJOR
+          MINOR: $MINOR
         run: |
           cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:latest
-          # cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:$VERSION
-          # cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:v$MAJOR
-          # cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:v$MAJOR.$MINOR
+          cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:$VERSION
+          cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:v$MAJOR
+          cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:v$MAJOR.$MINOR
           cosign sign --key env://COSIGN_PRIVATE_KEY --yes ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:sha-$DIGEST
         shell: bash
 
