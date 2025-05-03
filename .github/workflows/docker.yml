@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build-platforms:
-    name: Build images
+    name: Build ${{ matrix.packages }} for ${{ matrix.platforms }}
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1 # Enable BuildKit, which is required for Buildx
@@ -58,10 +58,9 @@ jobs:
         uses: sigstore/cosign-installer@main
         
       - name: Extract version components
-        if: ${{ github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v') }}
         id: version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
           MAJOR=$(echo $VERSION | cut -d. -f1)
           MINOR=$(echo $VERSION | cut -d. -f2)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
@@ -92,12 +91,12 @@ jobs:
             org.opencontainers.image.url=${{ github.event.repository.html_url }}
             org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version={{version}}
+            org.opencontainers.image.version=$VERSION
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
-            org.opencontainers.image.licenses=${{ github.event.repository.license }}
+            org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
-            org.opencontainers.image.title=${{ github.event.repository.name }}-${{ matrix.packages }}
+            org.opencontainers.image.title=${{ github.event.repository.name }}: ${{ matrix.packages }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
             org.opencontainers.image.base.name=${{ github.event.repository.name }}
           annotations: |
@@ -106,17 +105,17 @@ jobs:
             org.opencontainers.image.url=${{ github.event.repository.html_url }}
             org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version={{version}}
+            org.opencontainers.image.version=$VERSION
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
-            org.opencontainers.image.licenses=${{ github.event.repository.license }}
+            org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
-            org.opencontainers.image.title=${{ github.event.repository.name }}-${{ matrix.packages }}
+            org.opencontainers.image.title=${{ github.event.repository.name }}: ${{ matrix.packages }}
             org.opencontainers.image.description=${{ github.event.repository.description }}
             org.opencontainers.image.base.name=${{ github.event.repository.name }}
 
       # Build and push common platforms
-      - name: Build and push fast platforms
+      - name: Build and push
         id: push
         uses: docker/build-push-action@v6
         with:
