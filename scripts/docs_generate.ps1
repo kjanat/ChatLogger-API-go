@@ -16,10 +16,10 @@ param (
 # This script generates OpenAPI 3.1 documentation from Go annotations using swag v2
 
 function Prep-Env {
-    param (
+	param (
 		$outPath,
 		$filePath
-    )
+	)
 
 	# Ensure we're starting with fresh docs
 	if (Test-Path "$PSScriptRoot/../$outPath") {
@@ -36,24 +36,24 @@ function Prep-Env {
 }
 
 function Test-Run {
-    param (
+	param (
 		$outPath,
 		$filePath,
-        $exitCode = $LASTEXITCODE
-    )
+		$exitCode = $LASTEXITCODE
+	)
 
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Documentation generation failed with code $LASTEXITCODE"
-        exit $LASTEXITCODE
-    }
+	if ($LASTEXITCODE -ne 0) {
+		Write-Error "Documentation generation failed with code $LASTEXITCODE"
+		exit $LASTEXITCODE
+	}
 
 	# Verify the documentation files were created
-    if (Test-Path "${outPath}/${filePath}_swagger.json") {
-        Write-Host "✅ Documentation generated ${filePath} successfully in ${outPath}/" -ForegroundColor Green
-    } else {
-        Write-Host "❌ Failed to generate documentation files" -ForegroundColor Red
-        exit 1
-    }
+	if (Test-Path "${outPath}/${filePath}_swagger.json") {
+		Write-Host "✅ Documentation generated ${filePath} successfully in ${outPath}/" -ForegroundColor Green
+	} else {
+		Write-Host "❌ Failed to generate documentation files" -ForegroundColor Red
+		exit 1
+	}
 }
 
 # Change directory to project root to ensure proper parsing
@@ -91,6 +91,6 @@ try {
 		}
 	}
 } finally {
-    # Return to original directory
-    Pop-Location
+	# Return to original directory
+	Pop-Location
 }

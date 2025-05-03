@@ -22,7 +22,7 @@ on:
         default: 'patch'
         options: [patch, minor, major]
       release_notes:
-        description: 'Brief release notes or changes for this version'
+        description: 'Release notes/changes'
         type: string
         required: false
 
@@ -37,7 +37,9 @@ concurrency:
 jobs:
 # -------- CI ---------------------------------------------------
   ci:
+    name: Test & Lint
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch'
     services:
       postgres:
         image: postgres:16-alpine
@@ -61,7 +63,7 @@ jobs:
         with: { go-version-file: 'go.mod', cache: true }
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           skip-cache: false
@@ -76,7 +78,24 @@ jobs:
         with:
           files: coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: ${{ github.repository }}
+          slug:  ${{ github.repository }}
+
+# -------- Deploy API documentation --------------------
+  bump-sh:
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    name: Deploy API documentation on Bump.sh
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy API documentation
+        uses: bump-sh/github-action@v1
+        with:
+          doc: ${{ vars.BUMP_DOCID }}
+          token: ${{ secrets.BUMP_TOKEN }}
+          file: ${{ vars.BUMP_YAML_LOC }}
+          branch: ${{ github.ref_name }}
+          command: ${{ github.event_name == 'pull_request' && 'diff' || 'bump' }}
 
 # -------- Release (tag push OR manual bump) --------------------
   release:
@@ -179,25 +198,25 @@ jobs:
           username: ${{ vars.GH_USERNAME }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        if: |
-          startsWith(github.ref,'refs/tags/v') ||
-          steps.manual_bump.outputs.tag_created == 'true' ||
-          steps.ensure_tag.outputs.tag_created == 'true'
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
+      #   if: |
+      #     startsWith(github.ref,'refs/tags/v') ||
+      #     steps.manual_bump.outputs.tag_created == 'true' ||
+      #     steps.ensure_tag.outputs.tag_created == 'true'
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        if: |
-          startsWith(github.ref,'refs/tags/v') ||
-          steps.manual_bump.outputs.tag_created == 'true' ||
-          steps.ensure_tag.outputs.tag_created == 'true'
-      - name: Set up ko
-        uses: ko-build/setup-ko@v0.9
-        if: |
-          startsWith(github.ref,'refs/tags/v') ||
-          steps.manual_bump.outputs.tag_created == 'true' ||
-          steps.ensure_tag.outputs.tag_created == 'true'
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
+      #   if: |
+      #     startsWith(github.ref,'refs/tags/v') ||
+      #     steps.manual_bump.outputs.tag_created == 'true' ||
+      #     steps.ensure_tag.outputs.tag_created == 'true'
+      # - name: Set up ko
+      #   uses: ko-build/setup-ko@v0.9
+      #   if: |
+      #     startsWith(github.ref,'refs/tags/v') ||
+      #     steps.manual_bump.outputs.tag_created == 'true' ||
+      #     steps.ensure_tag.outputs.tag_created == 'true'
 
       - name: Set up cosign
         uses: sigstore/cosign-installer@v3.8.2
@@ -236,8 +255,8 @@ jobs:
           path: dist/*
           retention-days: 1
 
-      # # 5) move/force 'latest' tag
+      # # 5) move/force 'nightly' tag
       # - name: Move signed 'latest' tag
       #   run: |
-      #     git tag -fs latest -m "Latest stable version"
-      #     git push --force origin latest
+      #     git tag -fs latest -m "Nightly version"
+      #     git push --force origin nightly

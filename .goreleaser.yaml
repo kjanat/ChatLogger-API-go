@@ -9,7 +9,7 @@ before:
 builds:
   - id: server
     main: ./cmd/server
-    binary: "{{ .ProjectName }}-server_{{ .Version }}-{{ .Os }}_{{ .Arch }}"
+    binary: "{{ .ProjectName }}-server-{{ .Version }}_{{ .Os }}-{{ .Arch }}"
     ldflags: ['-s -w -X "github.com/kjanat/chatlogger-api-go/internal/version.Version={{.Version}}" -X "github.com/kjanat/chatlogger-api-go/internal/version.BuildTime={{.Date}}" -X "github.com/kjanat/chatlogger-api-go/internal/version.GitCommit={{.Commit}}"']
     goos: [linux, windows, darwin]
     goarch: [amd64, arm64]
@@ -17,18 +17,19 @@ builds:
 
   - id: worker
     main: ./cmd/worker
-    binary: "{{ .ProjectName }}-worker_{{ .Version }}-{{ .Os }}_{{ .Arch }}"
+    binary: "{{ .ProjectName }}-worker-{{ .Version }}_{{ .Os }}-{{ .Arch }}"
     ldflags: ['-s -w -X "github.com/kjanat/chatlogger-api-go/internal/version.Version={{.Version}}" -X "github.com/kjanat/chatlogger-api-go/internal/version.BuildTime={{.Date}}" -X "github.com/kjanat/chatlogger-api-go/internal/version.GitCommit={{.Commit}}"']
     goos: [linux, windows, darwin]
     goarch: [amd64, arm64]
     env: [CGO_ENABLED=0]
 
 archives:
-  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - name_template: "{{ .ProjectName }}-{{ .Version }}_{{ .Os }}-{{ .Arch }}"
     files:
       - LICENSE
       - README.md
       - migrations/*
+      - docs/OpenAPI_*
 
 checksum:
   name_template: "{{ .ProjectName }}_checksums.txt"
@@ -76,78 +77,3 @@ nfpms:
     scripts:
       postinstall: "./scripts/package/postinstall.sh"
       preremove: "./scripts/package/preremove.sh"
-
-kos:
-  - id: server
-    build: server
-    bare: true
-    preserve_import_paths: false
-    base_import_paths: false
-    repositories:
-      - ghcr.io/kjanat/chatlogger-api-server
-    tags:
-      - latest
-      - "{{.Tag}}"
-      - "v{{.Major}}"
-      - "v{{.Major}}.{{.Minor}}"
-      - "{{.Version}}"
-    # Labels for the image.
-    labels:
-      title: "{{ .ProjectName }}"
-      description: "{{ .Env.DESCRIPTION }}"
-      url: "https://github.com/users/kjanat/packages/container/package/chatlogger-api-server"
-      source: "{{ .Env.URL }}"
-      version: "{{ .Version }}"
-      created: "{{ .Date }}"
-      revision: "{{ .FullCommit }}"
-      licenses: "MIT"
-      vendor: "kjanat"
-    platforms:
-      - linux/amd64
-      - linux/arm64
-      - darwin/amd64
-      - darwin/arm64
-    ko_data_creation_time: "{{.CommitTimestamp}}"
-    env:
-      - GIN_MODE=release
-
-  - id: worker
-    build: worker
-    bare: true
-    preserve_import_paths: false
-    base_import_paths: false
-    repositories:
-      - ghcr.io/kjanat/chatlogger-api-worker
-    tags:
-      - latest
-      - "{{.Tag}}"
-      - "v{{.Major}}"
-      - "v{{.Major}}.{{.Minor}}"
-      - "{{.Version}}"
-    labels:
-      title: "{{ .ProjectName }}"
-      description: "{{ .Env.DESCRIPTION }}"
-      url: "https://github.com/users/kjanat/packages/container/package/chatlogger-api-worker"
-      source: "{{ .Env.URL }}"
-      version: "{{ .Version }}"
-      created: "{{ .Date }}"
-      revision: "{{ .FullCommit }}"
-      licenses: "MIT"
-      vendor: "kjanat"
-    platforms:
-      - linux/amd64
-      - linux/arm64
-      - darwin/amd64
-      - darwin/arm64
-    ko_data_creation_time: "{{.CommitTimestamp}}"
-    env:
-      - GIN_MODE=release
-
-docker_signs:
-  - artifacts: manifests
-    args:
-      - sign
-      - --key=env://COSIGN_PRIVATE_KEY
-      - --yes
-      - ${artifact}
-    stdin: ""

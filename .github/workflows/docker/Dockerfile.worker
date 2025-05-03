@@ -1,7 +1,45 @@
+# Build Stage
+FROM golang:1.24.2 AS builder
+
+ARG LD_FLAGS
+
+WORKDIR /src
+
+# Copy all files to ensure we have dependencies
+COPY go.mod go.sum ./
+COPY cmd/worker ./cmd/worker
+COPY docs/ ./docs
+COPY internal/ ./internal
+
+# Install dependencies (alpine image)
+# RUN apk add --no-cache git
+
+# If 32-bit architecture, change the version of gorm.io/gorm to v1.25.12
+RUN ARCH=$(uname -m) && \
+	if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
+		echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; \
+		go mod edit -replace=gorm.io/gorm=gorm.io/gorm@v1.25.12; \
+	else \
+		echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
+	fi
+
+# Install dependencies
+RUN go mod tidy
+
+# Build the worker binary for linux
+RUN go build \
+	-ldflags="${LD_FLAGS}" \
+	-o /out/worker \
+	./cmd/worker
+
+# Final Stage
 FROM alpine:3.21.3
+
 WORKDIR /app
-COPY chatlogger-api-go-worker* chatlogger-api-go-worker
 ENV GIN_MODE=release
+COPY --from=builder /out/worker /usr/local/bin/chatlogger-worker
 RUN mkdir -p /app/exports
-RUN chmod +x /app/chatlogger-api-go-worker
-CMD ["/app/chatlogger-api-go-worker"]
+
+USER chatlogger:notso
+
+ENTRYPOINT [ "chatlogger-worker" ]

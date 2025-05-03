@@ -7,8 +7,10 @@ version: 2
 updates:
   - package-ecosystem: 'gomod'
     directory: '/'
+    allow:
+      - dependency-type: "direct"
     schedule:
-      interval: weekly
+      interval: daily
       day: 'tuesday'
       time: '03:00'
       timezone: 'Europe/Amsterdam'
@@ -23,8 +25,10 @@ updates:
           - '*'
   - package-ecosystem: 'github-actions'
     directory: '/.github/workflows/'
+    allow:
+      - dependency-type: "all"
     schedule:
-      interval: weekly
+      interval: daily
       day: 'tuesday'
       time: '03:00'
       timezone: 'Europe/Amsterdam'
@@ -44,8 +48,10 @@ updates:
     directories:
       - '/'
       - '/.github/workflows/docker'
+    allow:
+      - dependency-type: "all"
     schedule:
-      interval: weekly
+      interval: daily
       day: 'tuesday'
       time: '03:00'
       timezone: 'Europe/Amsterdam'
@@ -60,8 +66,11 @@ updates:
     directories:
       - '/'
       - '/.github/workflows/docker'
+    allow:
+      # Allow both direct and indirect updates for all packages.
+      - dependency-type: "all"
     schedule:
-      interval: weekly
+      interval: daily
       day: 'tuesday'
       time: '03:00'
       timezone: 'Europe/Amsterdam'
