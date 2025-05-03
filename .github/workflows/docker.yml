@@ -11,7 +11,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}
+  #-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -131,7 +132,7 @@ jobs:
           cache-to: type=gha,mode=max
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
-            VERSION=${{ github.ref_name }}
+            VERSION=${{ env.VERSION }}
             BUILD_TIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
             GIT_COMMIT=${{ github.sha }}
             GIT_TAG=${{ github.ref_name }}
@@ -139,6 +140,7 @@ jobs:
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
         env:
           GIN_MODE: release
+          VERSION: ${{ env.VERSION }}
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
