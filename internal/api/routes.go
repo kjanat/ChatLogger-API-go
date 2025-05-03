@@ -4,6 +4,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/kjanat/chatlogger-api-go/internal/domain"
@@ -12,7 +13,43 @@ import (
 	"github.com/kjanat/chatlogger-api-go/internal/version"
 
 	"github.com/gin-gonic/gin"
+
+	docs "github.com/kjanat/chatlogger-api-go/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// setupSwaggerRoutes configures the OpenAPI/Swagger documentation routes.
+func setupSwaggerRoutes(router *gin.Engine, version, host, port string) {
+	log.Printf("Starting ChatLogger API v%s (host: %s, port: %s)",
+		version, host, port)
+
+	docs.SwaggerInfoOpenAPI.Version = version
+	docs.SwaggerInfoOpenAPI.Host = host + ":" + port
+	docs.SwaggerInfoOpenAPI.BasePath = "/api/v1"
+	docs.SwaggerInfoOpenAPI.Schemes = []string{"http", "https"}
+	docs.SwaggerInfoOpenAPI.InfoInstanceName = "OpenAPI"
+
+	// Static files for documentation
+	router.StaticFile("/docs/api.json", "./docs/OpenAPI_swagger.json")
+	router.StaticFile("/docs/api.yaml", "./docs/OpenAPI_swagger.yaml")
+
+	router.GET("/openapi/*any",
+		ginSwagger.WrapHandler(
+			swaggerFiles.Handler,
+			ginSwagger.DocExpansion("list"),
+			ginSwagger.URL("/docs/api.json"),
+		),
+	)
+
+	router.GET("/swagger/*any",
+		ginSwagger.WrapHandler(
+			swaggerFiles.Handler,
+			ginSwagger.DocExpansion("list"),
+			ginSwagger.URL("/docs/api.json"),
+		),
+	)
+}
 
 // addRoutes adds API routes to the router.
 func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
@@ -49,7 +86,7 @@ func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 	{
 		// User routes
 		userHandler := handler.NewUserHandler(services.UserService)
-		userGroup :=  dashboardGroup.Group("/users")
+		userGroup := dashboardGroup.Group("/users")
 		{
 			userGroup.GET("/me", userHandler.GetMe)
 			userGroup.PATCH("/me", userHandler.UpdateMe)

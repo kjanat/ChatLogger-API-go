@@ -26,7 +26,7 @@ jobs:
         with:
           doc: ${{ vars.BUMP_SLUG }}
           token: ${{ secrets.BUMP_TOKEN }}
-          file: docs/openapi-v3_swagger.yaml
+          file: docs-v3/OpenAPIv3_swagger.yaml
           branch: ${{ github.ref_name }}
   api-diff:
     if: ${{ github.event_name == 'pull_request' }}
@@ -40,7 +40,7 @@ jobs:
         with:
           doc: ${{ vars.BUMP_SLUG }}
           token: ${{ secrets.BUMP_TOKEN }}
-          file: docs/openapi-v3_swagger.yaml
+          file: docs-v3/OpenAPIv3_swagger.yaml
           branch: ${{ github.ref_name }}
           command: diff
         env:
