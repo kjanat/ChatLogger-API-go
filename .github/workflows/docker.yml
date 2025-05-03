@@ -57,8 +57,6 @@ jobs:
       - name: Install cosign
         if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3.8.1
-        with:
-          cosign-release: main
       - name: Check cosign install!
         run: cosign version
         
@@ -71,6 +69,10 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "MAJOR=$MAJOR" >> $GITHUB_ENV
           echo "MINOR=$MINOR" >> $GITHUB_ENV
+          echo "Version: $VERSION"
+          echo "Major: $MAJOR"
+          echo "Minor: $MINOR"
+        shell: bash
 
       - # Extract metadata for Docker tags
         name: Extract Docker metadata
@@ -97,36 +99,39 @@ jobs:
           labels: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
             org.opencontainers.image.authors=${{ github.actor }}
-            org.opencontainers.image.url=${{ github.event.repository.html_url }}
-            org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.url="${{ github.event.repository.html_url }}"
+            org.opencontainers.image.documentation="https://chatlogger-api-docs.kjanat.com/"
+            org.opencontainers.image.source="${{ github.server_url }}/${{ github.repository }}"
             org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
             org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
-            org.opencontainers.image.description=${{ github.event.repository.description }}
+            org.opencontainers.image.description="${{ github.event.repository.description }}"
             org.opencontainers.image.base.name=${{ github.event.repository.name }}
           annotations: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
             org.opencontainers.image.authors=${{ github.actor }}
-            org.opencontainers.image.url=${{ github.event.repository.html_url }}
-            org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.url="${{ github.event.repository.html_url }}"
+            org.opencontainers.image.documentation="https://chatlogger-api-docs.kjanat.com/"
+            org.opencontainers.image.source="${{ github.server_url }}/${{ github.repository }}"
             org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
             org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
-            org.opencontainers.image.description=${{ github.event.repository.description }}
+            org.opencontainers.image.description="${{ github.event.repository.description }}"
             org.opencontainers.image.base.name=${{ github.event.repository.name }}
 
       # Build and push common platforms
       - name: Build and push
         id: push
         uses: docker/build-push-action@v6
+        env:
+          GIN_MODE: release
+          VERSION: $VERSION
         with:
           context: .
           file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}
@@ -145,9 +150,6 @@ jobs:
             GIT_TAG=${{ github.ref_name }}
             GIT_BRANCH=${{ github.ref }}
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
-        env:
-          GIN_MODE: release
-          VERSION: $VERSION
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
