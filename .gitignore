@@ -47,3 +47,4 @@ cosign.key
 
 # Copied files
 *?copy.*
+*?old.*

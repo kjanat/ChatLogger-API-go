@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build-platforms:
-    name: Build ${{ matrix.packages }} on ${{ matrix.platforms }}
+    name: Build '${{ matrix.packages }}' on '${{ matrix.platforms }}'
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1 # Enable BuildKit, which is required for Buildx
@@ -65,8 +65,8 @@ jobs:
         run: |
           VERSION_NO_V=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
           VERSION=v$VERSION_NO_V
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          MINOR=$(echo $VERSION | cut -d. -f2)
+          MAJOR=$(echo $VERSION_NO_V | cut -d. -f1)
+          MINOR=$(echo $VERSION_NO_V | cut -d. -f2)
           COMMIT_DATE=$(git log -1 --format=%cd --date=iso-strict)
 
           echo "VERSION_NO_V=$VERSION_NO_V" >> "$GITHUB_ENV"
@@ -81,11 +81,11 @@ jobs:
           echo "MINOR=$MINOR" >> "$GITHUB_OUTPUT"
           echo "COMMIT_DATE=$COMMIT_DATE" >> "$GITHUB_OUTPUT"
 
-          echo "Version without v: $VERSION_NO_V"
-          echo "Version: $VERSION"
-          echo "Major: $MAJOR"
-          echo "Minor: $MINOR"
-          echo "Commit date: $COMMIT_DATE"
+          echo "Version (no v): $VERSION_NO_V"
+          echo "Version:        $VERSION"
+          echo "Major:          $MAJOR"
+          echo "Minor:          $MINOR"
+          echo "Commit date:    $COMMIT_DATE"
         shell: bash
 
       - # Extract metadata for Docker tags
@@ -113,7 +113,7 @@ jobs:
             org.opencontainers.image.url=${{ github.event.repository.html_url }}
             org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.version.outputs.VERSION }}
+            org.opencontainers.image.version=chatlogger-api-${{ matrix.packages }}-${{ steps.version.outputs.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
@@ -128,7 +128,7 @@ jobs:
         uses: docker/build-push-action@v6
         env:
           GIN_MODE: release
-          VERSION: ${{ env.VERSION_NO_V }}
+          VERSION: ${{ steps.version.outputs.VERSION_NO_V }}
         with:
           context: .
           file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}

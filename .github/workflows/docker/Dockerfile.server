@@ -1,6 +1,17 @@
+# Build Stage
+FROM golang:1.24.2-alpine AS builder
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+# Build the server binary for linux
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/chatlogger-api-go-server ./cmd/server
+
+# Final Stage
 FROM alpine:3.21.3
 WORKDIR /app
-COPY chatlogger-api-go-server* chatlogger-api-go-server
+# Copy only the compiled binary from the builder stage
+COPY --from=builder /app/chatlogger-api-go-server /app/chatlogger-api-go-server
 RUN chmod +x /app/chatlogger-api-go-server
 ENV GIN_MODE=release
 EXPOSE 8080
