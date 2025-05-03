@@ -84,10 +84,12 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with: { go-version-file: 'go.mod', cache: true }
 
       # 1) import GPG and setup git
@@ -111,18 +113,19 @@ jobs:
         id: manual_bump
         if: github.event_name == 'workflow_dispatch'
         run: |
-          chmod +x ./scripts/version.sh
-          ./scripts/version.sh "${{ github.event.inputs.version_type }}"
+          cp ./scripts/version.sh ${{ runner.temp }}/version.sh
+          chmod +x ${{ runner.temp }}/version.sh
+          ${{ runner.temp }}/version.sh "${{ github.event.inputs.version_type }}"
           NEW=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
-          
+
           # Construct a detailed commit message
           COMMIT_MSG="chore(release): bump ${{ github.event.inputs.version_type }} version to v${NEW}"
-          
+
           # Add release notes if provided
           if [ ! -z "${{ github.event.inputs.release_notes }}" ]; then
             COMMIT_MSG="${COMMIT_MSG}\n\n${{ github.event.inputs.release_notes }}"
           fi
-          
+
           # Add reference to the workflow run
           COMMIT_MSG="${COMMIT_MSG}\n\nTriggered by workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
@@ -144,7 +147,7 @@ jobs:
       # 3) auto-tag if version.go changed on master/dev
       - name: Ensure version tag exists
         id: ensure_tag
-        if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/')
+        if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/') || steps.manual_bump.outputs.tag_created == 'true'
         run: |
           VER=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
           [ -z "$VER" ] && { echo "::error ::unable to read version"; exit 1; }
