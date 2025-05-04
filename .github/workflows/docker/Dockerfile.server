@@ -1,5 +1,5 @@
 # Build Stage
-FROM golang:latest-alpine AS builder
+FROM golang:1.24.2 AS builder
 
 ARG LD_FLAGS
 
@@ -41,5 +41,7 @@ COPY docs /app
 COPY --from=builder /out/server /usr/local/bin/chatlogger-server
 
 EXPOSE 8080
+
+USER chatlogger:notso
 
 ENTRYPOINT [ "chatlogger-server" ]

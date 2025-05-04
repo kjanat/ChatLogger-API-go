@@ -255,8 +255,8 @@ jobs:
           path: dist/*
           retention-days: 1
 
-      # 5) move/force 'nightly' tag
-      - name: Move signed 'latest' tag
-        run: |
-          git tag -fs latest -m "Nightly version"
-          git push --force origin nightly
+      # # 5) move/force 'nightly' tag
+      # - name: Move signed 'latest' tag
+      #   run: |
+      #     git tag -fs latest -m "Nightly version"
+      #     git push --force origin nightly

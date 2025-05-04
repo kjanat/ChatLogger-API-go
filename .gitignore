@@ -48,3 +48,7 @@ cosign.key
 # Copied files
 *?copy.*
 *?old.*
+
+# Unused GitHub
+.github/workflows/docker-build.yml
+.github/workflows/bump.yml
