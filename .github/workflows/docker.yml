@@ -27,9 +27,10 @@ env:
 
 jobs:
   build-and-push:
-    name: Build & Push '${{ matrix.packages }}' multi-arch
+    name: Build & Push '${{ matrix.packages }}'
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1
       fail-fast: false
       matrix:
         packages:
