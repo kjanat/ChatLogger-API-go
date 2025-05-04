@@ -34,8 +34,8 @@ jobs:
       fail-fast: true
       matrix:
         packages:
-          - "server"
           - "worker"
+          - "server"
     outputs:
       image_name: ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
       digest: ${{ steps.push.outputs.digest }}
