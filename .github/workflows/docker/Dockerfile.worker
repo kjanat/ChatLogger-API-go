@@ -8,6 +8,9 @@ WORKDIR /src
 # Copy all files to ensure we have dependencies
 COPY cmd/ docs/ internal/ go.mod go.sum LICENSE README.md ./
 
+# Install dependencies
+RUN apk add --no-cache grep git
+
 # If 32-bit architecture, change the version of gorm.io/gorm to v1.25.12
 RUN ARCH=$(uname -m) && \
 	if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
@@ -21,8 +24,7 @@ RUN ARCH=$(uname -m) && \
 	fi
 
 # For better diagnosis
-RUN apk add --no-cache grep && \
-	go mod graph | grep -i gorm || echo "No direct GORM dependencies found"
+RUN go mod graph | grep -i gorm || echo "No direct GORM dependencies found"
 
 RUN cat go.mod
 
