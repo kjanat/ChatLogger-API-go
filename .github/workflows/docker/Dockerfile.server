@@ -10,6 +10,10 @@ RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
         echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; \
         go mod edit -require gorm.io/gorm@v1.25.12; \
+        # # Also explicitly downgrade the postgres driver to be compatible
+        # go mod edit -require gorm.io/driver/postgres@v1.5.4; \
+        # Add replace directive to ensure the version is enforced
+        go mod edit -replace gorm.io/gorm=gorm.io/gorm@v1.25.12; \
     else \
         echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
     fi
@@ -17,6 +21,8 @@ RUN ARCH=$(uname -m) && \
 RUN go mod tidy
 # Download dependencies based on the tidied go.mod
 RUN go mod download
+# Verify GORM version for debugging
+RUN go list -m gorm.io/gorm
 COPY . .
 # Build the server binary for linux
 RUN go build \
