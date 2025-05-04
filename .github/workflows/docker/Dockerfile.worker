@@ -15,7 +15,7 @@ RUN go build \
     ./cmd/worker
 
 # Final Stage
-FROM alpine:3.21.3
+FROM alpine
 
 WORKDIR /app
 ENV GIN_MODE=release
