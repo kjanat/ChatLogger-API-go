@@ -10,7 +10,7 @@ COPY . .
 
 # Build the server binary for linux
 RUN go build \
-    -ldflags=$LD_FLAGS \
+    -ldflags="${LD_FLAGS}" \
     -o /out/server \
     ./cmd/server
 
