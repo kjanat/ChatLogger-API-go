@@ -3,7 +3,6 @@ linters:
   exclusions:
     paths:
       - docs/
-      - docs-v3/
       - vendor/
       - .github/
       - .git/
