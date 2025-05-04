@@ -162,10 +162,10 @@ jobs:
           annotations: ${{ steps.meta.outputs.labels }}
           # no-cache: true
           build-contexts: |
-            golang=docker-image://ghcr.io/loong64/golang:${{ steps.version.outputs.GO_VERSION }}-alpine
-            alpine=docker-image://ghcr.io/loong64/alpine:latest
-            # golang=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
-            # alpine=docker-image://alpine:3.21.3
+            start=docker-image://ghcr.io/loong64/golang:${{ steps.version.outputs.GO_VERSION }}-alpine
+            final=docker-image://ghcr.io/loong64/alpine:latest
+            # start=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
+            # final=docker-image://alpine:3.21.3
           build-args: |
             VERSION=${{ env.VERSION }}
             BUILD_TIME=${{ steps.version.outputs.COMMIT_DATE }}
