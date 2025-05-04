@@ -10,7 +10,7 @@ COPY . .
 
 # Build the worker binary for linux
 RUN go build \
-    -ldflags="${LD_FLAGS}" \
+    -ldflags=$LD_FLAGS \
     -o /out/worker \
     ./cmd/worker
 
