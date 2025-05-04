@@ -8,14 +8,16 @@ COPY go.mod go.sum ./
 # If 32-bit architecture, change the version of gorm.io/gorm to v1.25.12
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
-        echo "32-bit architecture detected ($ARCH), changing gorm version"; \
+        echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; \
         go mod edit -require gorm.io/gorm@v1.25.12; \
-        go mod tidy; \
     else \
-        echo "Not a 32-bit architecture, using default gorm version"; \
+        echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
     fi
+# Download dependencies based on the potentially modified go.mod
 RUN go mod download
 COPY . .
+# Tidy up after copying source code
+RUN go mod tidy
 
 # Build the worker binary for linux
 RUN go build \
