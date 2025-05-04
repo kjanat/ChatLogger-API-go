@@ -162,7 +162,7 @@ jobs:
           annotations: ${{ steps.meta.outputs.labels }}
           no-cache: true
           build-contexts: |
-            golang=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
+            golang:latest-alpine=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
           build-args: |
             VERSION=${{ env.VERSION }}
             BUILD_TIME=${{ steps.version.outputs.COMMIT_DATE }}

@@ -1,5 +1,5 @@
 # Build Stage
-FROM golang AS builder
+FROM golang:latest-alpine AS builder
 
 ARG LD_FLAGS
 
