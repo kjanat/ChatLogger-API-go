@@ -7,10 +7,14 @@ version: 2
 updates:
   - package-ecosystem: 'gomod'
     directory: '/'
+    allow:
+      - dependency-type: "all"
+    ignore:
+      - dependency-name: "gorm.io/gorm"
     schedule:
-      interval: weekly
-      day: 'tuesday'
-      time: '03:00'
+      interval: daily
+      # day: 'tuesday'
+      time: '04:15'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     labels:
@@ -23,10 +27,12 @@ updates:
           - '*'
   - package-ecosystem: 'github-actions'
     directory: '/.github/workflows/'
+    allow:
+      - dependency-type: "all"
     schedule:
-      interval: weekly
-      day: 'tuesday'
-      time: '03:00'
+      interval: daily
+      # day: 'tuesday'
+      time: '04:15'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     labels:
@@ -44,10 +50,12 @@ updates:
     directories:
       - '/'
       - '/.github/workflows/docker'
+    allow:
+      - dependency-type: "all"
     schedule:
-      interval: weekly
-      day: 'tuesday'
-      time: '03:00'
+      interval: daily
+      # day: 'tuesday'
+      time: '04:15'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     reviewers:
@@ -60,10 +68,13 @@ updates:
     directories:
       - '/'
       - '/.github/workflows/docker'
+    allow:
+      # Allow both direct and indirect updates for all packages.
+      - dependency-type: "all"
     schedule:
-      interval: weekly
-      day: 'tuesday'
-      time: '03:00'
+      interval: daily
+      # day: 'tuesday'
+      time: '04:15'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     reviewers:
