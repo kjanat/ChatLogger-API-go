@@ -12,15 +12,12 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}
-  #-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-platforms:
     name: Build '${{ matrix.packages }}' on '${{ matrix.platforms }}'
     runs-on: ubuntu-latest
-    env:
-      DOCKER_BUILDKIT: 1 # Enable BuildKit, which is required for Buildx
     permissions:
       contents: read
       packages: write
@@ -29,30 +26,15 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        # Define the packages to build:
-        # 'server' represents the main API backend, and 'worker' represents the background job processor.
-        packages: [server, worker]
-        platforms: [linux/amd64, linux/arm64, linux/arm/v7]
+        packages: ["server", "worker"]
+        platforms: ["linux/amd64", "linux/arm64", " linux/arm/v7"]
+    env:
+      IMAGE_PREFIX: chatlogger-api
     steps:
-      - # Login to GitHub Container Registry
-        name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
@@ -68,24 +50,32 @@ jobs:
           MAJOR=$(echo $VERSION_NO_V | cut -d. -f1)
           MINOR=$(echo $VERSION_NO_V | cut -d. -f2)
           COMMIT_DATE=$(git log -1 --format=%cd --date=iso-strict)
+          GO_VERSION=$(grep -oP 'go \K[0-9]+(\.[0-9]+)*' go.mod)
+          TIMESTAMP=$(git log -1 --pretty=%ct)
 
           echo "VERSION_NO_V=$VERSION_NO_V" >> "$GITHUB_ENV"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "MAJOR=$MAJOR" >> "$GITHUB_ENV"
           echo "MINOR=$MINOR" >> "$GITHUB_ENV"
           echo "COMMIT_DATE=$COMMIT_DATE" >> "$GITHUB_ENV"
+          echo "GO_VERSION=$GO_VERSION" >> "$GITHUB_ENV"
+          echo "TIMESTAMP=$TIMESTAMP" >> "$GITHUB_ENV"
 
           echo "VERSION_NO_V=$VERSION_NO_V" >> "$GITHUB_OUTPUT"
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
           echo "MAJOR=$MAJOR" >> "$GITHUB_OUTPUT"
           echo "MINOR=$MINOR" >> "$GITHUB_OUTPUT"
           echo "COMMIT_DATE=$COMMIT_DATE" >> "$GITHUB_OUTPUT"
+          echo "GO_VERSION=$GO_VERSION" >> "$GITHUB_OUTPUT"
+          echo "TIMESTAMP=$TIMESTAMP" >> "$GITHUB_OUTPUT"
 
           echo "Version (no v): $VERSION_NO_V"
           echo "Version:        $VERSION"
           echo "Major:          $MAJOR"
           echo "Minor:          $MINOR"
           echo "Commit date:    $COMMIT_DATE"
+          echo "Go version:     $GO_VERSION"
+          echo "Timestamp:      $TIMESTAMP"
         shell: bash
 
       - # Extract metadata for Docker tags
@@ -93,7 +83,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
+          images: |
+            kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+            ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
           tags: |
             type=semver,pattern={{raw}},priority=1000
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }},priority=900
@@ -110,17 +102,40 @@ jobs:
           labels: |
             org.opencontainers.image.created=${{ steps.version.outputs.COMMIT_DATE }}
             org.opencontainers.image.authors=${{ github.actor }}
-            org.opencontainers.image.url=${{ github.event.repository.html_url }}
+            org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
             org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=chatlogger-api-${{ matrix.packages }}-${{ steps.version.outputs.VERSION }}
+            org.opencontainers.image.version=${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}-${{ steps.version.outputs.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
-            org.opencontainers.image.title=chatlogger-api-${{ matrix.packages }}
+            org.opencontainers.image.title=${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
             org.opencontainers.image.description='${{ github.event.repository.description }}'
-            org.opencontainers.image.base.name=ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}:${{ steps.version.outputs.VERSION_NO_V }}
+            org.opencontainers.image.base.name=ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}:${{ steps.version.outputs.VERSION_NO_V }}
+
+      - # Login to GitHub Container Registry
+        name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Login to DockerHub
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       # Build and push common platforms
       - name: Build and push
@@ -129,30 +144,34 @@ jobs:
         env:
           GIN_MODE: release
           VERSION: ${{ steps.version.outputs.VERSION_NO_V }}
+          SOURCE_DATE_EPOCH: ${{ steps.version.outputs.TIMESTAMP }}
         with:
           context: .
+
           file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}
-          platforms: linux/amd64,linux/arm/v7,linux/arm64
-          # platforms: ${{ matrix.platforms }}
+          platforms: ${{ matrix.platforms }}    # platforms: linux/amd64,linux/arm/v7,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}
           annotations: ${{ steps.meta.outputs.labels }}
           no-cache: true
+          build-contexts: |
+            golang=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
           build-args: |
             VERSION=${{ env.VERSION }}
-            BUILD_TIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            BUILD_TIME=${{ steps.version.outputs.COMMIT_DATE }}
             GIT_COMMIT=${{ github.sha }}
             GIT_TAG=${{ github.ref_name }}
             GIT_BRANCH=${{ github.ref }}
+            LD_FLAGS='-s -w -X "github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.VERSION_NO_V }}" -X "github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.COMMIT_DATE }}" -X "github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}"'
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description='${{ github.event.repository.description }}'
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
+          subject-name: ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
@@ -173,15 +192,15 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          VERSION: $VERSION_NO_V
-          MAJOR: $MAJOR
-          MINOR: $MINOR
+          VERSION: ${{ steps.version.outputs.VERSION_NO_V }}
+          MAJOR: ${{ steps.version.outputs.MAJOR }}
+          MINOR: ${{ steps.version.outputs.MINOR }}
           DIGEST: ${{ steps.push.outputs.digest }}
 
       - name: Check images
         continue-on-error: true
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          docker buildx imagetools inspect ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
-          docker pull ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
-          cosign verify --key cosign.pub ghcr.io/kjanat/chatlogger-api-${{ matrix.packages }}
+          docker buildx imagetools inspect ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+          docker pull ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+          cosign verify --key cosign.pub ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
