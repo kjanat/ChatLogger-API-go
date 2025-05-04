@@ -1,5 +1,5 @@
 # Build Stage
-FROM start AS builder
+FROM golang:1.24.2-alpine AS builder
 
 ARG LD_FLAGS
 
@@ -15,7 +15,7 @@ RUN go build \
     ./cmd/server
 
 # Final Stage
-FROM final
+FROM alpine:3.21.3
 
 WORKDIR /app
 ENV GIN_MODE=release
