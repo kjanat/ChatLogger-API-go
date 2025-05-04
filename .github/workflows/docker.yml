@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }} # Add ref to concurrency group
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -22,7 +22,7 @@ permissions:
 
 # Define platforms list once
 env:
-  PLATFORMS: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7,linux/riscv64,linux/ppc64le
+  PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7 #,linux/riscv64,linux/ppc64le,linux/arm/v6
   IMAGE_PREFIX: chatlogger-api
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
     name: Build & Push '${{ matrix.packages }}'
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 1
+      # max-parallel: 1
       fail-fast: false
       matrix:
         packages:
@@ -104,10 +104,24 @@ jobs:
             type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }},priority=700
             type=semver,pattern={{major}}.{{minor}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=700
             type=schedule,pattern={{date 'YYYYMMDD-hhmmss' tz='Europe/Amsterdam'}},prefix={{version}}-,enable=${{ github.ref != format('refs/heads/{0}', 'master') }},priority=200
-            type=sha,enable=true,prefix=sha-,format=short,priority=100
+            type=sha,enable=true,format=short,priority=100
             type=ref,event=branch,priority=300
             type=sha,priority=100
           labels: |
+            org.opencontainers.image.created=${{ steps.version.outputs.COMMIT_DATE }}
+            org.opencontainers.image.authors=${{ github.actor }}
+            org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+            org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}-${{ steps.version.outputs.VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
+            org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
+            org.opencontainers.image.title=${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+            org.opencontainers.image.description='${{ github.event.repository.description }}'
+            org.opencontainers.image.base.name=ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}:${{ steps.version.outputs.VERSION_NO_V }}
+          annotations: |
             org.opencontainers.image.created=${{ steps.version.outputs.COMMIT_DATE }}
             org.opencontainers.image.authors=${{ github.actor }}
             org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
@@ -155,7 +169,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           build-contexts: |
             golang:latest-alpine=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
           build-args: |
@@ -164,7 +178,7 @@ jobs:
             GIT_COMMIT=${{ github.sha }}
             GIT_TAG=${{ github.ref_name }}
             GIT_BRANCH=${{ github.ref }}
-            LD_FLAGS=-s -w -X "github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.VERSION_NO_V }}" -X "github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.COMMIT_DATE }}" -X "github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}"
+            LD_FLAGS=-s -w -X github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.VERSION_NO_V }} -X github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.COMMIT_DATE }} -X "github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
