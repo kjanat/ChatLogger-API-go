@@ -7,6 +7,7 @@ WORKDIR /src
 
 # Copy all files to ensure we have dependencies
 COPY cmd/ docs/ internal/ go.mod go.sum LICENSE README.md ./
+RUN ls -l
 
 # Install dependencies
 RUN apk add --no-cache grep git
@@ -15,7 +16,6 @@ RUN apk add --no-cache grep git
 RUN ARCH=$(uname -m) && \
 	if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
 		echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; \
-		go mod edit -require gorm.io/gorm@v1.25.12; \
 		go mod edit -replace=gorm.io/gorm=gorm.io/gorm@v1.25.12; \
 	else \
 		echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
@@ -33,7 +33,7 @@ RUN go list -m all | grep -i gorm || echo "No GORM dependencies found"
 RUN go build \
 	-ldflags="${LD_FLAGS}" \
 	-o /out/server \
-	./cmd/server
+	cmd/server
 
 # Final Stage
 FROM alpine:3.21.3
