@@ -147,7 +147,6 @@ jobs:
           SOURCE_DATE_EPOCH: ${{ steps.version.outputs.TIMESTAMP }}
         with:
           context: .
-
           file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}
           platforms: ${{ matrix.platforms }}    # platforms: linux/amd64,linux/arm/v7,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
@@ -156,7 +155,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}
           annotations: ${{ steps.meta.outputs.labels }}
-          no-cache: true
+          # no-cache: true
           build-contexts: |
             golang=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
           build-args: |
