@@ -6,8 +6,8 @@ on:
   push:
     branches: ["master"]
     tags: ["v*.*.*"]
-  pull_request:
-    branches: ["master"]
+  # pull_request:
+  #   branches: ["master"]
   workflow_dispatch:
 
 concurrency:
@@ -45,7 +45,6 @@ jobs:
           fetch-depth: 0
 
       - name: Install cosign
-        if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3.8.1
       - name: Check cosign install!
         run: cosign version
@@ -124,7 +123,6 @@ jobs:
 
       - # Login to GitHub Container Registry
         name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -133,7 +131,6 @@ jobs:
 
       # Login to DockerHub
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -187,7 +184,6 @@ jobs:
 
       # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
       - name: Sign the published Docker images
-        if: ${{ github.event_name != 'pull_request' }}
         id: sign
         run: |
           images=""
@@ -205,8 +201,7 @@ jobs:
           DIGEST: ${{ steps.push.outputs.digest }}
 
       - name: Check images
-        continue-on-error: true
-        if: ${{ github.event_name != 'pull_request' }}
+        # continue-on-error: true
         run: |
           docker buildx imagetools inspect ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
           docker pull ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
