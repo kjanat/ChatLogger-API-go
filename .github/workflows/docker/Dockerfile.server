@@ -13,12 +13,11 @@ RUN ARCH=$(uname -m) && \
     else \
         echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
     fi
-# Download dependencies based on the potentially modified go.mod
+# Tidy up dependencies based on the potentially modified go.mod *before* downloading
+RUN go mod tidy
+# Download dependencies based on the tidied go.mod
 RUN go mod download
 COPY . .
-# Tidy up after copying source code
-RUN go mod tidy
-
 # Build the server binary for linux
 RUN go build \
 -ldflags="${LD_FLAGS}" \
