@@ -6,10 +6,10 @@ ARG LD_FLAGS
 WORKDIR /src
 
 # Copy all files to ensure we have dependencies
-COPY go.mod go.sum /src/
-COPY /cmd/server /src/cmd/server
-COPY /cmd/docs/ /src/docs
-COPY /cmd/internal/ /src/internal
+COPY go.mod go.sum ./
+COPY cmd/server ./cmd/server
+COPY docs/ ./docs
+COPY internal/ ./internal
 
 RUN ls -l
 
