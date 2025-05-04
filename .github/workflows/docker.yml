@@ -157,10 +157,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}-${{ matrix.platforms }}
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}-${{ matrix.platforms }}
           annotations: ${{ steps.meta.outputs.labels }}
-          # no-cache: true
+          no-cache: true
           build-contexts: |
             golang=docker-image://ghcr.io/loong64/golang
             alpine=docker-image://ghcr.io/loong64/alpine
