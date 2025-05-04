@@ -11,8 +11,8 @@ updates:
       - dependency-type: "all"
     schedule:
       interval: daily
-      # day: 'tuesday'
-      time: '16:00'
+      day: 'tuesday'
+      time: '03:00'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     labels:
@@ -29,8 +29,8 @@ updates:
       - dependency-type: "all"
     schedule:
       interval: daily
-      # day: 'tuesday'
-      time: '16:00'
+      day: 'tuesday'
+      time: '03:00'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     labels:
@@ -52,8 +52,8 @@ updates:
       - dependency-type: "all"
     schedule:
       interval: daily
-      # day: 'tuesday'
-      time: '16:00'
+      day: 'tuesday'
+      time: '03:00'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     reviewers:
@@ -71,8 +71,8 @@ updates:
       - dependency-type: "all"
     schedule:
       interval: daily
-      # day: 'tuesday'
-      time: '16:00'
+      day: 'tuesday'
+      time: '03:00'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     reviewers:

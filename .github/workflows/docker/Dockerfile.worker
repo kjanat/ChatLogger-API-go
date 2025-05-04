@@ -21,6 +21,7 @@ RUN ls -l
 RUN cat go.mod
 
 # For better diagnosis
+RUN apk add --no-cache grep
 RUN go mod graph | grep gorm
 
 # Download dependencies based on the tidied go.mod
