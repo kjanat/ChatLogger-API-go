@@ -163,7 +163,6 @@ jobs:
           no-cache: true
           build-contexts: |
             golang=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
-            alpine=docker-image://alpine:3.21.3
           build-args: |
             VERSION=${{ env.VERSION }}
             BUILD_TIME=${{ steps.version.outputs.COMMIT_DATE }}
