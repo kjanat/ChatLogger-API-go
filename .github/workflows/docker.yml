@@ -11,33 +11,35 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }} # Add ref to concurrency group
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
+# Define platforms list once
+env:
+  PLATFORMS: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7,linux/riscv64,linux/ppc64le
+  IMAGE_PREFIX: chatlogger-api
+
 jobs:
-  build-platforms:
-    name: Build '${{ matrix.packages }}' on '${{ matrix.platforms }}'
+  build-and-push:
+    name: Build & Push '${{ matrix.packages }}' multi-arch
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      attestations: write
     strategy:
       fail-fast: false
       matrix:
         packages:
           - "server"
           - "worker"
-        platforms:
-          - "linux/amd64"
-          - "linux/arm64"
-          - "linux/arm/v6"
-          - "linux/arm/v7"
-          - "linux/riscv64"
-          - "linux/ppc64le"
-    env:
-      IMAGE_PREFIX: chatlogger-api
+    outputs:
+      image_name: ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+      digest: ${{ steps.push.outputs.digest }}
+      tags: ${{ steps.meta.outputs.tags }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -85,8 +87,7 @@ jobs:
           echo "Timestamp:      $TIMESTAMP"
         shell: bash
 
-      - # Extract metadata for Docker tags
-        name: Extract Docker metadata
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -94,18 +95,17 @@ jobs:
             kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
             ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
           tags: |
-            type=semver,pattern={{raw}},priority=1000
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }},priority=900
-            type=schedule,pattern=nightly,enable=${{ github.ref != format('refs/heads/{0}', 'master') && github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/v') }},priority=900
-            type=edge,enable={{is_default_branch}},priority=800
-            type=semver,pattern={{version}},value=${{ steps.version.outputs.VERSION_NO_V }},priority=800
+            type=semver,pattern={{raw}},priority=9000
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }},priority=1000
+            type=schedule,pattern=nightly,enable=${{ github.ref != format('refs/heads/{0}', 'master') && github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/v') }},priority=600
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.VERSION_NO_V }},priority=900
             type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=800
             type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }},priority=700
             type=semver,pattern={{major}}.{{minor}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=700
             type=schedule,pattern={{date 'YYYYMMDD-hhmmss' tz='Europe/Amsterdam'}},prefix={{version}}-,enable=${{ github.ref != format('refs/heads/{0}', 'master') }},priority=200
             type=sha,enable=true,prefix=sha-,format=short,priority=100
-            type=ref,event=branch
-            type=sha
+            type=ref,event=branch,priority=300
+            type=sha,priority=100
           labels: |
             org.opencontainers.image.created=${{ steps.version.outputs.COMMIT_DATE }}
             org.opencontainers.image.authors=${{ github.actor }}
@@ -121,15 +121,13 @@ jobs:
             org.opencontainers.image.description='${{ github.event.repository.description }}'
             org.opencontainers.image.base.name=ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}:${{ steps.version.outputs.VERSION_NO_V }}
 
-      # Login to DockerHub
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - # Login to GitHub Container Registry
-        name: Login to GitHub Container Registry
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -140,80 +138,101 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build and push common platforms
-      - name: Build and push
+      - name: Build and push multi-arch image
         id: push
         uses: docker/build-push-action@v6
         env:
           GIN_MODE: release
-          VERSION: ${{ steps.version.outputs.VERSION_NO_V }}
           SOURCE_DATE_EPOCH: ${{ steps.version.outputs.TIMESTAMP }}
         with:
           context: .
           file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}
-          platforms: ${{ matrix.platforms }}    # platforms: linux/amd64,linux/arm/v7,linux/arm64
+          platforms: ${{ env.PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}-${{ matrix.platforms }}
           annotations: ${{ steps.meta.outputs.labels }}
-          no-cache: true
           build-contexts: |
             golang:latest-alpine=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
           build-args: |
-            VERSION=${{ env.VERSION }}
+            VERSION=${{ steps.version.outputs.VERSION_NO_V }}
             BUILD_TIME=${{ steps.version.outputs.COMMIT_DATE }}
             GIT_COMMIT=${{ github.sha }}
             GIT_TAG=${{ github.ref_name }}
             GIT_BRANCH=${{ github.ref }}
             LD_FLAGS=-s -w -X "github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.VERSION_NO_V }}" -X "github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.COMMIT_DATE }}" -X "github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}"
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
+
       - name: Generate artifact attestation
+        if: steps.push.outputs.digest != ''
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-      # Sign the images (GitHub Container Registry only)
-      # There are repository secrets for COSIGN_PRIVATE_KEY and COSIGN_PASSWORD, and the repo contains cosign.pub
-
-      # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
       - name: Sign the published Docker images
+        if: steps.push.outputs.digest != '' && github.event_name != 'pull_request'
         id: sign
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
         env:
-          TAGS: ${{ steps.meta.outputs.tags }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          VERSION: ${{ steps.version.outputs.VERSION_NO_V }}
-          MAJOR: ${{ steps.version.outputs.MAJOR }}
-          MINOR: ${{ steps.version.outputs.MINOR }}
+          TAGS: ${{ steps.meta.outputs.tags }}
           DIGEST: ${{ steps.push.outputs.digest }}
-
-      - name: Check images
-        continue-on-error: true
         run: |
+          echo "Signing digest: ${DIGEST}"
+          echo "Tags: ${TAGS}"
+          images_to_sign=""
+          IFS=$'\n'
           for tag in ${TAGS}; do
-            echo "Checking image: $tag"
-            docker buildx imagetools inspect $tag
-            docker inspect $tag  # Added line to inspect the image
-            docker pull $tag
-            cosign verify --key cosign.pub $tag
+            if [[ -n "$tag" ]]; then
+              images_to_sign+="${tag}@${DIGEST} "
+            fi
           done
+          unset IFS
 
-          if [ $? -ne 0 ]; then
-            echo "Image verification failed for $tag"
-            echo ":: warning :: Image verification failed for $tag"
+          echo "Images to sign: ${images_to_sign}"
+          if [[ -n "$images_to_sign" ]]; then
+            cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images_to_sign}
+          else
+            echo "No images to sign."
           fi
-          # docker buildx imagetools inspect ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
-          # docker pull ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
-          # cosign verify --key cosign.pub ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+
+      - name: Check images and verify signatures
+        if: steps.push.outputs.digest != '' && github.event_name != 'pull_request'
+        continue-on-error: true
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          echo "Verifying digest: ${DIGEST}"
+          echo "Verifying tags: ${TAGS}"
+          verification_failed=false
+          IFS=$'\n'
+          for tag in ${TAGS}; do
+            if [[ -n "$tag" ]]; then
+              echo "--- Verifying image: $tag ---"
+              cosign verify-attestation --key cosign.pub $tag@${DIGEST}
+              if [ $? -ne 0 ]; then
+                echo "::warning::Provenance verification failed for $tag@${DIGEST}"
+                verification_failed=true
+              fi
+              cosign verify --key cosign.pub $tag@${DIGEST}
+              if [ $? -ne 0 ]; then
+                echo "::warning::Signature verification failed for $tag@${DIGEST}"
+                verification_failed=true
+              else
+                echo "Signature verified successfully for $tag@${DIGEST}"
+              fi
+            fi
+          done
+          unset IFS
+
+          if [[ "$verification_failed" == true ]]; then
+            echo "::error::One or more image verifications failed."
+          else
+            echo "All image verifications successful."
+          fi
