@@ -162,7 +162,7 @@ jobs:
       # Build server component
       - name: Build and push ${{ matrix.packages }} image
         id: docker_build_server
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6s
         env:
           VERSION: $VERSION
           BUILD_TIME: $BUILD_DATE

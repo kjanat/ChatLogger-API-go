@@ -7,16 +7,21 @@ WORKDIR /src
 COPY go.mod go.sum ./
 # If 32-bit architecture, change the version of gorm.io/gorm to v1.25.12
 RUN ARCH=$(uname -m) && \
-    if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
-        echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; \
-        go get -u gorm.io/gorm@v1.25.12 || true; \
-        go mod edit -require gorm.io/gorm@v1.25.12; \
-    else \
-        echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
-    fi
+if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
+    echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; \
+    go get -u gorm.io/gorm@v1.25.12 || true; \
+    go mod edit -require gorm.io/gorm@v1.25.12; \
+    go mod edit -replace=gorm.io/gorm=gorm.io/gorm@v1.25.12; \
+    go mod tidy; \
+else \
+    echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
+fi
 
-# Tidy up dependencies based on the potentially modified go.mod
-RUN go mod tidy
+RUN ls -l
+RUN cat go.mod
+
+# For better diagnosis
+RUN go mod graph | grep gorm
 
 # Download dependencies based on the tidied go.mod
 RUN go mod download
