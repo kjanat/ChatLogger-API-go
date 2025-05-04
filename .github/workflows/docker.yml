@@ -164,8 +164,6 @@ jobs:
           build-contexts: |
             golang:1.24.2-alpine=docker-image://ghcr.io/loong64/golang:${{ steps.version.outputs.GO_VERSION }}-alpine
             alpine:3.21.3=docker-image://ghcr.io/loong64/alpine:3.21.3
-            # start=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
-            # final=docker-image://alpine:3.21.3
           build-args: |
             VERSION=${{ env.VERSION }}
             BUILD_TIME=${{ steps.version.outputs.COMMIT_DATE }}
