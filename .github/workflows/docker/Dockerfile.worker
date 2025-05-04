@@ -23,6 +23,9 @@ RUN ARCH=$(uname -m) && \
 		echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
 	fi
 
+# Install dependencies
+RUN go mod tidy
+
 # Build the server binary for linux
 RUN go build \
 	-ldflags="${LD_FLAGS}" \
