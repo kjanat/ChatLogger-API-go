@@ -11,10 +11,8 @@ COPY cmd/worker ./cmd/worker
 COPY docs/ ./docs
 COPY internal/ ./internal
 
-RUN ls -l
-
 # Install dependencies
-RUN apk add --no-cache grep git
+RUN apk add --no-cache git
 
 # If 32-bit architecture, change the version of gorm.io/gorm to v1.25.12
 RUN ARCH=$(uname -m) && \
@@ -24,14 +22,6 @@ RUN ARCH=$(uname -m) && \
 	else \
 		echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
 	fi
-
-# For better diagnosis
-RUN go mod graph | grep -i gorm || echo "No direct GORM dependencies found"
-
-RUN cat go.mod
-
-# Verify GORM version being used
-RUN go list -m all | grep -i gorm || echo "No GORM dependencies found"
 
 # Build the server binary for linux
 RUN go build \
