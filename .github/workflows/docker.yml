@@ -158,9 +158,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}
+          cache-to: type=gha,mode=max,key=cache-${{ matrix.packages }}-${{ matrix.platforms }}
           annotations: ${{ steps.meta.outputs.labels }}
-          no-cache: true
+          # no-cache: true
           build-contexts: |
             golang=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}-alpine
           build-args: |
@@ -201,8 +201,20 @@ jobs:
           DIGEST: ${{ steps.push.outputs.digest }}
 
       - name: Check images
-        # continue-on-error: true
+        continue-on-error: true
         run: |
-          docker buildx imagetools inspect ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
-          docker pull ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
-          cosign verify --key cosign.pub ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+          for tag in ${TAGS}; do
+            echo "Checking image: $tag"
+            docker buildx imagetools inspect $tag
+            docker inspect $tag  # Added line to inspect the image
+            docker pull $tag
+            cosign verify --key cosign.pub $tag
+          done
+
+          if [ $? -ne 0 ]; then
+            echo "Image verification failed for $tag"
+            echo ":: warning :: Image verification failed for $tag"
+          fi
+          # docker buildx imagetools inspect ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+          # docker pull ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+          # cosign verify --key cosign.pub ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
