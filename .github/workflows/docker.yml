@@ -178,7 +178,7 @@ jobs:
             GIT_COMMIT=${{ github.sha }}
             GIT_TAG=${{ github.ref_name }}
             GIT_BRANCH=${{ github.ref }}
-            LD_FLAGS=-s -w '-X github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.VERSION_NO_V }}' '-X github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.COMMIT_DATE }}' '-X github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}'
+            LD_FLAGS=-s -w -X github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.VERSION_NO_V }} -X github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.COMMIT_DATE }} -X github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
