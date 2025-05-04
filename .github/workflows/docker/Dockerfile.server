@@ -6,7 +6,11 @@ ARG LD_FLAGS
 WORKDIR /src
 
 # Copy all files to ensure we have dependencies
-COPY cmd/ docs/ internal/ go.mod go.sum LICENSE README.md ./
+COPY go.mod go.sum /src/
+COPY /cmd/server /src/cmd/server
+COPY /cmd/docs/ /src/docs
+COPY /cmd/internal/ /src/internal
+
 RUN ls -l
 
 # Install dependencies
@@ -33,7 +37,7 @@ RUN go list -m all | grep -i gorm || echo "No GORM dependencies found"
 RUN go build \
 	-ldflags="${LD_FLAGS}" \
 	-o /out/server \
-	cmd/server
+	./cmd/server
 
 # Final Stage
 FROM alpine:3.21.3
