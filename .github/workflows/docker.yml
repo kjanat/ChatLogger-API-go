@@ -1,47 +1,60 @@
 name: Docker CI/CD
 
 on:
-  schedule:
-    - cron: "15 14 */1 * *" # At 14:15 on every day-of-month.
-  push:
-    branches: ["development"]
-    tags: ["v*.*.*"]
-  pull_request:
-    branches: ["master"]
+  # schedule:
+  #   - cron: "15 14 */1 * *" # At 14:15 on every day-of-month.
+  # push:
+  #   branches: ["development"]
+  #   tags: ["v*.*.*"]
+  # pull_request:
+  #   branches: ["master"]
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to build'
-        type: string
-        required: true
-      branch:
-        description: 'Branch to build'
-        type: string
-        required: false
-        default: 'development'
-        # options: [master, development]
-      package:
-        description: 'Package to build'
-        type: choice
-        required: true
-        default: 'server'
-        options: [server, worker]
+    # inputs:
+    #   version:
+    #     description: 'Version to build'
+    #     type: string
+    #     required: true
+    #   branch:
+    #     description: 'Branch to build'
+    #     type: string
+    #     required: false
+    #     default: 'development'
+    #     # options: [master, development]
+    #   package:
+    #     description: 'Package to build'
+    #     type: choice
+    #     required: true
+    #     default: 'server'
+    #     options: [server, worker]
   workflow_call:
-    inputs:
-      version:
-        description: 'Version to build'
-        type: string
+    secrets: 
+      TOKEN:
         required: true
-      branch:
-        description: 'Branch to build'
-        type: string
-        required: false
-        default: 'development'
-      package:
-        description: 'Package to build'
-        type: string
+        description: 'GitHub token'
+      COSIGN_PRIVATE_KEY:
         required: true
-        default: 'server'
+        description: 'Cosign private key'
+      COSIGN_PASSWORD:
+        required: true
+        description: 'Cosign password'
+      DOCKERHUB_TOKEN:
+        required: true
+        description: 'DockerHub token'
+    # inputs:
+    #   version:
+    #     description: 'Version to build'
+    #     type: string
+    #     required: true
+    #   branch:
+    #     description: 'Branch to build'
+    #     type: string
+    #     required: false
+    #     default: 'development'
+    #   package:
+    #     description: 'Package to build'
+    #     type: string
+    #     required: true
+    #     default: 'server'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -165,7 +178,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

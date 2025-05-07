@@ -31,7 +31,7 @@ permissions: # default
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false # for manual bump (no PRs)
+  cancel-in-progress: true # for manual bump (no PRs)
 
 # ───────────────────────────────────────────────────────────────
 jobs:
@@ -226,26 +226,6 @@ jobs:
           username: ${{ vars.GH_USERNAME }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v3
-      #   if: |
-      #     startsWith(github.ref,'refs/tags/v') ||
-      #     steps.manual_bump.outputs.tag_created == 'true' ||
-      #     steps.ensure_tag.outputs.tag_created == 'true'
-
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-      #   if: |
-      #     startsWith(github.ref,'refs/tags/v') ||
-      #     steps.manual_bump.outputs.tag_created == 'true' ||
-      #     steps.ensure_tag.outputs.tag_created == 'true'
-      # - name: Set up ko
-      #   uses: ko-build/setup-ko@v0.9
-      #   if: |
-      #     startsWith(github.ref,'refs/tags/v') ||
-      #     steps.manual_bump.outputs.tag_created == 'true' ||
-      #     steps.ensure_tag.outputs.tag_created == 'true'
-
       - name: Set up cosign
         uses: sigstore/cosign-installer@v3.8.2
         if: |
@@ -283,8 +263,18 @@ jobs:
           path: dist/*
           retention-days: 1
 
-      # # 5) move/force 'nightly' tag
-      # - name: Move signed 'latest' tag
-      #   run: |
-      #     git tag -fs latest -m "Nightly version"
-      #     git push --force origin nightly
+  docker:
+    uses: ./.github/workflows/docker.yml
+    name: Docker Build & Push
+    needs: [ci, release]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    secrets:
+      TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      DOCKERHUB_TOKEN: "${{ secrets.DOCKERHUB_TOKEN }}"
+      COSIGN_PASSWORD: "${{ secrets.COSIGN_PASSWORD }}"
+      COSIGN_PRIVATE_KEY: "${{ secrets.COSIGN_PRIVATE_KEY }}"
