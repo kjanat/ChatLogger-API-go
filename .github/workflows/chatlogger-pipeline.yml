@@ -268,11 +268,19 @@ jobs:
     name: Docker Build & Push
     needs: [ci, release]
     if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: true
+      matrix:
+        package: [server, worker]
     permissions:
       contents: read
       packages: write
       id-token: write
       attestations: write
+    with:
+      PACKAGE: ${{ matrix.package }}
+      IMAGE_PREFIX: chatlogger-api
+      PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7
     secrets:
       TOKEN: "${{ secrets.GITHUB_TOKEN }}"
       DOCKERHUB_TOKEN: "${{ secrets.DOCKERHUB_TOKEN }}"

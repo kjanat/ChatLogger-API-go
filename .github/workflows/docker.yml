@@ -1,31 +1,6 @@
-name: Docker CI/CD
+name: Docker
 
 on:
-  # schedule:
-  #   - cron: "15 14 */1 * *" # At 14:15 on every day-of-month.
-  # push:
-  #   branches: ["development"]
-  #   tags: ["v*.*.*"]
-  # pull_request:
-  #   branches: ["master"]
-  workflow_dispatch:
-    # inputs:
-    #   version:
-    #     description: 'Version to build'
-    #     type: string
-    #     required: true
-    #   branch:
-    #     description: 'Branch to build'
-    #     type: string
-    #     required: false
-    #     default: 'development'
-    #     # options: [master, development]
-    #   package:
-    #     description: 'Package to build'
-    #     type: choice
-    #     required: true
-    #     default: 'server'
-    #     options: [server, worker]
   workflow_call:
     secrets: 
       TOKEN:
@@ -40,25 +15,19 @@ on:
       DOCKERHUB_TOKEN:
         required: true
         description: 'DockerHub token'
-    # inputs:
-    #   version:
-    #     description: 'Version to build'
-    #     type: string
-    #     required: true
-    #   branch:
-    #     description: 'Branch to build'
-    #     type: string
-    #     required: false
-    #     default: 'development'
-    #   package:
-    #     description: 'Package to build'
-    #     type: string
-    #     required: true
-    #     default: 'server'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+    inputs:
+      PACKAGE:
+        type: string
+        required: true
+        description: 'Package to build'
+      IMAGE_PREFIX:
+        required: true
+        type: string
+        description: 'Prefix for the image name'
+      PLATFORMS:
+        required: true
+        type: string
+        description: 'List of platforms to build for'
 
 permissions:
   contents: read
@@ -66,24 +35,12 @@ permissions:
   id-token: write
   attestations: write
 
-# Define platforms list once
-env:
-  PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7
-  IMAGE_PREFIX: chatlogger-api
-
 jobs:
   build-and-push:
-    name: Build & Push '${{ matrix.packages }}'
+    name: Build & Push '${{ inputs.PACKAGE }}'
     runs-on: ubuntu-latest
-    strategy:
-      # max-parallel: 1
-      fail-fast: true
-      matrix:
-        packages:
-          - "server"
-          - "worker"
     outputs:
-      image_name: ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+      # image_name: ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
       digest: ${{ steps.push.outputs.digest }}
       tags: ${{ steps.meta.outputs.tags }}
 
@@ -134,8 +91,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
-            ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+            kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
+            ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
           tags: |
             # latest vs nightly
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }},priority=1000
@@ -155,17 +112,17 @@ jobs:
           labels: |
             org.opencontainers.image.created=${{ steps.version.outputs.COMMIT_DATE }}
             org.opencontainers.image.authors=${{ github.actor }}
-            org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+            org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
             org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}-${{ steps.version.outputs.VERSION_NO_V }}
+            org.opencontainers.image.version=${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}-${{ steps.version.outputs.VERSION_NO_V }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
             org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
             org.opencontainers.image.ref.name=${{ github.ref_name }}
-            org.opencontainers.image.title=${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+            org.opencontainers.image.title=${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
             org.opencontainers.image.description='${{ github.event.repository.description }}'
-            org.opencontainers.image.base.name=ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}:${{ steps.version.outputs.VERSION_NO_V }}
+            org.opencontainers.image.base.name=ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}:${{ steps.version.outputs.VERSION_NO_V }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -195,8 +152,8 @@ jobs:
           SOURCE_DATE_EPOCH: ${{ steps.version.outputs.TIMESTAMP }}
         with:
           context: .
-          file: .github/workflows/docker/Dockerfile.${{ matrix.packages }}
-          platforms: ${{ env.PLATFORMS }}
+          file: .github/workflows/docker/Dockerfile.${{ inputs.PACKAGE }}
+          platforms: ${{ inputs.PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -211,8 +168,8 @@ jobs:
             GIT_BRANCH=${{ github.ref }}
             LD_FLAGS=-s -w -X github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.VERSION_NO_V }} -X github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.COMMIT_DATE }} -X github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}
           outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
-          cache-from: type=gha,mode=max,scope=buildx-${{ github.ref_name }},tags=ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}:cache
-          cache-to: type=gha,mode=max,scope=buildx-${{ github.ref_name }},tags=ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}:cache
+          cache-from: type=gha,mode=max,scope=buildx-${{ github.ref_name }},tags=ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}:cache
+          cache-to: type=gha,mode=max,scope=buildx-${{ github.ref_name }},tags=ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}:cache
           # no-cache: true
 
       - name: Attest GitHub Container Registry image
@@ -220,7 +177,7 @@ jobs:
         uses: actions/attest-build-provenance@v2
         id: attest_ghcr
         with:
-          subject-name: ghcr.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+          subject-name: ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
@@ -229,7 +186,7 @@ jobs:
         uses: actions/attest-build-provenance@v2
         id: attest_dockerhub
         with:
-          subject-name: index.docker.io/kjanat/${{ env.IMAGE_PREFIX }}-${{ matrix.packages }}
+          subject-name: index.docker.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
