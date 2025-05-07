@@ -51,6 +51,7 @@ cosign.key
 .github/workflows/labels.yaml
 .github/workflows/release.yml
 .github/workflows/action.yml
+.github/workflows/autofix.yml
 
 # Markdown
 *.md

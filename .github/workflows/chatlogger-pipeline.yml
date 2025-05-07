@@ -35,25 +35,6 @@ concurrency:
 
 # ───────────────────────────────────────────────────────────────
 jobs:
-  # autofix:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-go@v5
-  #       with:
-  #         go-version-file: go.mod
-
-  #     # goimports works like gofmt, but also fixes imports.
-  #     # see https://pkg.go.dev/golang.org/x/tools/cmd/goimports
-  #     - run: go install golang.org/x/tools/cmd/goimports@latest
-  #     - run: goimports -w .
-
-  #     - uses: autofix-ci/action@v1
-  #       with:
-  #         fail-fast: false
-  #         # commit-message: # 'The commit message to use when fixing a commit.'
-  #         # comment: # 'Add a custom comment to the PR when fixing a commit.'
-
   # lint:
   #   name: Lint Code Base
   #   runs-on: ubuntu-latest
@@ -128,7 +109,7 @@ jobs:
 
 # -------- Deploy API documentation --------------------
   bump-sh:
-    needs: ci
+    needs: [ci, release]
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
     name: Deploy API documentation on Bump.sh
     runs-on: ubuntu-latest
