@@ -1,0 +1,23 @@
+{
+    "github-actions.workflows.pinned.workflows": [
+        ".github/workflows/version.yml",
+        ".github/workflows/release.yml",
+        ".github/workflows/docker.yml"
+    ],
+    "go.diagnostic.vulncheck": "Imports",
+    "go.inlayHints.assignVariableTypes": true,
+    "go.inlayHints.compositeLiteralFields": true,
+    "go.inlayHints.compositeLiteralTypes": true,
+    "go.inlayHints.constantValues": true,
+    "go.inlayHints.functionTypeParameters": true,
+    "go.inlayHints.parameterNames": true,
+    "go.inlayHints.rangeVariableTypes": true,
+    "go.installDependenciesWhenBuilding": true,
+    "go.lintOnSave": "package",
+    "go.lintTool": "golangci-lint",
+    "go.toolsManagement.autoUpdate": true,
+    "gopls": {
+        "ui.semanticTokens": true
+    },
+    "markdown.validate.enabled": true
+}

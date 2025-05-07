@@ -91,7 +91,6 @@ type ChatRepository interface {
 	FindByUserID(userID uint64, limit, offset int) ([]Chat, error)
 	Update(chat *Chat) error
 	Delete(id uint64) error
-	// Advanced queries for analytics
 	CountByOrgIDAndDateRange(orgID uint64, start, end time.Time) (int64, error)
 	GetTagStats(orgID uint64) (map[string]int64, error)
 }
@@ -104,6 +103,5 @@ type ChatService interface {
 	GetByUserID(userID uint64, limit, offset int) ([]Chat, error)
 	UpdateChat(chat *Chat) error
 	DeleteChat(id uint64) error
-	// Analytics methods
 	GetChatStats(orgID uint64, start, end time.Time) (map[string]any, error)
 }

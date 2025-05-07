@@ -1,0 +1,45 @@
+name: Bug Report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees:
+  - kjanat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report this issue! Please [check for existing bugs](https://github.com/kjanat/chatlogger-api-go/issues) before submitting. If you find one, feel free to add more information or give a 👍 to the original issue.
+  - type: input
+    id: chatlogger-worker-version
+    attributes:
+      label: ChatLogger Worker Version
+      description: What version of the ChatLogger Worker are you using?
+      placeholder: 3.5.7
+  - type: input
+    id: chatlogger-api-version
+    attributes:
+      label: ChatLogger API Version
+      description: What version of the ChatLogger API are you using?
+      placeholder: 0.1.0
+  - type: dropdown
+    id: os
+    attributes:
+      label: What Operating System are you seeing the problem on?
+      multiple: true
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - FreeBSD
+        - Docker
+        - WSL
+        - Other
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true

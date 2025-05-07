@@ -1,6 +1,11 @@
 {
     "recommendations": [
         "golang.Go",
-        "ms-ossdata.vscode-postgresql"
+        "ms-ossdata.vscode-postgresql",
+        "42crunch.vscode-openapi",
+        "ms-vscode-remote.remote-containers",
+        "supabase.vscode-supabase-extension",
+        "supabase.postgrestools",
+        "supabase-snippets.supabase-javascript-snippets"
     ]
 }

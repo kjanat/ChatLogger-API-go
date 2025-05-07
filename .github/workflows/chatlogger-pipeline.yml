@@ -35,6 +35,52 @@ concurrency:
 
 # ───────────────────────────────────────────────────────────────
 jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # goimports works like gofmt, but also fixes imports.
+      # see https://pkg.go.dev/golang.org/x/tools/cmd/goimports
+      - run: go install golang.org/x/tools/cmd/goimports@latest
+      - run: goimports -w .
+
+      - uses: autofix-ci/action@v1
+        with:
+          fail-fast: false
+          # commit-message: # 'The commit message to use when fixing a commit.'
+          # comment: # 'Add a custom comment to the PR when fixing a commit.'
+
+  # lint:
+  #   name: Lint Code Base
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+  #       with: { fetch-depth: 0 }
+
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v5
+  #       with:
+  #         go-version-file: go.mod
+
+  #     - name: Run Super-Linter
+  #       uses: super-linter/super-linter/slim@4e8a7c2bf106c4c766c816b35ec612638dc9b6b2 # v7.3.0
+  #       env:
+  #         VALIDATE_ALL_CODEBASE: true
+  #         DEFAULT_BRANCH: "master"
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         VALIDATE_GO: false
+  #         VALIDATE_JSCPD: false
+  #         VALIDATE_JSON: false
+  #         VALIDATE_JSON_PRETTIER: false
+  #         LINTER_RULES_PATH: .github/linters
+  #         GOLANGCI_LINT_CONFIG: .golangci.yml
+  #         VALIDATE_YAML_PRETTIER: false
 # -------- CI ---------------------------------------------------
   ci:
     name: Test & Lint
@@ -82,6 +128,7 @@ jobs:
 
 # -------- Deploy API documentation --------------------
   bump-sh:
+    needs: ci
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
     name: Deploy API documentation on Bump.sh
     runs-on: ubuntu-latest

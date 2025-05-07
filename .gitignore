@@ -18,11 +18,6 @@ coverage.txt
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Editor
-.vscode/
-.vs/
-.idea/
-
 # Temporary files
 *.tmp
 .temp/
@@ -52,3 +47,21 @@ cosign.key
 # Unused GitHub
 .github/workflows/docker-build.yml
 .github/workflows/bump.yml
+.github/workflows/ci.yml
+.github/workflows/labels.yaml
+.github/workflows/release.yml
+.github/workflows/action.yml
+
+# Markdown
+*.md
+*.markdown
+*.mdown
+*.mkd?
+*.mdwn
+*.mdx
+!README.md
+
+# Editor
+# .vscode/
+.vs/
+.idea/

@@ -1,0 +1,79 @@
+name: 'Extract Version'
+description: 'Determine semver parts, dates and Go version from tag/input or fallback file'
+inputs:
+  version:
+    description: "Optional version string (may start with 'v')"
+    required: false
+    default: ''
+  fallback-path:
+    description: 'Path to fallback file containing Version = "x.y.z"'
+    required: true
+outputs:
+  version:
+    description: "Full version, prefixed with 'v'"
+  version-no-v:
+    description: "Version without leading 'v'"
+  major:
+    description: 'Major version number'
+  minor:
+    description: 'Minor version number'
+  patch:
+    description: 'Patch version number'
+  prerelease:
+    description: 'Prerelease suffix (if any)'
+  commit-date:
+    description: 'ISO‐strict date of last commit'
+  timestamp:
+    description: 'Unix epoch of last commit'
+  build-date:
+    description: 'UTC build timestamp (RFC3339)'
+  go-version:
+    description: 'Go version from go.mod'
+runs:
+  using: 'composite'
+  steps:
+    - name: Extract everything
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        # Determine raw version string
+        if [[ -n "${{ inputs.version }}" ]]; then
+          RAW="${{ inputs.version }}"
+        elif [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${GITHUB_REF_NAME:-}" == v* ]]; then
+          RAW="${GITHUB_REF_NAME}"
+        else
+          RAW=$(grep -oP 'Version = "\K[^"]+' "${{ inputs.fallback-path }}")
+        fi
+
+        # Strip leading 'v'
+        RAW="${RAW#v}"
+        V="v${RAW}"
+
+        # Semver parts
+        MAJOR=$(echo "$RAW" | cut -d. -f1)
+        MINOR=$(echo "$RAW" | cut -d. -f2)
+        PATCH=$(echo "$RAW" | cut -d. -f3 | cut -d- -f1)
+        PRERELEASE=""
+        if [[ "$RAW" == *-* ]]; then
+          PRERELEASE="${RAW#*.}.*/"  # everything after the first hyphen
+          PRERELEASE="${RAW#*-}"
+        fi
+
+        # Dates and Go version
+        COMMIT_DATE=$(git log -1 --format=%cd --date=iso-strict)
+        TIMESTAMP=$(git log -1 --format=%ct)
+        BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+        GO_VERSION=$(grep -oP 'go \K[0-9]+(\.[0-9]+)*' go.mod)
+
+        # Emit outputs
+        echo "version-no-v=$RAW"       >> $GITHUB_OUTPUT
+        echo "version=$V"              >> $GITHUB_OUTPUT
+        echo "major=$MAJOR"            >> $GITHUB_OUTPUT
+        echo "minor=$MINOR"            >> $GITHUB_OUTPUT
+        echo "patch=$PATCH"            >> $GITHUB_OUTPUT
+        echo "prerelease=$PRERELEASE"  >> $GITHUB_OUTPUT
+        echo "commit-date=$COMMIT_DATE">> $GITHUB_OUTPUT
+        echo "timestamp=$TIMESTAMP"    >> $GITHUB_OUTPUT
+        echo "build-date=$BUILD_DATE"  >> $GITHUB_OUTPUT
+        echo "go-version=$GO_VERSION"  >> $GITHUB_OUTPUT

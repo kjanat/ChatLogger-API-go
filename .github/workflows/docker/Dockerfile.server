@@ -11,8 +11,8 @@ COPY cmd/server ./cmd/server
 COPY docs/ ./docs
 COPY internal/ ./internal
 
-# Install dependencies (alpine image)
-# RUN apk add --no-cache git
+RUN export GOARCH=$(uname -m) && echo "GOARCH=$GOARCH" >> /etc/environment
+RUN export GOOS=linux && echo "GOOS=$GOOS" >> /etc/environment
 
 # If 32-bit architecture, change the version of gorm.io/gorm to v1.25.12
 RUN ARCH=$(uname -m) && \
