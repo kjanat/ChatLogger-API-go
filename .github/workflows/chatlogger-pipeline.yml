@@ -295,8 +295,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1 # Faster checkout
 
       # Cache Docker layers
       - name: Set up Docker Buildx
@@ -320,11 +318,9 @@ jobs:
           PLATFORMS: linux/amd64,linux/arm64 # Reduced platform set for faster builds
           CACHE_FROM: type=local,src=/tmp/.buildx-cache
           CACHE_TO: type=local,dest=/tmp/.buildx-cache-new
-        # secrets:
-        #   TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-        #   DOCKERHUB_TOKEN: '${{ secrets.DOCKERHUB_TOKEN }}'
-        #   COSIGN_PASSWORD: '${{ secrets.COSIGN_PASSWORD }}'
-        #   COSIGN_PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'
+          DOCKERHUB_TOKEN: '${{ secrets.DOCKERHUB_TOKEN }}'
+          COSIGN_PASSWORD: '${{ secrets.COSIGN_PASSWORD }}'
+          COSIGN_PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'
       
       # Move cache
       - name: Move cache
