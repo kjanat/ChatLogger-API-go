@@ -130,6 +130,7 @@ runs:
 
     - name: Sign the published Docker images
       if: github.event_name != 'pull_request'
+      continue-on-error: true
       id: sign
       shell: bash
       run: |
