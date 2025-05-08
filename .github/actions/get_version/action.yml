@@ -48,12 +48,8 @@ runs:
       shell: bash
       run: |
         # Extract version from input or version file
-        if [[ -n "${{ inputs.version }}" ]]; then
-          version="${{ inputs.version }}"
-        else
-          version=$(grep -oP 'Version\s*=\s*"\K[^"]+' "${{ inputs['version-file'] }}")
-        fi
-
+        version=$(grep -oP '(?<=Version = ")[^"]+' "${{ inputs['version-file'] }}")
+        
         # Ensure version starts with 'v'
         if [[ "$version" != v* ]]; then
           version="v$version"
@@ -64,7 +60,7 @@ runs:
         major=$(echo "$version_no_v" | cut -d. -f1)
         minor=$(echo "$version_no_v" | cut -d. -f2)
         patch=$(echo "$version_no_v" | cut -d. -f3 | cut -d- -f1)
-        prerelease=$(echo "$version_no_v" | grep -oP '(?<=-).+')
+        prerelease=$(echo "$version_no_v" | grep -oP '(?<=-).+' || echo "")
 
         # Get commit date and timestamp
         commit_date=$(git log -1 --format=%aI)
