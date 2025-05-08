@@ -19,12 +19,11 @@ inputs:
     description: 'Cache destination for Docker build'
     default: 'type=gha,mode=max'
   DOCKERHUB_LOGIN:
-    required: false
-    description: ''
+    required: true
+    description: 'Username for Docker Hub'
   DOCKERHUB_TOKEN:
-    required: false
-    description: ''
-
+    required: true
+    description: 'PAT for Docker Hub'
 runs:
   using: 'composite'
   steps:
