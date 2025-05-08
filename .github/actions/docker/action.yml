@@ -113,6 +113,8 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.labels }}
+        sbom: true
+        provenance: mode=max
         build-contexts: |
           golang:1.24.2=docker-image://golang:${{ steps.version.outputs.go-version }}
         build-args: |
@@ -125,24 +127,6 @@ runs:
         outputs: type=image,name=target
         cache-from: ${{ inputs.CACHE_FROM }}
         cache-to: ${{ inputs.CACHE_TO }}
-
-    - name: Attest GitHub Container Registry image
-      if: github.event_name != 'pull_request'
-      uses: actions/attest-build-provenance@v2
-      id: attest_ghcr
-      with:
-        subject-name: ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
-        subject-digest: ${{ github.sha }}
-        push-to-registry: true
-
-    - name: Attest DockerHub image
-      if: github.event_name != 'pull_request'
-      uses: actions/attest-build-provenance@v2
-      id: attest_dockerhub
-      with:
-        subject-name: index.docker.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
-        subject-digest: ${{ github.sha }}
-        push-to-registry: true
 
     - name: Sign the published Docker images
       if: github.event_name != 'pull_request'
