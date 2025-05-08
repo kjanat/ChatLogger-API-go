@@ -269,14 +269,7 @@ jobs:
           PACKAGE: ${{ matrix.package }}
           IMAGE_PREFIX: chatlogger-api
           PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7,linux/386,linux/ppc64le,linux/s390,linux/arm/v6,linux/loongarch6,linux/riscv64
-          # CACHE_FROM: type=local,src=/tmp/.buildx-cache
-          # CACHE_TO: type=local,dest=/tmp/.buildx-cache-new
+          DOCKERHUB_LOGIN: '${{ vars.DOCKERHUB_LOGIN }}'
           DOCKERHUB_TOKEN: '${{ secrets.DOCKERHUB_TOKEN }}'
-          # COSIGN_PASSWORD: '${{ secrets.COSIGN_PASSWORD }}'
+          # GHCR: '${{ secrets.COSIGN_PASSWORD }}'
           # COSIGN_PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'
-      
-      # Move cache
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
