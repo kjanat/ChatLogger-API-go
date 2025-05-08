@@ -56,8 +56,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1 # Faster checkout
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -93,8 +91,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1 # Faster checkout
+
       - name: Deploy API documentation
         uses: bump-sh/github-action@v1
         with:
@@ -145,7 +142,7 @@ jobs:
 
       - name: Get version
         id: version
-        uses: ./.github/actions/get_version
+        uses: .github/actions/get_version
         with:
           version-file: internal/version/version.go
 
@@ -264,7 +261,7 @@ jobs:
         with:
           buildkitd-flags: --debug
 
-      - uses: ./.github/actions/docker
+      - uses: .github/actions/docker
         with:
           PACKAGE: ${{ matrix.package }}
           IMAGE_PREFIX: chatlogger-api
