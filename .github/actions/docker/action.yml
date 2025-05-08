@@ -35,7 +35,7 @@ runs:
     - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
-        username: ${{ inputs.DOCKERHUB_USERNAME }}
+        username: ${{ inputs.DOCKERHUB_LOGIN }}
         password: ${{ inputs.DOCKERHUB_TOKEN }}
 
     - name: Login to GitHub Container Registry
