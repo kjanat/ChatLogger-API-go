@@ -163,7 +163,7 @@ jobs:
 
       - name: Get version
         id: version
-        uses: ./.github/actions/version
+        uses: ./.github/actions/get_version
         with:
           version-file: internal/version/version.go
 
