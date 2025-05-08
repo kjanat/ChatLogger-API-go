@@ -266,7 +266,7 @@ jobs:
           PACKAGE: ${{ matrix.package }}
           IMAGE_PREFIX: chatlogger-api
           PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7,linux/386,linux/ppc64le,linux/s390,linux/arm/v6,linux/loongarch6,linux/riscv64
-          DOCKERHUB_LOGIN: '${{ vars.DOCKERHUB_LOGIN }}'
+          DOCKERHUB_LOGIN: '${{ vars.DOCKERHUB_USERNAME }}'
           DOCKERHUB_TOKEN: '${{ secrets.DOCKERHUB_TOKEN }}'
           # GHCR: '${{ secrets.COSIGN_PASSWORD }}'
           # COSIGN_PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'
