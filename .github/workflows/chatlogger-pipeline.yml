@@ -273,6 +273,8 @@ jobs:
       id-token: write
       attestations: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - uses: ./.github/actions/docker
         with:
           PACKAGE: ${{ matrix.package }}
