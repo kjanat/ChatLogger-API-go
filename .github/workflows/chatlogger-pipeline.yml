@@ -65,30 +65,12 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      # Cache golangci-lint
-      - name: Cache golangci-lint
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-golangci-${{ hashFiles('.golangci.yml') }}
-          restore-keys: ${{ runner.os }}-golangci-
-
       - name: Lint
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           skip-cache: false
           args: --timeout=3m
-
-      # Cache test dependencies
-      - name: Cache Go test
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-test-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-test-
 
       - name: Run Tests
         run: go test -v -race -coverprofile=coverage.txt -timeout=5m ./...
@@ -161,15 +143,6 @@ jobs:
           git config --global commit.gpgsign true
           git config --global tag.gpgsign true
 
-      # Cache version related files
-      - name: Cache version info
-        uses: actions/cache@v4
-        with:
-          path: |
-            ./scripts/version.sh
-            internal/version/version.go
-          key: ${{ runner.os }}-version-${{ hashFiles('internal/version/version.go', 'scripts/version.sh') }}
-
       - name: Get version
         id: version
         uses: ./.github/actions/get_version
@@ -237,17 +210,6 @@ jobs:
           steps.manual_bump.outputs.tag_created == 'true' ||
           steps.ensure_tag.outputs.tag_created == 'true'
 
-      # Cache goreleaser configuration
-      - name: Cache GoReleaser config
-        uses: actions/cache@v4
-        with:
-          path: .goreleaser.yaml
-          key: ${{ runner.os }}-goreleaser-${{ hashFiles('.goreleaser.yaml') }}
-        if: |
-          startsWith(github.ref,'refs/tags/v') ||
-          steps.manual_bump.outputs.tag_created == 'true' ||
-          steps.ensure_tag.outputs.tag_created == 'true'
-
       # 4) GoReleaser – run only if we *have* a tag
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
@@ -302,22 +264,13 @@ jobs:
         with:
           buildkitd-flags: --debug
 
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.package }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.package }}-
-            ${{ runner.os }}-buildx-
-
       - uses: ./.github/actions/docker
         with:
           PACKAGE: ${{ matrix.package }}
           IMAGE_PREFIX: chatlogger-api
-          PLATFORMS: linux/amd64,linux/arm64 # Reduced platform set for faster builds
-          CACHE_FROM: type=local,src=/tmp/.buildx-cache
-          CACHE_TO: type=local,dest=/tmp/.buildx-cache-new
+          PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7,linux/386,linux/ppc64le,linux/s390,linux/arm/v6,linux/loongarch6,linux/riscv64
+          # CACHE_FROM: type=local,src=/tmp/.buildx-cache
+          # CACHE_TO: type=local,dest=/tmp/.buildx-cache-new
           DOCKERHUB_TOKEN: '${{ secrets.DOCKERHUB_TOKEN }}'
           # COSIGN_PASSWORD: '${{ secrets.COSIGN_PASSWORD }}'
           # COSIGN_PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'
