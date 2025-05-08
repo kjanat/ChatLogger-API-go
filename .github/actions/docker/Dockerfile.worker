@@ -7,7 +7,7 @@ WORKDIR /src
 
 # Copy all files to ensure we have dependencies
 COPY go.mod go.sum ./
-COPY cmd/server ./cmd/server
+COPY cmd/worker ./cmd/worker
 COPY docs/ ./docs
 COPY internal/ ./internal
 
@@ -26,22 +26,20 @@ RUN ARCH=$(uname -m) && \
 # Install dependencies
 RUN go mod tidy
 
-# Build the server binary for linux
+# Build the worker binary for linux
 RUN go build \
 	-ldflags="${LD_FLAGS}" \
-	-o /out/server \
-	./cmd/server
+	-o /out/worker \
+	./cmd/worker
 
 # Final Stage
 FROM alpine:3.21.3
 
 WORKDIR /app
 ENV GIN_MODE=release
-COPY docs /app
-COPY --from=builder /out/server /usr/local/bin/chatlogger-server
+COPY --from=builder /out/worker /usr/local/bin/chatlogger-worker
+RUN mkdir -p /app/exports
 
-EXPOSE 8080
+# USER chatlogger:notso
 
-USER chatlogger:notso
-
-ENTRYPOINT [ "chatlogger-server" ]
+ENTRYPOINT [ "chatlogger-worker" ]

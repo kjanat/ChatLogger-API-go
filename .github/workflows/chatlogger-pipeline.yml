@@ -8,7 +8,7 @@ on:
       - 'LICENSE'
       - '.github/ISSUE_TEMPLATE/**'
       - 'docs/**'
-    tags: ['v*']                    # build when a tag is pushed
+    tags: ['v*'] # build when a tag is pushed
 
   pull_request:
     branches: [master, development]
@@ -62,7 +62,7 @@ jobs:
   #         LINTER_RULES_PATH: .github/linters
   #         GOLANGCI_LINT_CONFIG: .golangci.yml
   #         VALIDATE_YAML_PRETTIER: false
-# -------- CI ---------------------------------------------------
+  # -------- CI ---------------------------------------------------
   ci:
     name: Test & Lint
     runs-on: ubuntu-latest
@@ -71,9 +71,9 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER:     test
+          POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-          POSTGRES_DB:       test
+          POSTGRES_DB: test
         ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready
@@ -105,9 +105,9 @@ jobs:
         with:
           files: coverage.txt
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug:  ${{ github.repository }}
+          slug: ${{ github.repository }}
 
-# -------- Deploy API documentation --------------------
+  # -------- Deploy API documentation --------------------
   bump-sh:
     needs: [ci, release]
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
@@ -125,7 +125,7 @@ jobs:
           branch: ${{ github.ref_name }}
           command: ${{ github.event_name == 'pull_request' && 'diff' || 'bump' }}
 
-# -------- Release (tag push OR manual bump) --------------------
+  # -------- Release (tag push OR manual bump) --------------------
   release:
     name: Release
     needs: ci
@@ -150,18 +150,23 @@ jobs:
         id: gpg
         uses: crazy-max/ghaction-import-gpg@v6
         with:
-          gpg_private_key:   ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase:        ${{ secrets.GPG_PASSPHRASE }}
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Setup git
         run: |
-          git config --global user.name  "${{ secrets.ACTIONS_USERNAME }}"
+          git config --global user.name  "${{ vars.ACTIONS_USERNAME }}"
           git config --global user.email "${{ secrets.ACTIONS_EMAIL }}"
           git config --global user.signingkey "${{ steps.gpg.outputs.fingerprint }}"
           git config --global commit.gpgsign true
           git config --global tag.gpgsign true
 
-      # 2) (opt) manual bump – **only** on workflow_dispatch
+      - name: Get version
+        id: version
+        uses: ./.github/actions/version
+        with:
+          version-file: internal/version/version.go
+
       - name: Manual bump & tag
         id: manual_bump
         if: github.event_name == 'workflow_dispatch'
@@ -180,7 +185,7 @@ jobs:
           fi
 
           # Add reference to the workflow run
-          COMMIT_MSG="${COMMIT_MSG}\n\nTriggered by workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          COMMIT_MSG="${COMMIT_MSG} Triggered by workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           git add internal/version/version.go
           git commit -S -m "$COMMIT_MSG"
@@ -188,7 +193,7 @@ jobs:
           # Create a more detailed tag message
           TAG_MSG="Release v${NEW}: ${{ github.event.inputs.version_type }} version update"
           if [ ! -z "${{ github.event.inputs.release_notes }}" ]; then
-            TAG_MSG="${TAG_MSG}\n\n${{ github.event.inputs.release_notes }}"
+            TAG_MSG="${TAG_MSG} ${{ github.event.inputs.release_notes }}"
           fi
 
           git tag -s "v${NEW}" -m "$TAG_MSG"
@@ -215,17 +220,6 @@ jobs:
             echo "Created and pushed signed tag $TAG"
           fi
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        if: |
-          startsWith(github.ref,'refs/tags/v') ||
-          steps.manual_bump.outputs.tag_created == 'true' ||
-          steps.ensure_tag.outputs.tag_created == 'true'
-        with:
-          registry: ghcr.io
-          username: ${{ vars.GH_USERNAME }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Set up cosign
         uses: sigstore/cosign-installer@v3.8.2
         if: |
@@ -240,17 +234,18 @@ jobs:
           startsWith(github.ref,'refs/tags/v') ||
           steps.manual_bump.outputs.tag_created == 'true' ||
           steps.ensure_tag.outputs.tag_created == 'true'
+
         with:
           distribution: goreleaser
           version: '~> v2'
           args: release --clean
         env:
-          GITHUB_TOKEN:       ${{ secrets.GITHUB_TOKEN }}
-          COSIGN_PASSWORD:    ${{ secrets.COSIGN_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          GPG_FINGERPRINT:    ${{ steps.gpg.outputs.fingerprint }}
-          DESCRIPTION:        ${{ github.event.repository.description }}
-          URL:                ${{ github.server_url }}/${{ github.repository }}
+          GPG_FINGERPRINT: ${{ steps.gpg.outputs.fingerprint }}
+          DESCRIPTION: ${{ github.event.repository.description }}
+          URL: ${{ github.server_url }}/${{ github.repository }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -264,8 +259,8 @@ jobs:
           retention-days: 1
 
   docker:
-    uses: ./.github/workflows/docker.yml
     name: Docker Build & Push
+    runs-on: ubuntu-latest
     needs: [ci, release]
     if: github.event_name != 'pull_request'
     strategy:
@@ -277,12 +272,14 @@ jobs:
       packages: write
       id-token: write
       attestations: write
-    with:
-      PACKAGE: ${{ matrix.package }}
-      IMAGE_PREFIX: chatlogger-api
-      PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7
-    secrets:
-      TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      DOCKERHUB_TOKEN: "${{ secrets.DOCKERHUB_TOKEN }}"
-      COSIGN_PASSWORD: "${{ secrets.COSIGN_PASSWORD }}"
-      COSIGN_PRIVATE_KEY: "${{ secrets.COSIGN_PRIVATE_KEY }}"
+    steps:
+      - uses: ./.github/actions/docker
+        with:
+          PACKAGE: ${{ matrix.package }}
+          IMAGE_PREFIX: chatlogger-api
+          PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7,linux/386,linux/ppc64le,linux/s390,linux/arm/v6,linux/loongarch6,linux/riscv64
+        # secrets:
+        #   TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        #   DOCKERHUB_TOKEN: '${{ secrets.DOCKERHUB_TOKEN }}'
+        #   COSIGN_PASSWORD: '${{ secrets.COSIGN_PASSWORD }}'
+        #   COSIGN_PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'

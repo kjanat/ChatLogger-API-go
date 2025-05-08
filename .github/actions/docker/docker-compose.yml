@@ -4,7 +4,7 @@ services:
     image: ${DOCKER_REGISTRY:-ghcr.io/kjanat}/chatlogger-api-server:${VERSION:-latest}
     build:
       context: .
-      dockerfile: ./github/workflows/docker/Dockerfile.server
+      dockerfile: ./github/actions/docker/Dockerfile.server
       args:
         - VERSION=${VERSION:-}
         - BUILD_TIME=${BUILD_TIME:-}
@@ -39,7 +39,7 @@ services:
     image: ${DOCKER_REGISTRY:-ghcr.io/kjanat}/chatlogger-api-worker:${VERSION:-latest}
     build:
       context: .
-      dockerfile: ./github/workflows/docker/Dockerfile.worker
+      dockerfile: ./github/actions/docker/Dockerfile.worker
       args:
         - VERSION=${VERSION:-}
         - BUILD_TIME=${BUILD_TIME:-}

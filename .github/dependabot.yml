@@ -24,7 +24,9 @@ updates:
         patterns:
           - '*'
   - package-ecosystem: 'github-actions'
-    directory: '/.github/workflows/'
+    directories:
+      - '/.github/actions/'
+      - '/.github/workflows/'
     allow:
       - dependency-type: "all"
     schedule:
@@ -47,7 +49,7 @@ updates:
   - package-ecosystem: 'docker'
     directories:
       - '/'
-      - '/.github/workflows/docker'
+      - '/.github/actions/docker/'
     allow:
       - dependency-type: "all"
     schedule:
@@ -63,9 +65,9 @@ updates:
         patterns:
           - '*'
   - package-ecosystem: 'docker-compose'
-    directories:
+    dirctories:
       - '/'
-      - '/.github/workflows/docker'
+      - '/.github/actions/docker/'
     allow:
       # Allow both direct and indirect updates for all packages.
       - dependency-type: "all"

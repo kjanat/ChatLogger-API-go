@@ -19,5 +19,5 @@
     "gopls": {
         "ui.semanticTokens": true
     },
-    "markdown.validate.enabled": true
+    "markdown.validate.enabled": true,
 }

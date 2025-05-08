@@ -1,0 +1,89 @@
+name: Get Version
+description: Get version information from a Go module
+inputs:
+  version-prefix:
+    description: "Prefix for version string (may start with 'v')"
+    required: false
+    default: ''
+  version-file:
+    description: 'Path to version file containing Version = "x.y.z"'
+    required: true
+outputs:
+  version:
+    value: ${{ steps.extract-everything.outputs.version }}
+    description: "Full version, prefixed with 'v'"
+  version-no-v:
+    value: ${{ steps.extract-everything.outputs.version-no-v }}
+    description: "Version without leading 'v'"
+  major:
+    value: ${{ steps.extract-everything.outputs.major }}
+    description: 'Major version number'
+  minor:
+    value: ${{ steps.extract-everything.outputs.minor }}
+    description: 'Minor version number'
+  patch:
+    value: ${{ steps.extract-everything.outputs.patch }}
+    description: 'Patch version number'
+  prerelease:
+    value: ${{ steps.extract-everything.outputs.prerelease }}
+    description: 'Prerelease suffix (if any)'
+  commit-date:
+    value: ${{ steps.extract-everything.outputs.commit-date }}
+    description: 'ISO‐strict date of last commit'
+  timestamp:
+    value: ${{ steps.extract-everything.outputs.timestamp }}
+    description: 'Unix epoch of last commit'
+  build-date:
+    value: ${{ steps.extract-everything.outputs.build-date }}
+    description: 'UTC build timestamp (RFC3339)'
+  go-version:
+    value: ${{ steps.extract-everything.outputs.go-version }}
+    description: 'Go version from go.mod'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Extract everything
+      id: extract-everything
+      shell: bash
+      run: |
+        # Extract version from input or version file
+        if [[ -n "${{ inputs.version }}" ]]; then
+          version="${{ inputs.version }}"
+        else
+          version=$(grep -oP 'Version\s*=\s*"\K[^"]+' "${{ inputs['version-file'] }}")
+        fi
+
+        # Ensure version starts with 'v'
+        if [[ "$version" != v* ]]; then
+          version="v$version"
+        fi
+
+        # Extract version components
+        version_no_v="${version#v}"
+        major=$(echo "$version_no_v" | cut -d. -f1)
+        minor=$(echo "$version_no_v" | cut -d. -f2)
+        patch=$(echo "$version_no_v" | cut -d. -f3 | cut -d- -f1)
+        prerelease=$(echo "$version_no_v" | grep -oP '(?<=-).+')
+
+        # Get commit date and timestamp
+        commit_date=$(git log -1 --format=%aI)
+        timestamp=$(git log -1 --format=%at)
+
+        # Generate build date
+        build_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+        # Extract Go version from go.mod
+        go_version=$(grep -oP '^go\s+\K[\d.]+' go.mod)
+
+        # Set outputs
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "version-no-v=$version_no_v" >> $GITHUB_OUTPUT
+        echo "major=$major" >> $GITHUB_OUTPUT
+        echo "minor=$minor" >> $GITHUB_OUTPUT
+        echo "patch=$patch" >> $GITHUB_OUTPUT
+        echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
+        echo "commit-date=$commit_date" >> $GITHUB_OUTPUT
+        echo "timestamp=$timestamp" >> $GITHUB_OUTPUT
+        echo "build-date=$build_date" >> $GITHUB_OUTPUT
+        echo "go-version=$go_version" >> $GITHUB_OUTPUT

@@ -1,11 +1,13 @@
 {
     "recommendations": [
+        "42crunch.vscode-openapi",
         "golang.Go",
         "ms-ossdata.vscode-postgresql",
-        "42crunch.vscode-openapi",
         "ms-vscode-remote.remote-containers",
-        "supabase.vscode-supabase-extension",
+        "mtxr.sqltools-driver-pg",
+        "mtxr.sqltools",
+        "supabase-snippets.supabase-javascript-snippets",
         "supabase.postgrestools",
-        "supabase-snippets.supabase-javascript-snippets"
+        "supabase.vscode-supabase-extension",
     ]
 }

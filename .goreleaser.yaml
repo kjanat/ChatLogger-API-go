@@ -45,14 +45,6 @@ signs:
       - ${artifact}
     stdin: ""
 
-# metadata:
-#   mod_timestamp: "{{ .CommitTimestamp }}"
-#   maintainers:
-#     - "Kaj Kowalski <chatlogger-api-go@kjanat.com>"
-#   license: "MIT"
-#   homepage: "https://github.com/kjanat/chatlogger-api-go"
-#   description: "{{ .Env.DESCRIPTION }}"
-
 nfpms:
   - id: chatlogger-api-go
     package_name: "{{ .ProjectName }}"
