@@ -244,14 +244,14 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
-          # - linux/riscv64
-          # - linux/ppc64le
-          # - linux/s390x
-          # - linux/386
-          # - linux/mips64le
+          - linux/riscv64
+          - linux/ppc64le
+          - linux/s390x
+          - linux/386
+          - linux/mips64le
           # - linux/mips64
-          # - linux/loong64
-          # - linux/arm/v7
+          - linux/loong64
+          - linux/arm/v7
           # - linux/arm/v6
     steps:
       - name: Checkout Repository
@@ -369,25 +369,39 @@ jobs:
           DIGESTS=$(find . -type f -name "*" | sort)
           if [ -n "$DIGESTS" ]; then
             echo "Found digest files: $DIGESTS"
-            DIGEST_ARGS=""
+            VALID_DIGEST_ARGS=""
+            
             for file in $DIGESTS; do
               DIGEST_NAME=$(basename $file)
-              DIGEST_ARGS="$DIGEST_ARGS ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:$DIGEST_NAME"
+              DIGEST_REF="${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:$DIGEST_NAME"
+              
+              # Verify the digest exists in Docker Hub before adding it
+              if docker buildx imagetools inspect "$DIGEST_REF" &>/dev/null; then
+                echo "✓ Verified digest exists: $DIGEST_REF"
+                VALID_DIGEST_ARGS="$VALID_DIGEST_ARGS $DIGEST_REF"
+              else
+                echo "✗ Digest not found, skipping: $DIGEST_REF"
+              fi
             done
             
-            echo "Creating manifest with arguments: $DIGEST_ARGS"
+            if [ -z "$VALID_DIGEST_ARGS" ]; then
+              echo "No valid digests found! Exiting."
+              exit 1
+            fi
+            
+            echo "Creating manifest with arguments: $VALID_DIGEST_ARGS"
             
             # Create version tag manifest
-            docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:$VERSION_TAG $DIGEST_ARGS
+            docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:$VERSION_TAG $VALID_DIGEST_ARGS
             
             # Create sha tag manifest
             if [ -n "$SHA_TAG" ]; then
-              docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:$SHA_TAG $DIGEST_ARGS
+              docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:$SHA_TAG $VALID_DIGEST_ARGS
             fi
             
             # Create latest tag if on tagged commit
             if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
-              docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:latest $DIGEST_ARGS
+              docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:latest $VALID_DIGEST_ARGS
             fi
           else
             echo "No digest files found!"
@@ -409,25 +423,39 @@ jobs:
           DIGESTS=$(find . -type f -name "*" | sort)
           if [ -n "$DIGESTS" ]; then
             echo "Found digest files: $DIGESTS"
-            DIGEST_ARGS=""
+            VALID_DIGEST_ARGS=""
+            
             for file in $DIGESTS; do
               DIGEST_NAME=$(basename $file)
-              DIGEST_ARGS="$DIGEST_ARGS ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}@sha256:$DIGEST_NAME"
+              DIGEST_REF="ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}@sha256:$DIGEST_NAME"
+              
+              # Verify the digest exists in GHCR before adding it
+              if docker buildx imagetools inspect "$DIGEST_REF" &>/dev/null; then
+                echo "✓ Verified digest exists: $DIGEST_REF"
+                VALID_DIGEST_ARGS="$VALID_DIGEST_ARGS $DIGEST_REF"
+              else
+                echo "✗ Digest not found, skipping: $DIGEST_REF"
+              fi
             done
             
-            echo "Creating manifest with arguments: $DIGEST_ARGS"
+            if [ -z "$VALID_DIGEST_ARGS" ]; then
+              echo "No valid digests found! Exiting."
+              exit 1
+            fi
+            
+            echo "Creating manifest with arguments: $VALID_DIGEST_ARGS"
             
             # Create version tag manifest
-            docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:$VERSION_TAG $DIGEST_ARGS
-            
+            docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:$VERSION_TAG $VALID_DIGEST_ARGS
+
             # Create sha tag manifest
             if [ -n "$SHA_TAG" ]; then
-              docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:$SHA_TAG $DIGEST_ARGS
+              docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:$SHA_TAG $VALID_DIGEST_ARGS
             fi
             
             # Create latest tag if on tagged commit
             if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
-              docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:latest $DIGEST_ARGS
+              docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:latest $VALID_DIGEST_ARGS
             fi
           else
             echo "No digest files found!"
