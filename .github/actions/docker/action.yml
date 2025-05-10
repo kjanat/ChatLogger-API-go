@@ -109,6 +109,8 @@ runs:
         provenance: false
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha,scope=${{ inputs.PACKAGE }}
+        cache-to: type=gha,scope=${{ inputs.PACKAGE }},mode=max
         build-args: |
           VERSION=${{ steps.version.outputs.version-no-v }}
           BUILD_TIME=${{ steps.version.outputs.commit-date }}
