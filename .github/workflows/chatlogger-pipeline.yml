@@ -100,10 +100,14 @@ jobs:
   
   # Call ./.github/workflows/codeql.yml
   codeql:
-    name: CodeQL Advanced
+    name: CodeQL
     needs: [ci]
     if: github.event_name != 'pull_request'
-    permissions: {actions: read, security-events: write, contents: read, packages: read}
+    permissions:
+        actions: read
+        contents: read
+        packages: read
+        security-events: write
     uses: ./.github/workflows/codeql.yml
 
   # -------- Release (tag push OR manual bump) --------------------
@@ -114,8 +118,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
       id-token: write
+      packages: write
 
     steps:
       - name: Checkout
@@ -250,13 +254,13 @@ jobs:
       matrix:
         package: [server, worker]
         platform:
-          - linux/amd64
-          - linux/arm64
-          - linux/riscv64
-          - linux/ppc64le
-          - linux/s390x
           - linux/386
+          - linux/amd64
           - linux/arm/v7
+          - linux/arm64
+          - linux/ppc64le
+          - linux/riscv64
+          - linux/s390x
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -272,12 +276,12 @@ jobs:
         id: docker
         uses: ./.github/actions/docker
         with:
-          PACKAGE: ${{ matrix.package }}
-          IMAGE_PREFIX: chatlogger-api
-          PLATFORM: ${{ matrix.platform }}
-          DOCKER_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKER_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           GITHUB_TOKEN: ${{ github.token }}
+          IMAGE_PREFIX: chatlogger-api
+          PACKAGE: ${{ matrix.package }}
+          PLATFORM: ${{ matrix.platform }}
           
       - name: Export digest
         run: |
@@ -304,11 +308,14 @@ jobs:
       contents: read
       packages: write
     strategy:
+      fail-fast: false
       matrix:
         package: [server, worker]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -344,132 +351,27 @@ jobs:
         with:
           images: |
             ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}
-            ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}
+            ghcr.io/${{ vars.GH_USERNAME }}/chatlogger-api-${{ matrix.package }}
           tags: |
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=schedule,pattern=nightly,enable=${{ github.ref == format('refs/heads/{0}', 'development') }}
-            type=semver,pattern={{version}},value=${{ steps.version.outputs.version-no-v }},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/v0') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') || github.ref.name == 'master' }}
             type=semver,pattern={{major}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/v0') }}
-            type=raw,value=${{ steps.version.outputs.version-no-v }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/v0') }}
+            type=semver,pattern=${{ steps.version.outputs.version-no-v }}
             type=sha,enable=true,format=short
 
       - name: List digest files
         run: |
           find ${{ runner.temp }}/digests -type f | sort
 
-      - name: Create manifest list and push (Docker Hub)
+      - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
-          echo "Creating manifest for Docker Hub..."
-          
-          # Extract specific tags from metadata
-          VERSION_TAG=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -r '.tags[] | select(contains(":sha-") | not) | select(contains("ghcr.io") | not) | split(":")[1]' | head -n1)
-          SHA_TAG=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -r '.tags[] | select(contains(":sha-")) | select(contains("ghcr.io") | not) | split(":")[1]' | head -n1)
-          
-          echo "Using tags: $VERSION_TAG $SHA_TAG"
-          
-          # Create the manifest with all digest files
-          DIGESTS=$(find . -type f -name "*" | sort)
-          if [ -n "$DIGESTS" ]; then
-            echo "Found digest files: $DIGESTS"
-            VALID_DIGEST_ARGS=""
-            
-            for file in $DIGESTS; do
-              DIGEST_NAME=$(basename $file)
-              DIGEST_REF="${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:$DIGEST_NAME"
-              
-              # Verify the digest exists in Docker Hub before adding it
-              if docker buildx imagetools inspect "$DIGEST_REF" &>/dev/null; then
-                echo "✓ Verified digest exists: $DIGEST_REF"
-                VALID_DIGEST_ARGS="$VALID_DIGEST_ARGS $DIGEST_REF"
-              else
-                echo "✗ Digest not found, skipping: $DIGEST_REF"
-              fi
-            done
-            
-            if [ -z "$VALID_DIGEST_ARGS" ]; then
-              echo "No valid digests found! Exiting."
-              exit 1
-            fi
-            
-            echo "Creating manifest with arguments: $VALID_DIGEST_ARGS"
-            
-            # Create version tag manifest
-            docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:$VERSION_TAG $VALID_DIGEST_ARGS
-            
-            # Create sha tag manifest
-            if [ -n "$SHA_TAG" ]; then
-              docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:$SHA_TAG $VALID_DIGEST_ARGS
-            fi
-            
-            # Create latest tag if on tagged commit
-            if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
-              docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:latest $VALID_DIGEST_ARGS
-            fi
-          else
-            echo "No digest files found!"
-            exit 1
-          fi
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/${{ vars.GH_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
 
-      - name: Create manifest list and push (GHCR)
-        working-directory: ${{ runner.temp }}/digests
+      - name: Inspect image
         run: |
-          echo "Creating manifest for GitHub Container Registry..."
-          
-          # Extract specific tags from metadata
-          VERSION_TAG=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -r '.tags[] | select(contains(":sha-") | not) | select(contains("ghcr.io")) | split(":")[1]' | head -n1)
-          SHA_TAG=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -r '.tags[] | select(contains(":sha-")) | select(contains("ghcr.io")) | split(":")[1]' | head -n1)
-          
-          echo "Using tags: $VERSION_TAG $SHA_TAG"
-          
-          # Create the manifest with all digest files
-          DIGESTS=$(find . -type f -name "*" | sort)
-          if [ -n "$DIGESTS" ]; then
-            echo "Found digest files: $DIGESTS"
-            VALID_DIGEST_ARGS=""
-            
-            for file in $DIGESTS; do
-              DIGEST_NAME=$(basename $file)
-              DIGEST_REF="ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}@sha256:$DIGEST_NAME"
-              
-              # Verify the digest exists in GHCR before adding it
-              if docker buildx imagetools inspect "$DIGEST_REF" &>/dev/null; then
-                echo "✓ Verified digest exists: $DIGEST_REF"
-                VALID_DIGEST_ARGS="$VALID_DIGEST_ARGS $DIGEST_REF"
-              else
-                echo "✗ Digest not found, skipping: $DIGEST_REF"
-              fi
-            done
-            
-            if [ -z "$VALID_DIGEST_ARGS" ]; then
-              echo "No valid digests found! Exiting."
-              exit 1
-            fi
-            
-            echo "Creating manifest with arguments: $VALID_DIGEST_ARGS"
-            
-            # Create version tag manifest
-            docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:$VERSION_TAG $VALID_DIGEST_ARGS
-
-            # Create sha tag manifest
-            if [ -n "$SHA_TAG" ]; then
-              docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:$SHA_TAG $VALID_DIGEST_ARGS
-            fi
-            
-            # Create latest tag if on tagged commit
-            if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
-              docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:latest $VALID_DIGEST_ARGS
-            fi
-          else
-            echo "No digest files found!"
-            exit 1
-          fi
-
-      - name: Inspect images
-        run: |
-          echo "Inspecting Docker Hub image..."
-          docker buildx imagetools inspect ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:${{ steps.version.outputs.version-no-v }}
-          
-          echo "Inspecting GitHub Container Registry image..."
-          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:${{ steps.version.outputs.version-no-v }}
+          docker buildx imagetools inspect ghcr.io/${{ vars.GH_USERNAME }}/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
