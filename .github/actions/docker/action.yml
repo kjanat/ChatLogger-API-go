@@ -37,15 +37,15 @@ runs:
     - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
-        username: ${{ inputs.DOCKERHUB_LOGIN }}
-        password: ${{ inputs.DOCKERHUB_TOKEN }}
+        username: ${{ inputs.DOCKER_USERNAME }}
+        password: ${{ inputs.DOCKER_PASSWORD }}
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.GITHUB_TOKEN }}
 
     - name: Install cosign
       uses: sigstore/cosign-installer@v3.8.2
@@ -68,38 +68,32 @@ runs:
       uses: docker/metadata-action@v5
       with:
         images: |
-          kjanat/chatlogger-api-${{ inputs.PACKAGE }}
+          ${{ inputs.DOCKER_USERNAME }}/chatlogger-api-${{ inputs.PACKAGE }}
           ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ inputs.PACKAGE }}
         tags: |
           # latest vs nightly
-          type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }},priority=1000
-          type=schedule,pattern=nightly,enable=${{ github.ref == format('refs/heads/{0}', 'development') }},priority=1000
+          type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+          type=schedule,pattern=nightly,enable=${{ github.ref == format('refs/heads/{0}', 'development') }}
 
-          # version (semver) vs version-date
-          type=semver,pattern={{version}},value=${{ steps.version.outputs.version-no-v }},enable=${{ !startsWith(github.ref, 'refs/tags/v') }},priority=900
-          type=schedule,pattern={{date 'YYYYMMDD-hhmmss' tz='Europe/Amsterdam'}},prefix=${{ steps.version.outputs.version-no-v }}-,enable=${{ github.ref != format('refs/heads/{0}', 'master') || github.event_name == 'schedule' }},priority=900
-
-          # version (semver, magjor/major+minor) if major version is not 0
-          type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0') }},priority=800
-          type=semver,pattern={{major}}.{{minor}},enable=${{ !startsWith(github.ref, 'refs/tags/v0') }},priority=700
-          type=semver,pattern={{major}}.{{minor}}.{{patch}},enable=${{ !startsWith(github.ref, 'refs/tags/v0') }},priority=600
+          # version (semver)
+          type=semver,pattern={{version}},value=${{ steps.version.outputs.version-no-v }},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+          type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/v0') }}
+          type=semver,pattern={{major}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/v0') }}
 
           # sha
-          type=sha,enable=true,format=short,priority=100
+          type=sha,enable=true,format=short
         labels: |
           org.opencontainers.image.created=${{ steps.version.outputs.commit-date }}
           org.opencontainers.image.authors=${{ github.actor }}
-          org.opencontainers.image.url=https://github.com/users/kjanat/packages/container/package/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
-          org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
+          org.opencontainers.image.url=https://github.com/${{ github.repository }}
+          org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/tree/main/docs
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          org.opencontainers.image.version=${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}-${{ steps.version.outputs.version-no-v }}
+          org.opencontainers.image.version=${{ steps.version.outputs.version-no-v }}
           org.opencontainers.image.revision=${{ github.sha }}
-          org.opencontainers.image.vendor=${{ github.event.repository.owner.login }}
-          org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
+          org.opencontainers.image.vendor=${{ github.repository_owner }}
           org.opencontainers.image.ref.name=${{ github.ref_name }}
-          org.opencontainers.image.title=${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
-          org.opencontainers.image.description='${{ github.event.repository.description }}'
-          org.opencontainers.image.base.name=ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}:${{ steps.version.outputs.version-no-v }}
+          org.opencontainers.image.title=chatlogger-api-${{ inputs.PACKAGE }}
+          org.opencontainers.image.description='ChatLogger API ${{ inputs.PACKAGE }} service'
 
     - name: Build and push by digest
       id: build
@@ -111,19 +105,12 @@ runs:
         context: .
         file: ./.github/actions/docker/Dockerfile.${{ inputs.PACKAGE }}
         platforms: ${{ inputs.PLATFORM }}
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta.outputs.tags }}
+        push: true
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.labels }}
-        sbom: true
-        provenance: mode=max
-        build-contexts: |
-          golang:1.24.2=docker-image://golang:${{ steps.version.outputs.go-version }}
         build-args: |
           VERSION=${{ steps.version.outputs.version-no-v }}
-          BUILD_TIME=${{ steps.version.outputs.build-date }}
+          BUILD_TIME=${{ steps.version.outputs.commit-date }}
           GIT_COMMIT=${{ github.sha }}
           GIT_TAG=${{ github.ref_name }}
-          GIT_BRANCH=${{ github.ref }}
-          LD_FLAGS=-s -w -X github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.version-no-v }} -X github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.commit-date }} -X github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}
-        outputs: type=image,push-by-digest=true,name-canonical=true,push=true,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
+        outputs: type=image,push-by-digest=true,name-canonical=true,push=true
