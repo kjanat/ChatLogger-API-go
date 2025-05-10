@@ -97,6 +97,13 @@ jobs:
           file: ${{ vars.BUMP_YAML_LOC }}
           branch: ${{ github.ref_name }}
           command: ${{ github.event_name == 'pull_request' && 'diff' || 'bump' }}
+  
+  # Call ./.github/workflows/codeql.yml
+  codeql:
+    name: CodeQL Advanced
+    needs: [ci]
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/codeql.yml
 
   # -------- Release (tag push OR manual bump) --------------------
   release:
@@ -248,7 +255,6 @@ jobs:
           - linux/ppc64le
           - linux/s390x
           - linux/386
-          - linux/mips64
           - linux/arm/v7
     steps:
       - name: Checkout Repository
