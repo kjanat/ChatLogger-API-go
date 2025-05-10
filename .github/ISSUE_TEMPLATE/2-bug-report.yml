@@ -1,5 +1,5 @@
 name: Bug Report
-description: File a bug report.
+description: File a detailed bug report
 title: "[Bug]: "
 labels: ["bug", "triage"]
 assignees:
@@ -9,22 +9,68 @@ body:
     attributes:
       value: |
         Thank you for taking the time to report this issue! Please [check for existing bugs](https://github.com/kjanat/chatlogger-api-go/issues) before submitting. If you find one, feel free to add more information or give a 👍 to the original issue.
-  - type: input
-    id: chatlogger-worker-version
+
+  - type: textarea
+    id: description
     attributes:
-      label: ChatLogger Worker Version
-      description: What version of the ChatLogger Worker are you using?
-      placeholder: 3.5.7
+      label: Description
+      description: Provide a clear and concise description of the bug you're experiencing
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps To Reproduce
+      description: List the steps to reproduce the bug in detail
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: Describe what you expected to happen
+      placeholder: The application should have...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: Describe what actually happened when the bug occurred
+      placeholder: Instead, the application...
+    validations:
+      required: true
+
   - type: input
     id: chatlogger-api-version
     attributes:
       label: ChatLogger API Version
       description: What version of the ChatLogger API are you using?
-      placeholder: 0.1.0
+      placeholder: 0.4.8
+    validations:
+      required: true
+
+  - type: input
+    id: chatlogger-worker-version
+    attributes:
+      label: ChatLogger Worker Version (if applicable)
+      description: What version of the ChatLogger Worker are you using?
+      placeholder: 0.4.8
+
   - type: dropdown
     id: os
     attributes:
-      label: What Operating System are you seeing the problem on?
+      label: Operating System
+      description: What Operating System are you seeing the problem on?
       multiple: true
       options:
         - Linux
@@ -34,12 +80,40 @@ body:
         - Docker
         - WSL
         - Other
-  - type: textarea
-    id: what-happened
+    validations:
+      required: true
+
+  - type: input
+    id: browser
     attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
+      label: Browser/Device (if applicable)
+      description: Which browser or device were you using?
+      placeholder: Chrome 120, iPhone 15, etc.
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots or Logs
+      description: If applicable, add screenshots, error logs, or console outputs to help demonstrate the issue
+      render: shell
+      placeholder: Paste any relevant logs or screenshots here. They will be automatically formatted.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the bug that might be useful for understanding or resolving it
+      placeholder: Add any other relevant information here
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Indicate the priority of the bug
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
     validations:
       required: true
