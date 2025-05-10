@@ -7,12 +7,16 @@ inputs:
   IMAGE_PREFIX:
     required: true
     description: 'Prefix for the image name'
-  PLATFORMS:
+  PLATFORM:
     required: true
-    description: 'List of platforms to build for'
+    description: 'Platform to build for (e.g. linux/amd64)'
 outputs:
-  digest: ${{ steps.push.outputs.digest }}
-  tags: ${{ steps.meta.outputs.tags }}
+  digest:
+    description: 'Image digest'
+    value: ${{ steps.build.outputs.digest }}
+  tags:
+    description: 'Tags'
+    value: ${{ steps.meta.outputs.tags }}
 runs:
   using: 'composite'
   steps:
@@ -88,16 +92,16 @@ runs:
           org.opencontainers.image.description='${{ github.event.repository.description }}'
           org.opencontainers.image.base.name=ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}:${{ steps.version.outputs.version-no-v }}
 
-    - name: Build and push multi-arch image
-      id: push
+    - name: Build and push by digest
+      id: build
       uses: docker/build-push-action@v6
       env:
         GIN_MODE: release
         SOURCE_DATE_EPOCH: ${{ steps.version.outputs.timestamp }}
       with:
         context: .
-        file: .github/actions/docker/Dockerfile.${{ inputs.PACKAGE }}
-        platforms: ${{ inputs.PLATFORMS }}
+        file: ./.github/actions/docker/Dockerfile.${{ inputs.PACKAGE }}
+        platforms: ${{ inputs.PLATFORM }}
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -111,89 +115,4 @@ runs:
           GIT_TAG=${{ github.ref_name }}
           GIT_BRANCH=${{ github.ref }}
           LD_FLAGS=-s -w -X github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.version-no-v }} -X github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.commit-date }} -X github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }}
-        outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}
-        cache-from: type=gha,mode=max,scope=buildx-${{ github.ref_name }},tags=ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}:cache
-        cache-to: type=gha,mode=max,scope=buildx-${{ github.ref_name }},tags=ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}:cache
-
-    - name: Attest GitHub Container Registry image
-      if: steps.push.outputs.digest != ''
-      uses: actions/attest-build-provenance@v2
-      id: attest_ghcr
-      with:
-        subject-name: ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
-        subject-digest: ${{ steps.push.outputs.digest }}
-        push-to-registry: true
-
-    - name: Attest DockerHub image
-      if: steps.push.outputs.digest != ''
-      uses: actions/attest-build-provenance@v2
-      id: attest_dockerhub
-      with:
-        subject-name: index.docker.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
-        subject-digest: ${{ steps.push.outputs.digest }}
-        push-to-registry: true
-
-    - name: Sign the published Docker images
-      if: steps.push.outputs.digest != '' && github.event_name != 'pull_request'
-      id: sign
-      env:
-        COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-        TAGS: ${{ steps.meta.outputs.tags }}
-        DIGEST: ${{ steps.push.outputs.digest }}
-      shell: bash
-      run: |
-        echo "Signing digest: ${DIGEST}"
-        echo "Tags: ${TAGS}"
-        images_to_sign=""
-        IFS=$'\n'
-        for tag in ${TAGS}; do
-          if [[ -n "$tag" ]]; then
-            images_to_sign+="${tag}@${DIGEST} "
-          fi
-        done
-        unset IFS
-
-        echo "Images to sign: ${images_to_sign}"
-        if [[ -n "$images_to_sign" ]]; then
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images_to_sign}
-        else
-          echo "No images to sign."
-        fi
-
-    - name: Check images and verify signatures
-      if: steps.push.outputs.digest != '' && github.event_name != 'pull_request'
-      continue-on-error: true
-      env:
-        TAGS: ${{ steps.meta.outputs.tags }}
-        DIGEST: ${{ steps.push.outputs.digest }}
-      shell: bash
-      run: |
-        echo "Verifying digest: ${DIGEST}"
-        echo "Verifying tags: ${TAGS}"
-        verification_failed=false
-        IFS=$'\n'
-        for tag in ${TAGS}; do
-          if [[ -n "$tag" ]]; then
-            echo "--- Verifying image: $tag ---"
-            cosign verify-attestation --key cosign.pub $tag@${DIGEST}
-            if [ $? -ne 0 ]; then
-              echo "::warning::Provenance verification failed for $tag@${DIGEST}"
-              verification_failed=true
-            fi
-            cosign verify --key cosign.pub $tag@${DIGEST}
-            if [ $? -ne 0 ]; then
-              echo "::warning::Signature verification failed for $tag@${DIGEST}"
-              verification_failed=true
-            else
-              echo "Signature verified successfully for $tag@${DIGEST}"
-            fi
-          fi
-        done
-        unset IFS
-
-        if [[ "$verification_failed" == true ]]; then
-          echo "::error::One or more image verifications failed."
-        else
-          echo "All image verifications successful."
-        fi
+        outputs: type=image,push-by-digest=true,name-canonical=true,push=true,annotation-index.org.opencontainers.image.description=${{ github.event.repository.description }}

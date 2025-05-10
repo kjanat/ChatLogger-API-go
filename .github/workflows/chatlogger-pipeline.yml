@@ -174,7 +174,7 @@ jobs:
           cp ./scripts/version.sh ${{ runner.temp }}/version.sh
           chmod +x ${{ runner.temp }}/version.sh
           ${{ runner.temp }}/version.sh "${{ github.event.inputs.version_type }}"
-          NEW=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
+          NEW=$(grep -oP 'Version\s*=\s*"\K[^"]+' internal/version/version.go)
 
           # Construct a detailed commit message
           COMMIT_MSG="chore(release): bump ${{ github.event.inputs.version_type }} version to v${NEW}"
@@ -207,7 +207,7 @@ jobs:
         id: ensure_tag
         if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/') # || steps.manual_bump.outputs.tag_created == 'true'
         run: |
-          VER=$(grep -oP 'Version = "\K[^"]+' internal/version/version.go)
+          VER=$(grep -oP 'Version\s*=\s*"\K[^"]+' internal/version/version.go)
           [ -z "$VER" ] && { echo "::error ::unable to read version"; exit 1; }
           TAG=v${VER}
           if git show-ref --tags --verify "refs/tags/$TAG" -q; then
@@ -264,22 +264,125 @@ jobs:
     needs: [ci, release]
     if: github.event_name != 'pull_request'
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         package: [server, worker]
+        platform:
+          - linux/386
+          - linux/amd64
+          - linux/arm/v6
+          - linux/arm/v7
+          - linux/arm64
+          - linux/loongarch64
+          - linux/ppc64le
+          - linux/riscv64
+          - linux/s390x
     permissions:
       contents: read
       packages: write
       id-token: write
       attestations: write
+      
+    env:
+      REGISTRY_IMAGE: ghcr.io/kjanat/chatlogger-api
+      
     steps:
-      - uses: ./.github/actions/docker
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+      
+      - name: Docker Build & Push
+        uses: ./.github/actions/docker
+        id: docker
         with:
           PACKAGE: ${{ matrix.package }}
           IMAGE_PREFIX: chatlogger-api
-          PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7,linux/386,linux/ppc64le,linux/s390,linux/arm/v6,linux/loongarch6,linux/riscv64
-        # secrets:
-        #   TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-        #   DOCKERHUB_TOKEN: '${{ secrets.DOCKERHUB_TOKEN }}'
-        #   COSIGN_PASSWORD: '${{ secrets.COSIGN_PASSWORD }}'
-        #   COSIGN_PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'
+          PLATFORM: ${{ matrix.platform }}
+
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.docker.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.package }}-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        package: [server, worker]
+    permissions:
+      contents: read
+      packages: write
+      
+    env:
+      REGISTRY_IMAGE: ghcr.io/kjanat/chatlogger-api
+      
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.package }}-*
+          merge-multiple: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Extract version components
+        id: version
+        uses: ./.github/actions/get_version
+        with:
+          version-file: internal/version/version.go
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            kjanat/chatlogger-api-${{ matrix.package }}
+            ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
