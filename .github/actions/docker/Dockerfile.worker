@@ -1,7 +1,11 @@
 # Build Stage
-FROM golang:1.24.2 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.24.2 AS builder
 
+ARG TARGETOS
+ARG TARGETARCH
 ARG LD_FLAGS
+
+LABEL org.opencontainers.image.description DESCRIPTION="ChatLogger API Worker"
 
 WORKDIR /src
 
@@ -11,35 +15,41 @@ COPY cmd/worker ./cmd/worker
 COPY docs/ ./docs
 COPY internal/ ./internal
 
-RUN export GOARCH=$(uname -m) && echo "GOARCH=$GOARCH" >> /etc/environment
-RUN export GOOS=linux && echo "GOOS=$GOOS" >> /etc/environment
-
 # If 32-bit architecture, change the version of gorm.io/gorm to v1.25.12
 RUN ARCH=$(uname -m) && \
-	if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
-		echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; \
-		go mod edit -replace=gorm.io/gorm=gorm.io/gorm@v1.25.12; \
-	else \
-		echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
-	fi
+if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
+	echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; \
+	go mod edit -replace=gorm.io/gorm=gorm.io/gorm@v1.25.12; \
+else \
+	echo "Not a 32-bit architecture ($ARCH), using default gorm version"; \
+fi
 
 # Install dependencies
 RUN go mod tidy
 
 # Build the worker binary for linux
-RUN go build \
-	-ldflags="${LD_FLAGS}" \
-	-o /out/worker \
-	./cmd/worker
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
+-ldflags="${LD_FLAGS}" \
+-o /out/worker \
+./cmd/worker
 
 # Final Stage
 FROM alpine:3.21.3
 
 WORKDIR /app
 ENV GIN_MODE=release
-COPY --from=builder /out/worker /usr/local/bin/chatlogger-worker
-RUN mkdir -p /app/exports
 
-# USER chatlogger:notso
+# Create a non-root user and group
+RUN addgroup -S chatlogger && adduser -S -G chatlogger chatlogger
+
+COPY --from=builder /out/worker /usr/local/bin/chatlogger-worker
+
+# Create exports directory and set appropriate permissions
+RUN mkdir -p /app/exports && \
+    chown -R chatlogger:chatlogger /app && \
+    chmod -R 755 /usr/local/bin/chatlogger-worker
+
+# Use non-root user for running the application
+USER chatlogger
 
 ENTRYPOINT [ "chatlogger-worker" ]

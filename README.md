@@ -297,7 +297,7 @@ The application includes version information that can be injected during build:
 ```bash
 # Build with version information
 docker build -t chatlogger-api \
-  --build-arg VERSION=0.3.0 \
+  --build-arg VERSION=0.4.9 \
   --build-arg BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
   --build-arg GIT_COMMIT=$(git rev-parse HEAD) \
   .
@@ -311,12 +311,12 @@ All container images are signed using [Sigstore cosign](https://github.com/sigst
 # Verify the container image signature
 cosign verify \
     --key=cosign.pub \
-    ghcr.io/kjanat/chatlogger-api-server:v0.3.0
+    ghcr.io/kjanat/chatlogger-api-server:0.4.9
 
 # Or use the public key URL
 cosign verify \
-    --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/refs/heads/master/cosign.pub \
-    ghcr.io/kjanat/chatlogger-api-worker:v0.3.0
+    --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub \
+    ghcr.io/kjanat/chatlogger-api-worker:0.4.9
 ```
 
 The public key for verification ([`cosign.pub`](cosign.pub)) is available in the root of the repository. For production deployments, we recommend verifying image signatures as part of your CI/CD pipeline to ensure supply chain security.

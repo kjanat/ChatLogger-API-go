@@ -97,6 +97,17 @@ jobs:
           file: ${{ vars.BUMP_YAML_LOC }}
           branch: ${{ github.ref_name }}
           command: ${{ github.event_name == 'pull_request' && 'diff' || 'bump' }}
+  
+  codeql:
+    name: CodeQL
+    needs: [ci]
+    if: github.event_name != 'pull_request'
+    permissions:
+        actions: read
+        contents: read
+        packages: read
+        security-events: write
+    uses: ./.github/workflows/codeql.yml
 
   # -------- Release (tag push OR manual bump) --------------------
   release:
@@ -106,8 +117,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
       id-token: write
+      packages: write
 
     steps:
       - name: Checkout
@@ -242,8 +253,14 @@ jobs:
       matrix:
         package: [server, worker]
         platform:
+          - linux/386
           - linux/amd64
+          - linux/arm/v6
+          - linux/arm/v7
           - linux/arm64
+          - linux/ppc64le
+          - linux/riscv64
+          - linux/s390x
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -259,12 +276,12 @@ jobs:
         id: docker
         uses: ./.github/actions/docker
         with:
-          PACKAGE: ${{ matrix.package }}
-          IMAGE_PREFIX: chatlogger-api
-          PLATFORM: ${{ matrix.platform }}
-          DOCKER_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKER_USERNAME: kjanat
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_PREFIX: chatlogger-api
+          PACKAGE: ${{ matrix.package }}
+          PLATFORM: ${{ matrix.platform }}
           
       - name: Export digest
         run: |
@@ -291,24 +308,22 @@ jobs:
       contents: read
       packages: write
     strategy:
+      fail-fast: false
       matrix:
         package: [server, worker]
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        
+
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
           path: ${{ runner.temp }}/digests
           pattern: digests-${{ matrix.package }}-*
           merge-multiple: true
-        
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -319,12 +334,15 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
+          username: kjanat
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Get version
-        id: version
         uses: ./.github/actions/get_version
+        id: version
         with:
           version-file: internal/version/version.go
 
@@ -333,33 +351,102 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}
-            ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}
+            kjanat/chatlogger-api-${{ matrix.package }}
+            ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}
           tags: |
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=schedule,pattern=nightly,enable=${{ github.ref == format('refs/heads/{0}', 'development') }}
-            type=semver,pattern={{version}},value=${{ steps.version.outputs.version-no-v }},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/v0') }}
-            type=semver,pattern={{major}},enable=${{ startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/v0') }}
+            type=raw,value=${{ steps.version.outputs.version-no-v }},enable=true,priority=1000
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/master') }},priority=900
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0') }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !startsWith(github.ref, 'refs/tags/v0') }}
+            type=semver,pattern={{version}},enable=true
             type=sha,enable=true,format=short
 
-      - name: Create manifest list and push (Docker Hub)
+      - name: List digest files
+        run: |
+          find ${{ runner.temp }}/digests -type f | sort
+
+      - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
-          echo "Creating manifest for Docker Hub..."
-          docker buildx imagetools create $(jq -cr '.tags | map("-t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:" + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
 
-      - name: Create manifest list and push (GHCR)
-        working-directory: ${{ runner.temp }}/digests
+      - name: Inspect image
         run: |
-          echo "Creating manifest for GitHub Container Registry..."
-          docker buildx imagetools create $(jq -cr '.tags | map("-t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:" + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          docker buildx imagetools inspect ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
 
-      - name: Inspect images
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.8.2
+
+      - name: Sign the published Docker images
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          echo "Inspecting Docker Hub image..."
-          docker buildx imagetools inspect ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
-          echo "Inspecting GitHub Container Registry image..."
-          docker buildx imagetools inspect ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
+          echo "🔐 Signing tags for matrix package: ${{ matrix.package }}"
+
+          # Extract image tags from metadata output
+          IMAGE_TAGS=$(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+
+          # Sign each tag for both registries
+          while IFS= read -r tag; do
+            if [[ -n "$tag" ]]; then
+              echo "📦 Signing tag: $tag"
+              cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$tag"
+            fi
+          done <<< "$IMAGE_TAGS"
+
+          echo "✅ Done signing tags"
+
+      - name: Sign digest-based manifest references
+        if: false
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          echo "🔐 Signing digests for multi-platform manifest: ${{ matrix.package }}"
+
+          cd "${{ runner.temp }}/digests"
+
+          for digest_file in *; do
+            digest="sha256:$digest_file"
+            echo "📦 Signing digest: kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+            cosign sign --yes --key env://COSIGN_PRIVATE_KEY "kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+
+            echo "📦 Signing digest: ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+            cosign sign --yes --key env://COSIGN_PRIVATE_KEY "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+          done
+
+          echo "✅ Done signing all digests"
+
+      - name: Verify signed images
+        run: |
+          # Additional logging for verification
+          echo "🔍 Verifying signed tag"
+          for digest_file in *; do
+            digest="sha256:$digest_file"
+            cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "kjanat/chatlogger-api-${{ matrix.package }}:latest"
+            cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
+          done
+          
+          echo "✅ All digest-based manifest references verified"
+
+      - name: Verify signed images
+        if: false
+        run: |
+          # Additional logging for verification
+          echo "🔍 Verifying signed digests..."
+          for digest_file in *; do
+            digest="sha256:$digest_file"
+            cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+            cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+          done
+          
+          echo "✅ All digest-based manifest references verified"
