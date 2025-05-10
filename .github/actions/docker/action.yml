@@ -106,7 +106,7 @@ runs:
         file: ./.github/actions/docker/Dockerfile.${{ inputs.PACKAGE }}
         platforms: ${{ inputs.PLATFORM }}
         push: true
-        provenance: false
+        provenance: true
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha,scope=${{ inputs.PACKAGE }}
