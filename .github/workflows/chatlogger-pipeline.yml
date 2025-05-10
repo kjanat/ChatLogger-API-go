@@ -307,13 +307,13 @@ jobs:
       matrix:
         package: [server, worker]
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+          sparse-checkout: |
+            internal/version/version.go
+            go.mod
+          sparse-checkout-cone-mode: false
 
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -335,9 +335,11 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Get version
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - uses: ./.github/actions/get_version
         id: version
-        uses: ./.github/actions/get_version
         with:
           version-file: internal/version/version.go
 
@@ -365,15 +367,81 @@ jobs:
         working-directory: ${{ runner.temp }}/digests
         run: |
           echo "Creating manifest for Docker Hub..."
-          docker buildx imagetools create $(jq -cr '.tags | map("-t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:" + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          
+          # Extract specific tags from metadata
+          VERSION_TAG=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -r '.tags[] | select(contains(":sha-") | not) | select(contains("ghcr.io") | not) | split(":")[1]' | head -n1)
+          SHA_TAG=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -r '.tags[] | select(contains(":sha-")) | select(contains("ghcr.io") | not) | split(":")[1]' | head -n1)
+          
+          echo "Using tags: $VERSION_TAG $SHA_TAG"
+          
+          # Create the manifest with all digest files
+          DIGESTS=$(find . -type f -name "*" | sort)
+          if [ -n "$DIGESTS" ]; then
+            echo "Found digest files: $DIGESTS"
+            DIGEST_ARGS=""
+            for file in $DIGESTS; do
+              DIGEST_NAME=$(basename $file)
+              DIGEST_ARGS="$DIGEST_ARGS ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:$DIGEST_NAME"
+            done
+            
+            echo "Creating manifest with arguments: $DIGEST_ARGS"
+            
+            # Create version tag manifest
+            docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:$VERSION_TAG $DIGEST_ARGS
+            
+            # Create sha tag manifest
+            if [ -n "$SHA_TAG" ]; then
+              docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:$SHA_TAG $DIGEST_ARGS
+            fi
+            
+            # Create latest tag if on tagged commit
+            if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
+              docker buildx imagetools create -t ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:latest $DIGEST_ARGS
+            fi
+          else
+            echo "No digest files found!"
+            exit 1
+          fi
 
       - name: Create manifest list and push (GHCR)
         working-directory: ${{ runner.temp }}/digests
         run: |
           echo "Creating manifest for GitHub Container Registry..."
-          docker buildx imagetools create $(jq -cr '.tags | map("-t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:" + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          
+          # Extract specific tags from metadata
+          VERSION_TAG=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -r '.tags[] | select(contains(":sha-") | not) | select(contains("ghcr.io")) | split(":")[1]' | head -n1)
+          SHA_TAG=$(echo "$DOCKER_METADATA_OUTPUT_JSON" | jq -r '.tags[] | select(contains(":sha-")) | select(contains("ghcr.io")) | split(":")[1]' | head -n1)
+          
+          echo "Using tags: $VERSION_TAG $SHA_TAG"
+          
+          # Create the manifest with all digest files
+          DIGESTS=$(find . -type f -name "*" | sort)
+          if [ -n "$DIGESTS" ]; then
+            echo "Found digest files: $DIGESTS"
+            DIGEST_ARGS=""
+            for file in $DIGESTS; do
+              DIGEST_NAME=$(basename $file)
+              DIGEST_ARGS="$DIGEST_ARGS ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}@sha256:$DIGEST_NAME"
+            done
+            
+            echo "Creating manifest with arguments: $DIGEST_ARGS"
+            
+            # Create version tag manifest
+            docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:$VERSION_TAG $DIGEST_ARGS
+            
+            # Create sha tag manifest
+            if [ -n "$SHA_TAG" ]; then
+              docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:$SHA_TAG $DIGEST_ARGS
+            fi
+            
+            # Create latest tag if on tagged commit
+            if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
+              docker buildx imagetools create -t ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ matrix.package }}:latest $DIGEST_ARGS
+            fi
+          else
+            echo "No digest files found!"
+            exit 1
+          fi
 
       - name: Inspect images
         run: |
