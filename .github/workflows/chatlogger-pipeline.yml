@@ -35,34 +35,6 @@ concurrency:
 
 # ───────────────────────────────────────────────────────────────
 jobs:
-  # lint:
-  #   name: Lint Code Base
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
-  #       with: { fetch-depth: 0 }
-
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v5
-  #       with:
-  #         go-version-file: go.mod
-
-  #     - name: Run Super-Linter
-  #       uses: super-linter/super-linter/slim@4e8a7c2bf106c4c766c816b35ec612638dc9b6b2 # v7.3.0
-  #       env:
-  #         VALIDATE_ALL_CODEBASE: true
-  #         DEFAULT_BRANCH: "master"
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         VALIDATE_GO: false
-  #         VALIDATE_JSCPD: false
-  #         VALIDATE_JSON: false
-  #         VALIDATE_JSON_PRETTIER: false
-  #         LINTER_RULES_PATH: .github/linters
-  #         GOLANGCI_LINT_CONFIG: .golangci.yml
-  #         VALIDATE_YAML_PRETTIER: false
-  # -------- CI ---------------------------------------------------
   ci:
     name: Test & Lint
     runs-on: ubuntu-latest
@@ -87,16 +59,19 @@ jobs:
 
       - name: Setup Go
         uses: actions/setup-go@v5
-        with: { go-version-file: 'go.mod', cache: true }
+        with:
+          go-version-file: 'go.mod'
+          cache: true
 
       - name: Lint
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           skip-cache: false
+          args: --timeout=3m
 
       - name: Run Tests
-        run: go test -v -race -coverprofile=coverage.txt ./...
+        run: go test -v -race -coverprofile=coverage.txt -timeout=5m ./...
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/test
 
@@ -111,11 +86,12 @@ jobs:
   bump-sh:
     needs: [ci, release]
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
-    name: Deploy API documentation on Bump.sh
+    name: Deploy API documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Deploy API documentation
         uses: bump-sh/github-action@v1
         with:
@@ -139,13 +115,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0 # Need full history for tags
 
       - name: Setup Go
         uses: actions/setup-go@v5
-        with: { go-version-file: 'go.mod', cache: true }
+        with:
+          go-version-file: 'go.mod'
+          cache: true
 
-      # 1) import GPG and setup git
+      # 1) import GPG and setup git - run in parallel
       - name: Import GPG key
         id: gpg
         uses: crazy-max/ghaction-import-gpg@v6
@@ -205,7 +184,7 @@ jobs:
       # 3) auto-tag if version.go changed on master/dev
       - name: Ensure version tag exists
         id: ensure_tag
-        if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/') # || steps.manual_bump.outputs.tag_created == 'true'
+        if: github.event_name == 'push' && !startsWith(github.ref,'refs/tags/')
         run: |
           VER=$(grep -oP 'Version\s*=\s*"\K[^"]+' internal/version/version.go)
           [ -z "$VER" ] && { echo "::error ::unable to read version"; exit 1; }
@@ -220,6 +199,7 @@ jobs:
             echo "Created and pushed signed tag $TAG"
           fi
 
+      # Prepare release tools in parallel with tag verification
       - name: Set up cosign
         uses: sigstore/cosign-installer@v3.8.2
         if: |
@@ -234,11 +214,10 @@ jobs:
           startsWith(github.ref,'refs/tags/v') ||
           steps.manual_bump.outputs.tag_created == 'true' ||
           steps.ensure_tag.outputs.tag_created == 'true'
-
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean
+          args: release --clean --parallelism 4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}

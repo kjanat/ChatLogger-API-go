@@ -28,15 +28,15 @@ runs:
     - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
-        username: ${{ vars.USER }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        username: ${{ inputs.DOCKERHUB_LOGIN }}
+        password: ${{ inputs.DOCKERHUB_TOKEN }}
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ github.token }}
 
     - name: Install cosign
       uses: sigstore/cosign-installer@v3.8.2
@@ -106,11 +106,13 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.labels }}
+        sbom: true
+        provenance: mode=max
         build-contexts: |
-          golang:1.24.2=docker-image://golang:${{ steps.version.outputs.GO_VERSION }}
+          golang:1.24.2=docker-image://golang:${{ steps.version.outputs.go-version }}
         build-args: |
           VERSION=${{ steps.version.outputs.version-no-v }}
-          BUILD_TIME=${{ steps.version.outputs.commit-date }}
+          BUILD_TIME=${{ steps.version.outputs.build-date }}
           GIT_COMMIT=${{ github.sha }}
           GIT_TAG=${{ github.ref_name }}
           GIT_BRANCH=${{ github.ref }}
