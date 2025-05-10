@@ -103,6 +103,7 @@ jobs:
     name: CodeQL Advanced
     needs: [ci]
     if: github.event_name != 'pull_request'
+    permissions: {actions: read, security-events: write, contents: read, packages: read}
     uses: ./.github/workflows/codeql.yml
 
   # -------- Release (tag push OR manual bump) --------------------
