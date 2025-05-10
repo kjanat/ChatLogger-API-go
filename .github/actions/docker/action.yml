@@ -10,6 +10,15 @@ inputs:
   PLATFORM:
     required: true
     description: 'Platform to build for (e.g. linux/amd64)'
+  DOCKER_USERNAME:
+    required: true
+    description: 'Docker Hub username'
+  DOCKER_PASSWORD:
+    required: true
+    description: 'Docker Hub password or token'
+  GITHUB_TOKEN:
+    required: true
+    description: 'GitHub token for GHCR access'
 outputs:
   digest:
     description: 'Image digest'
@@ -36,7 +45,7 @@ runs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ github.token }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install cosign
       uses: sigstore/cosign-installer@v3.8.2
@@ -59,8 +68,8 @@ runs:
       uses: docker/metadata-action@v5
       with:
         images: |
-          kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
-          ghcr.io/kjanat/${{ inputs.IMAGE_PREFIX }}-${{ inputs.PACKAGE }}
+          kjanat/chatlogger-api-${{ inputs.PACKAGE }}
+          ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ inputs.PACKAGE }}
         tags: |
           # latest vs nightly
           type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }},priority=1000
