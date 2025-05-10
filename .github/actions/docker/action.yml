@@ -82,9 +82,6 @@ runs:
 
           # sha
           type=sha,enable=true,format=short
-          
-          # Add a specific tag for the platform-specific image
-          type=raw,value=${{ steps.version.outputs.version-no-v }}-${{ inputs.PLATFORM }}
         labels: |
           org.opencontainers.image.created=${{ steps.version.outputs.commit-date }}
           org.opencontainers.image.authors=${{ github.actor }}
@@ -109,8 +106,7 @@ runs:
         file: ./.github/actions/docker/Dockerfile.${{ inputs.PACKAGE }}
         platforms: ${{ inputs.PLATFORM }}
         push: true
-        provenance: true
-        tags: ${{ steps.meta.outputs.tags }}
+        provenance: false
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.labels }}
         build-args: |
@@ -118,4 +114,6 @@ runs:
           BUILD_TIME=${{ steps.version.outputs.commit-date }}
           GIT_COMMIT=${{ github.sha }}
           GIT_TAG=${{ github.ref_name }}
-        outputs: type=image,name=${{ inputs.DOCKER_USERNAME }}/chatlogger-api-${{ inputs.PACKAGE }},push-by-digest=true
+        outputs: |
+          type=image,name=${{ inputs.DOCKER_USERNAME }}/chatlogger-api-${{ inputs.PACKAGE }},push-by-digest=true
+          type=image,name=ghcr.io/${{ github.repository_owner }}/chatlogger-api-${{ inputs.PACKAGE }},push-by-digest=true
