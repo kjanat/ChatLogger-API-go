@@ -88,7 +88,7 @@ runs:
           org.opencontainers.image.ref.name=${{ github.ref_name }}
           org.opencontainers.image.title=chatlogger-api-${{ inputs.PACKAGE }}
           org.opencontainers.image.description='ChatLogger API ${{ inputs.PACKAGE }} service'
-          org.opencontainers.image.licenses=${{ github.repository.license.spdx_id }}
+          org.opencontainers.image.licenses=${{ github.repository.license.name || 'MIT' }}
 
     - name: Build and push by digest
       id: build

@@ -387,89 +387,97 @@ jobs:
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf 'ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          
+          
+          
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf 'kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
-          docker buildx imagetools inspect kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *) >> $GITHUB_STEP_SUMMARY
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.8.2
+          docker buildx imagetools inspect \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *) >> $GITHUB_STEP_SUMMARY
 
-      - name: Sign the published Docker images
-        env:
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-        run: |
-          echo "🔐 Signing tags for matrix package: ${{ matrix.package }}"
+      # - name: Install Cosign
+      #   uses: sigstore/cosign-installer@v3.8.2
 
-          # First sign versioned tags (which will create the SHA signatures)
-          VERSION_TAG="kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.version.outputs.version-no-v }}"
-          GHCR_VERSION_TAG="ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.version.outputs.version-no-v }}"
-          echo "📦 Signing version tag: $VERSION_TAG"
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$VERSION_TAG"
-          echo "📦 Signing GHCR version tag: $GHCR_VERSION_TAG"
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$GHCR_VERSION_TAG"
+      # - name: Sign the published Docker images
+      #   env:
+      #     COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      #   run: |
+      #     echo "🔐 Signing tags for matrix package: ${{ matrix.package }}"
 
-          # Then push latest tags separately *after* the version tags are signed
-          # This should make them appear at the top of the package list
-          docker tag "$VERSION_TAG" "kjanat/chatlogger-api-${{ matrix.package }}:latest"
-          docker push "kjanat/chatlogger-api-${{ matrix.package }}:latest"
-          docker tag "$GHCR_VERSION_TAG" "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
-          docker push "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
+      #     # First sign versioned tags (which will create the SHA signatures)
+      #     VERSION_TAG="kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.version.outputs.version-no-v }}"
+      #     GHCR_VERSION_TAG="ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.version.outputs.version-no-v }}"
+      #     echo "📦 Signing version tag: $VERSION_TAG"
+      #     cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$VERSION_TAG"
+      #     echo "📦 Signing GHCR version tag: $GHCR_VERSION_TAG"
+      #     cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$GHCR_VERSION_TAG"
 
-          # Sign the latest tags last
-          echo "📦 Signing latest tag"
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "kjanat/chatlogger-api-${{ matrix.package }}:latest"
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
+      #     # Then push latest tags separately *after* the version tags are signed
+      #     # This should make them appear at the top of the package list
+      #     docker tag "$VERSION_TAG" "kjanat/chatlogger-api-${{ matrix.package }}:latest"
+      #     docker push "kjanat/chatlogger-api-${{ matrix.package }}:latest"
+      #     docker tag "$GHCR_VERSION_TAG" "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
+      #     docker push "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
 
-          echo "✅ Done signing tags"
+      #     # Sign the latest tags last
+      #     echo "📦 Signing latest tag"
+      #     cosign sign --yes --key env://COSIGN_PRIVATE_KEY "kjanat/chatlogger-api-${{ matrix.package }}:latest"
+      #     cosign sign --yes --key env://COSIGN_PRIVATE_KEY "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
 
-      - name: Sign digest-based manifest references
-        if: false
-        env:
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-        run: |
-          echo "🔐 Signing digests for multi-platform manifest: ${{ matrix.package }}"
+      #     echo "✅ Done signing tags"
 
-          cd "${{ runner.temp }}/digests"
+      # - name: Sign digest-based manifest references
+      #   if: false
+      #   env:
+      #     COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      #   run: |
+      #     echo "🔐 Signing digests for multi-platform manifest: ${{ matrix.package }}"
 
-          for digest_file in *; do
-            digest="sha256:$digest_file"
-            echo "📦 Signing digest: kjanat/chatlogger-api-${{ matrix.package }}@$digest"
-            cosign sign --yes --key env://COSIGN_PRIVATE_KEY "kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+      #     cd "${{ runner.temp }}/digests"
 
-            echo "📦 Signing digest: ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
-            cosign sign --yes --key env://COSIGN_PRIVATE_KEY "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
-          done
+      #     for digest_file in *; do
+      #       digest="sha256:$digest_file"
+      #       echo "📦 Signing digest: kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+      #       cosign sign --yes --key env://COSIGN_PRIVATE_KEY "kjanat/chatlogger-api-${{ matrix.package }}@$digest"
 
-          echo "✅ Done signing all digests"
+      #       echo "📦 Signing digest: ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+      #       cosign sign --yes --key env://COSIGN_PRIVATE_KEY "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+      #     done
 
-      - name: Verify signed images (tags)
-        run: |
-          # Additional logging for verification
-          echo "🔍 Verifying signed tag"
-          for digest_file in *; do
-            digest="sha256:$digest_file"
-            cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "kjanat/chatlogger-api-${{ matrix.package }}:latest"
-            cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
-          done
+      #     echo "✅ Done signing all digests"
 
-          echo "✅ All digest-based manifest references verified"
+      # - name: Verify signed images (tags)
+      #   run: |
+      #     # Additional logging for verification
+      #     echo "🔍 Verifying signed tag"
+      #     for digest_file in *; do
+      #       digest="sha256:$digest_file"
+      #       cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "kjanat/chatlogger-api-${{ matrix.package }}:latest"
+      #       cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
+      #     done
 
-      - name: Verify signed images (digest)
-        if: false
-        run: |
-          # Additional logging for verification
-          echo "🔍 Verifying signed digests..."
-          for digest_file in *; do
-            digest="sha256:$digest_file"
-            cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "kjanat/chatlogger-api-${{ matrix.package }}@$digest"
-            cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
-          done
+      #     echo "✅ All digest-based manifest references verified"
 
-          echo "✅ All digest-based manifest references verified"
+      # - name: Verify signed images (digest)
+      #   if: false
+      #   run: |
+      #     # Additional logging for verification
+      #     echo "🔍 Verifying signed digests..."
+      #     for digest_file in *; do
+      #       digest="sha256:$digest_file"
+      #       cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+      #       cosign verify --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@$digest"
+      #     done
+
+      #     echo "✅ All digest-based manifest references verified"
