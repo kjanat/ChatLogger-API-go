@@ -36,11 +36,20 @@ FROM alpine:3.21.3
 
 WORKDIR /app
 ENV GIN_MODE=release
+
+# Create a non-root user and group
+RUN addgroup -S chatlogger && adduser -S -G chatlogger chatlogger
+
 COPY docs /app
 COPY --from=builder /out/server /usr/local/bin/chatlogger-server
 
+# Ensure non-root user has appropriate permissions
+RUN chown -R chatlogger:chatlogger /app && \
+    chmod -R 755 /usr/local/bin/chatlogger-server
+
 EXPOSE 8080
 
-# USER chatlogger:notso
+# Use non-root user for running the application
+USER chatlogger
 
 ENTRYPOINT [ "chatlogger-server" ]

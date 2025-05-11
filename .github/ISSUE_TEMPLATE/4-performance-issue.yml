@@ -1,0 +1,98 @@
+name: Performance Issue
+description: Report performance problems or bottlenecks
+title: "[Performance]: "
+labels: ["performance"]
+assignees:
+  - kjanat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a performance issue. Detailed information helps us diagnose and fix the problem more quickly.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the performance issue you're experiencing
+      placeholder: E.g., slow loading, high CPU usage, memory leaks, timeouts
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: List the actions that lead to the performance degradation
+      placeholder: |
+        1. Go to '...'
+        2. Perform action '...'
+        3. Wait for '...'
+        4. Observe slow performance
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What should the performance be like under normal conditions?
+      placeholder: Response should be under 200ms, CPU usage should be under 30%, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: How does the performance degrade? Include specific metrics if possible
+      placeholder: Takes 5 seconds to respond, CPU usage spikes to 100%, memory usage grows continuously
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: ChatLogger API Version
+      description: What version are you running?
+      placeholder: 0.4.8
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Where are you experiencing this issue?
+      options:
+        - Development
+        - Testing
+        - Staging
+        - Production
+        - Docker
+        - Kubernetes
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: system-specs
+    attributes:
+      label: System Specifications
+      description: Provide details about your system setup
+      placeholder: |
+        - Operating System: Ubuntu 24.04
+        - CPU: Intel i7-13700K
+        - RAM: 32GB
+        - Database: PostgreSQL 16
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, such as recent changes or known issues that might affect performance
+      placeholder: Recent changes, configuration settings, load conditions, etc.
+    validations:
+      required: false

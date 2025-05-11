@@ -36,9 +36,18 @@ FROM alpine:3.21.3
 
 WORKDIR /app
 ENV GIN_MODE=release
-COPY --from=builder /out/worker /usr/local/bin/chatlogger-worker
-RUN mkdir -p /app/exports
 
-# USER chatlogger:notso
+# Create a non-root user and group
+RUN addgroup -S chatlogger && adduser -S -G chatlogger chatlogger
+
+COPY --from=builder /out/worker /usr/local/bin/chatlogger-worker
+
+# Create exports directory and set appropriate permissions
+RUN mkdir -p /app/exports && \
+    chown -R chatlogger:chatlogger /app && \
+    chmod -R 755 /usr/local/bin/chatlogger-worker
+
+# Use non-root user for running the application
+USER chatlogger
 
 ENTRYPOINT [ "chatlogger-worker" ]

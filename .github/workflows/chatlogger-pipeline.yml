@@ -278,8 +278,8 @@ jobs:
         uses: ./.github/actions/docker
         with:
           DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-          DOCKER_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          GITHUB_TOKEN: ${{ github.token }}
+          DOCKER_USERNAME: kjanat
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_PREFIX: chatlogger-api
           PACKAGE: ${{ matrix.package }}
           PLATFORM: ${{ matrix.platform }}
@@ -335,7 +335,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
+          username: kjanat
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
@@ -351,12 +351,12 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}
-            ghcr.io/${{ vars.GH_USERNAME }}/chatlogger-api-${{ matrix.package }}
+            kjanat/chatlogger-api-${{ matrix.package }}
+            ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
+            type=semver,pattern={{version}},enable=true
             type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0') }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ !startsWith(github.ref, 'refs/tags/v0') }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/master') }}
@@ -369,12 +369,14 @@ jobs:
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/${{ vars.GH_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'kjanat/chatlogger-api-${{ matrix.package }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ghcr.io/${{ vars.GH_USERNAME }}/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
-          docker buildx imagetools inspect ${{ vars.DOCKERHUB_USERNAME }}/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.meta.outputs.version }}

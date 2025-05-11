@@ -1,0 +1,56 @@
+name: Documentation Request
+description: Request improvements or additions to documentation
+title: "[Docs]: "
+labels: ["documentation"]
+assignees:
+  - kjanat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping us improve our documentation! Please provide details about what needs to be improved or added.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What part of the documentation is unclear or missing?
+      placeholder: Please describe the specific documentation issue...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: Why do you think this documentation improvement is needed?
+      placeholder: Explain the problem this creates for users...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: What specific changes would improve the documentation?
+      placeholder: Suggest content, structure, or other improvements...
+    validations:
+      required: true
+
+  - type: textarea
+    id: related-resources
+    attributes:
+      label: Related Resources
+      description: Link to any external resources that could help improve the documentation
+      placeholder: Add links to relevant references or examples...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Provide any other context that could help us improve the documentation
+      placeholder: Add any other relevant information here...
+    validations:
+      required: false

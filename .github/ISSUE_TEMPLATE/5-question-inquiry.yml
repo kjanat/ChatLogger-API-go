@@ -1,0 +1,50 @@
+name: Question or Inquiry
+description: Ask a question about the project or its features
+title: "[Question]: "
+labels: ["question"]
+assignees:
+  - kjanat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in ChatLogger API! Use this template to ask questions about functionality, implementation, or usage.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What would you like to know or clarify?
+      placeholder: Please provide a clear and specific question...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-answer
+    attributes:
+      label: Expected Answer
+      description: Describe what kind of answer you're hoping to receive
+      placeholder: I'm looking for information about...
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any additional information that will help clarify the context of your question
+      placeholder: Include relevant details, scenarios, or use cases...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this question?
+      options:
+        - Low (Just curious)
+        - Medium (Blocking my understanding)
+        - High (Blocking my implementation)
+    validations:
+      required: false
