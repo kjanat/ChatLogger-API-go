@@ -37,7 +37,7 @@ outputs:
     value: ${{ steps.extract-everything.outputs.build-date }}
     description: 'UTC build timestamp (RFC3339)'
   build-date-tag:
-    value: ${{ steps.extract-everything.outputs.build-date_tag }}
+    value: ${{ steps.extract-everything.outputs.build_date_tag }}
     description: 'UTC build timestamp tonadd to tag'
   go-version:
     value: ${{ steps.extract-everything.outputs.go-version }}
