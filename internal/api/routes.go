@@ -14,41 +14,34 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	docs "github.com/kjanat/chatlogger-api-go/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // setupSwaggerRoutes configures the OpenAPI/Swagger documentation routes.
-func setupSwaggerRoutes(router *gin.Engine, version, host, port string) {
-	log.Printf("Starting ChatLogger API v%s (host: %s, port: %s)",
-		version, host, port)
+func setupSwaggerRoutes(router *gin.Engine) {
+	log.Printf("Setting up Swagger routes")
 
-	docs.SwaggerInfoOpenAPI.Version = version
-	docs.SwaggerInfoOpenAPI.Host = host + ":" + port
-	docs.SwaggerInfoOpenAPI.BasePath = "/api/v1"
-	docs.SwaggerInfoOpenAPI.Schemes = []string{"http", "https"}
-	docs.SwaggerInfoOpenAPI.InfoInstanceName = "OpenAPI"
+	// Set up Swagger UI endpoint for API documentation
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(
+		swaggerFiles.Handler,
+		ginSwagger.DocExpansion("list"),
+	))
 
-	// Static files for documentation
-	router.StaticFile("/docs/api.json", "./docs/OpenAPI_swagger.json")
-	router.StaticFile("/docs/api.yaml", "./docs/OpenAPI_swagger.yaml")
-
+	// Also make documentation available at /openapi for OpenAPI 3.0
 	router.GET("/openapi/*any",
 		ginSwagger.WrapHandler(
 			swaggerFiles.Handler,
 			ginSwagger.DocExpansion("list"),
-			ginSwagger.URL("/docs/api.json"),
+			ginSwagger.URL("/docs/OpenAPIv3_swagger.json"),
 		),
 	)
 
-	router.GET("/swagger/*any",
-		ginSwagger.WrapHandler(
-			swaggerFiles.Handler,
-			ginSwagger.DocExpansion("list"),
-			ginSwagger.URL("/docs/api.json"),
-		),
-	)
+	// Expose raw documentation files
+	router.StaticFile("/docs/api.json", "./docs/OpenAPI_swagger.json")
+	router.StaticFile("/docs/api.yaml", "./docs/OpenAPI_swagger.yaml")
+	router.StaticFile("/docs/apiv3.json", "./docs/OpenAPIv3_swagger.json")
+	router.StaticFile("/docs/apiv3.yaml", "./docs/OpenAPIv3_swagger.yaml")
 }
 
 // addRoutes adds API routes to the router.
@@ -94,7 +87,7 @@ func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 	}
 
 	// API routes for the Dashboard (JWT auth required)
-	dashboardGroup := router.Group("/api/v1")
+	dashboardGroup := router.Group("/v1")
 	dashboardGroup.Use(middleware.JWTAuth(jwtSecret))
 	{
 		// User routes
@@ -154,7 +147,7 @@ func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 	}
 
 	// Public API routes (API key auth required)
-	publicAPIGroup := router.Group("/api/v1/orgs/:slug")
+	publicAPIGroup := router.Group("/v1/orgs/:slug")
 	publicAPIGroup.Use(middleware.APIKeyAuth(services.APIKeyService))
 	publicAPIGroup.Use(middleware.ValidateSlugAccess(services.OrganizationService))
 	{

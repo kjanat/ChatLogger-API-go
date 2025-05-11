@@ -50,8 +50,8 @@ type CreateChatRequest struct {
 //	@Failure		403		{object}	map[string]string		"Forbidden (API Key doesn't match slug)"
 //	@Failure		500		{object}	map[string]string		"Failed to create chat or process tags/metadata"
 //	@Security		BearerAuth || ApiKeyAuth
-//	@Router			/api/v1/chats [post]
-//	@Router			/api/v1/orgs/{slug}/chats [post]
+//	@Router			/v1/chats [post]
+//	@Router			/v1/orgs/{slug}/chats [post]
 func (h *ChatHandler) CreateChat(c *gin.Context) {
 	var req CreateChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -133,7 +133,7 @@ type GetChatResponse struct {
 //	@Failure		404					{object}	map[string]string	"Chat not found"
 //	@Failure		500					{object}	map[string]string	"Failed to get chat or messages"
 //	@Security		BearerAuth
-//	@Router			/api/v1/chats/{chatID} [get]
+//	@Router			/v1/chats/{chatID} [get]
 func (h *ChatHandler) GetChat(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")
@@ -220,7 +220,7 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 //	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
 //	@Failure		500		{object}	map[string]string	"Failed to list chats"
 //	@Security		BearerAuth
-//	@Router			/api/v1/chats [get]
+//	@Router			/v1/chats [get]
 func (h *ChatHandler) ListChats(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")
@@ -266,7 +266,7 @@ type UpdateChatRequest struct {
 //	@Failure		404		{object}	map[string]string	"Chat not found"
 //	@Failure		500		{object}	map[string]string	"Failed to get or update chat, or process tags/metadata"
 //	@Security		BearerAuth
-//	@Router			/api/v1/chats/{chatID} [patch]
+//	@Router			/v1/chats/{chatID} [patch]
 func (h *ChatHandler) UpdateChat(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")
@@ -370,7 +370,7 @@ func (h *ChatHandler) UpdateChat(c *gin.Context) {
 //	@Failure		404		{object}	map[string]string	"Chat not found"
 //	@Failure		500		{object}	map[string]string	"Failed to get or delete chat"
 //	@Security		BearerAuth
-//	@Router			/api/v1/chats/{chatID} [delete]
+//	@Router			/v1/chats/{chatID} [delete]
 func (h *ChatHandler) DeleteChat(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")

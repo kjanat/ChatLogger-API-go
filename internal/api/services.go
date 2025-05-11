@@ -11,6 +11,10 @@ import (
 // AppConfig contains application configuration values
 type AppConfig struct {
 	ExportDir string
+	APIServer struct {
+		Host string
+		Port string
+	}
 }
 
 // AppServices contains all the services used by the application.
@@ -21,5 +25,6 @@ type AppServices struct {
 	ChatService         domain.ChatService
 	MessageService      domain.MessageService
 	ExportService       domain.ExportService
+	SwaggerService      domain.SwaggerService
 	Config              *AppConfig
 }

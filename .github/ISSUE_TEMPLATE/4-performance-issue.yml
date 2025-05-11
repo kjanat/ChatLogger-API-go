@@ -55,7 +55,7 @@ body:
     attributes:
       label: ChatLogger API Version
       description: What version are you running?
-      placeholder: 0.4.9
+      placeholder: 0.5.0
     validations:
       required: true
 

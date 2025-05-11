@@ -24,7 +24,11 @@ type Config struct {
 	RedisAddr string
 	// ExportDir is the directory where export files will be stored
 	ExportDir string
-	// Add more config fields as needed
+	// PublicHost is the public hostname for the API
+	ApiServer struct {
+		Host string
+		Port string
+	}
 }
 
 // LoadConfig loads configuration from environment variables and returns a Config struct.
@@ -36,7 +40,6 @@ func LoadConfig() (*Config, error) {
 	if err != nil && !os.IsNotExist(err) {
 		log.Printf("Warning: Error loading .env file: %v\n", err)
 	}
-
 	cfg := &Config{
 		ServerHost:  os.Getenv("HOST"),
 		ServerPort:  os.Getenv("PORT"),
@@ -44,6 +47,13 @@ func LoadConfig() (*Config, error) {
 		JWTSecret:   os.Getenv("JWT_SECRET"),
 		RedisAddr:   os.Getenv("REDIS_ADDR"),
 		ExportDir:   os.Getenv("EXPORT_DIR"),
+		ApiServer: struct {
+			Host string
+			Port string
+		}{
+			Host: os.Getenv("API_ENDPOINT_HOST"),
+			Port: os.Getenv("API_ENDPOINT_PORT"),
+		},
 		// Load other config...
 	}
 
@@ -80,6 +90,19 @@ func LoadConfig() (*Config, error) {
 	if cfg.ExportDir == "" {
 		cfg.ExportDir = "./exports" // Default export directory
 		log.Println("Warning: Using default export directory. Set EXPORT_DIR for production.")
+	}
+
+	// Check if API server host and port are set
+	// If not, use server host and port as defaults
+	// This is useful for local development where the API server might be on the same host
+	// and port as the main server.
+	if cfg.ApiServer.Host == "" {
+		cfg.ApiServer.Host = cfg.ServerHost // Default to server host
+		log.Println("Warning: API_ENDPOINT_HOST not set, using server host")
+	}
+	if cfg.ApiServer.Port == "" {
+		cfg.ApiServer.Port = cfg.ServerPort // Default to server port
+		log.Println("Warning: API_ENDPOINT_PORT not set, using server port")
 	}
 
 	// Create export directory if it doesn't exist

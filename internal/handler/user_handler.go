@@ -31,7 +31,7 @@ func NewUserHandler(userService domain.UserService) *UserHandler {
 //	@Failure		404	{object}	map[string]string	"User not found"
 //	@Failure		500	{object}	map[string]string	"Failed to get user"
 //	@Security		BearerAuth
-//	@Router			/api/v1/users/me [get]
+//	@Router			/v1/users/me [get]
 func (h *UserHandler) GetMe(c *gin.Context) {
 	// Get user ID from context (set by JWTAuth middleware)
 	userID, exists := c.Get("userID")
@@ -78,7 +78,7 @@ type UpdateMeRequest struct {
 //	@Failure		404		{object}	map[string]string	"User not found"
 //	@Failure		500		{object}	map[string]string	"Failed to get or update user"
 //	@Security		BearerAuth
-//	@Router			/api/v1/users/me [patch]
+//	@Router			/v1/users/me [patch]
 func (h *UserHandler) UpdateMe(c *gin.Context) {
 	var req UpdateMeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -141,7 +141,7 @@ type ChangePasswordRequest struct {
 //	@Failure		400		{object}	map[string]string		"Invalid request data or password change failed (e.g., wrong current password)"
 //	@Failure		401		{object}	map[string]string		"Unauthorized (JWT invalid/missing or User ID not found)"
 //	@Security		BearerAuth
-//	@Router			/api/v1/users/me/password [post]
+//	@Router			/v1/users/me/password [post]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	var req ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -182,7 +182,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Failure		403		{object}	map[string]string	"Forbidden (User does not have admin role)"	//	Assuming	RoleRequired	middleware	handles	this
 //	@Failure		500		{object}	map[string]string	"Failed to get users"
 //	@Security		BearerAuth
-//	@Router			/api/v1/orgs/me/users [get] // Assuming this route exists and is admin-protected
+//	@Router			/v1/orgs/me/users [get] // Assuming this route exists and is admin-protected
 func (h *UserHandler) ListOrgUsers(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")

@@ -111,7 +111,7 @@ Uses API key authentication via the `x-organization-api-key` header:
 
 ```bash
 curl -X POST \
-  http://localhost:8080/api/v1/orgs/acme/chats \
+  http://localhost:8080/v1/orgs/acme/chats \
   -H 'x-organization-api-key: your-api-key' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -204,41 +204,41 @@ RBAC is implemented via middleware that checks the user's role before allowing a
 
 | Method   | Endpoint                          | Description                      |
 |:---------|:----------------------------------|:---------------------------------|
-| `GET`    | `/api/v1/users/me`                | Get current user profile         |
-| `PATCH`  | `/api/v1/users/me`                | Update current user profile      |
-| `POST`   | `/api/v1/users/me/password`       | Change current user's password   |
-| `POST`   | `/api/v1/chats`                   | Create a new chat                |
-| `GET`    | `/api/v1/chats`                   | List user's chats                |
-| `GET`    | `/api/v1/chats/:chatID`           | Get a specific chat              |
-| `PATCH`  | `/api/v1/chats/:chatID`           | Update a chat                    |
-| `DELETE` | `/api/v1/chats/:chatID`           | Delete a chat                    |
-| `GET`    | `/api/v1/chats/:chatID/messages`  | Get messages from a chat         |
-| `GET`    | `/api/v1/analytics/messages`      | Get message analytics            |
+| `GET`    | `/v1/users/me`                | Get current user profile         |
+| `PATCH`  | `/v1/users/me`                | Update current user profile      |
+| `POST`   | `/v1/users/me/password`       | Change current user's password   |
+| `POST`   | `/v1/chats`                   | Create a new chat                |
+| `GET`    | `/v1/chats`                   | List user's chats                |
+| `GET`    | `/v1/chats/:chatID`           | Get a specific chat              |
+| `PATCH`  | `/v1/chats/:chatID`           | Update a chat                    |
+| `DELETE` | `/v1/chats/:chatID`           | Delete a chat                    |
+| `GET`    | `/v1/chats/:chatID/messages`  | Get messages from a chat         |
+| `GET`    | `/v1/analytics/messages`      | Get message analytics            |
 
 ### Admin-Only Endpoints (JWT + Admin Role)
 
 | Method   | Endpoint                          | Description                      |
 |:---------|:----------------------------------|:---------------------------------|
-| `GET`    | `/api/v1/orgs/me/apikeys`         | List organization API keys       |
-| `POST`   | `/api/v1/orgs/me/apikeys`         | Generate a new API key           |
-| `DELETE` | `/api/v1/orgs/me/apikeys/:id`     | Revoke an API key                |
+| `GET`    | `/v1/orgs/me/apikeys`         | List organization API keys       |
+| `POST`   | `/v1/orgs/me/apikeys`         | Generate a new API key           |
+| `DELETE` | `/v1/orgs/me/apikeys/:id`     | Revoke an API key                |
 
 ### Export Endpoints (JWT Auth)
 
 | Method   | Endpoint                          | Description                      |
 |:---------|:----------------------------------|:---------------------------------|
-| `POST`   | `/api/v1/exports`                 | Create async export job          |
-| `GET`    | `/api/v1/exports`                 | List export jobs                 |
-| `GET`    | `/api/v1/exports/:id`             | Get export job status            |
-| `GET`    | `/api/v1/exports/:id/download`    | Download completed export        |
-| `POST`   | `/api/v1/exports/sync`            | Create synchronous export        |
+| `POST`   | `/v1/exports`                 | Create async export job          |
+| `GET`    | `/v1/exports`                 | List export jobs                 |
+| `GET`    | `/v1/exports/:id`             | Get export job status            |
+| `GET`    | `/v1/exports/:id/download`    | Download completed export        |
+| `POST`   | `/v1/exports/sync`            | Create synchronous export        |
 
 ### Public API (API Key Auth)
 
 | Method   | Endpoint                                   | Description                |
 |:---------|:-------------------------------------------|:---------------------------|
-| `POST`   | `/api/v1/orgs/:slug/chats`                 | Create a new chat session  |
-| `POST`   | `/api/v1/orgs/:slug/chats/:chatID/messages`| Add a message to a chat    |
+| `POST`   | `/v1/orgs/:slug/chats`                 | Create a new chat session  |
+| `POST`   | `/v1/orgs/:slug/chats/:chatID/messages`| Add a message to a chat    |
 
 ## 🔧 Configuration
 
@@ -297,7 +297,7 @@ The application includes version information that can be injected during build:
 ```bash
 # Build with version information
 docker build -t chatlogger-api \
-  --build-arg VERSION=0.4.9 \
+  --build-arg VERSION=0.5.0 \
   --build-arg BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
   --build-arg GIT_COMMIT=$(git rev-parse HEAD) \
   .
@@ -311,12 +311,12 @@ All container images are signed using [Sigstore cosign](https://github.com/sigst
 # Verify the container image signature
 cosign verify \
     --key=cosign.pub \
-    ghcr.io/kjanat/chatlogger-api-server:0.4.9
+    ghcr.io/kjanat/chatlogger-api-server:0.5.0
 
 # Or use the public key URL
 cosign verify \
     --key=https://raw.githubusercontent.com/kjanat/chatlogger-api-go/master/cosign.pub \
-    ghcr.io/kjanat/chatlogger-api-worker:0.4.9
+    ghcr.io/kjanat/chatlogger-api-worker:0.5.0
 ```
 
 The public key for verification ([`cosign.pub`](cosign.pub)) is available in the root of the repository. For production deployments, we recommend verifying image signatures as part of your CI/CD pipeline to ensure supply chain security.

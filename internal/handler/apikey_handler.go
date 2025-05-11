@@ -42,7 +42,7 @@ type GenerateKeyRequest struct {
 //	@Failure		401		{object}	map[string]string	"Unauthorized or Org ID not found"
 //	@Failure		500		{object}	map[string]string	"Failed to generate API key"
 //	@Security		BearerAuth
-//	@Router			/api/v1/orgs/me/apikeys [post]
+//	@Router			/v1/orgs/me/apikeys [post]
 func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 	var req GenerateKeyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -82,7 +82,7 @@ func (h *APIKeyHandler) GenerateKey(c *gin.Context) {
 //	@Failure		401	{object}	map[string]string	"Unauthorized or Org ID not found"
 //	@Failure		500	{object}	map[string]string	"Failed to list API keys"
 //	@Security		BearerAuth
-//	@Router			/api/v1/orgs/me/apikeys [get]
+//	@Router			/v1/orgs/me/apikeys [get]
 func (h *APIKeyHandler) ListKeys(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")
@@ -163,7 +163,7 @@ func (h *APIKeyHandler) validateKeyAccess(c *gin.Context, actionName string) (ui
 //	@Failure		404	{object}	map[string]string	"API key not found"
 //	@Failure		500	{object}	map[string]string	"Failed to revoke API key"
 //	@Security		BearerAuth
-//	@Router			/api/v1/orgs/me/apikeys/{id} [delete] // Note: Swag uses the path for DELETE, often mapped to revoke
+//	@Router			/v1/orgs/me/apikeys/{id} [delete] // Note: Swag uses the path for DELETE, often mapped to revoke
 func (h *APIKeyHandler) RevokeKey(c *gin.Context) {
 	id, _, ok := h.validateKeyAccess(c, "revoke")
 	if !ok {
@@ -193,7 +193,7 @@ func (h *APIKeyHandler) RevokeKey(c *gin.Context) {
 //	@Failure		404	{object}	map[string]string	"API key not found"
 //	@Failure		500	{object}	map[string]string	"Failed to delete API key"
 //	@Security		BearerAuth
-//	@Router			/api/v1/orgs/me/apikeys/{id}/delete [delete] // Example distinct path if needed
+//	@Router			/v1/orgs/me/apikeys/{id}/delete [delete] // Example distinct path if needed
 func (h *APIKeyHandler) DeleteKey(c *gin.Context) {
 	id, _, ok := h.validateKeyAccess(c, "delete")
 	if !ok {

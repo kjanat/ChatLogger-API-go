@@ -51,7 +51,7 @@ type CreateMessageRequest struct {
 //	@Failure		404		{object}	map[string]string		"Chat not found"
 //	@Failure		500		{object}	map[string]string		"Failed to get chat or create message"
 //	@Security		ApiKeyAuth
-//	@Router			/api/v1/orgs/{slug}/chats/{chatID}/messages [post]
+//	@Router			/v1/orgs/{slug}/chats/{chatID}/messages [post]
 func (h *MessageHandler) CreateMessage(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")
@@ -163,7 +163,7 @@ type GetMessageResponse struct {
 //	@Failure		404		{object}	map[string]string	"Chat not found"
 //	@Failure		500		{object}	map[string]string	"Failed to get chat or messages"
 //	@Security		BearerAuth
-//	@Router			/api/v1/chats/{chatID}/messages [get]
+//	@Router			/v1/chats/{chatID}/messages [get]
 func (h *MessageHandler) GetMessages(c *gin.Context) {
 	// Get chat ID from URL
 	chatID := c.Param("chatID")
@@ -252,7 +252,7 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 //	@Failure		401		{object}	map[string]string		"Unauthorized (JWT invalid/missing or Org ID not found)"
 //	@Failure		500		{object}	map[string]string		"Failed to get message statistics"
 //	@Security		BearerAuth
-//	@Router			/api/v1/analytics/messages [get]
+//	@Router			/v1/analytics/messages [get]
 func (h *MessageHandler) GetMessageStats(c *gin.Context) {
 	// Get organization ID from context
 	orgID, exists := c.Get("orgID")

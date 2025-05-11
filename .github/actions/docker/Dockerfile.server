@@ -40,7 +40,7 @@ ENV GIN_MODE=release
 # Create a non-root user and group
 RUN addgroup -S chatlogger && adduser -S -G chatlogger chatlogger
 
-COPY docs /app
+COPY docs/ /app/docs
 COPY --from=builder /out/server /usr/local/bin/chatlogger-server
 
 # Ensure non-root user has appropriate permissions

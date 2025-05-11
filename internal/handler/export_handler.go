@@ -60,7 +60,7 @@ type ExportRequest struct {
 //	@Failure		401		{object}	map[string]string		"Unauthorized (JWT invalid/missing, Org or User ID not found)"
 //	@Failure		500		{object}	map[string]string		"Failed to create export job"
 //	@Security		BearerAuth
-//	@Router			/api/v1/exports [post]
+//	@Router			/v1/exports [post]
 func (h *ExportHandler) CreateExport(c *gin.Context) {
 	var req ExportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -139,7 +139,7 @@ func (h *ExportHandler) CreateExport(c *gin.Context) {
 //	@Failure		401	{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
 //	@Failure		404	{object}	map[string]string	"Export not found or doesn't belong to user's org"
 //	@Security		BearerAuth
-//	@Router			/api/v1/exports/{id} [get]
+//	@Router			/v1/exports/{id} [get]
 func (h *ExportHandler) GetExport(c *gin.Context) {
 	exportID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -176,7 +176,7 @@ func (h *ExportHandler) GetExport(c *gin.Context) {
 //	@Failure		404	{object}	map[string]string	"Export not found or doesn't belong to user's org"
 //	@Failure		500	{object}	map[string]string	"Export file path not found or file missing on disk"
 //	@Security		BearerAuth
-//	@Router			/api/v1/exports/{id}/download [get]
+//	@Router			/v1/exports/{id}/download [get]
 func (h *ExportHandler) DownloadExport(c *gin.Context) {
 	exportID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -246,7 +246,7 @@ func (h *ExportHandler) DownloadExport(c *gin.Context) {
 //	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
 //	@Failure		500		{object}	map[string]string	"Failed to fetch exports"
 //	@Security		BearerAuth
-//	@Router			/api/v1/exports [get]
+//	@Router			/v1/exports [get]
 func (h *ExportHandler) ListExports(c *gin.Context) {
 	// Get pagination parameters
 	limit := 10
@@ -293,7 +293,7 @@ func (h *ExportHandler) ListExports(c *gin.Context) {
 //	@Failure		401		{object}	map[string]string	"Unauthorized (JWT invalid/missing or Org ID not found)"
 //	@Failure		500		{object}	map[string]string	"Failed to retrieve data or generate export"
 //	@Security		BearerAuth
-//	@Router			/api/v1/exports/sync [post]
+//	@Router			/v1/exports/sync [post]
 func (h *ExportHandler) SyncExport(c *gin.Context) {
 	var req ExportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -4,13 +4,14 @@
 package main
 
 import (
+	"log"
+
 	"github.com/kjanat/chatlogger-api-go/internal/api"
 	"github.com/kjanat/chatlogger-api-go/internal/config"
 	"github.com/kjanat/chatlogger-api-go/internal/jobs"
 	"github.com/kjanat/chatlogger-api-go/internal/repository"
 	"github.com/kjanat/chatlogger-api-go/internal/service"
 	"github.com/kjanat/chatlogger-api-go/internal/version"
-	"log"
 )
 
 // @title          ChatLogger API (Go)
@@ -36,6 +37,7 @@ import (
 // @externalDocs.description  GitHub Wiki
 // @externalDocs.url          https://github.com/kjanat/chatlogger-api-go/wiki
 // @externalDocs.name         Wiki
+
 func main() {
 	// Log version information at startup
 	log.Printf("Starting ChatLogger API v%s (built: %s, commit: %s)",
@@ -90,6 +92,10 @@ func main() {
 	chatService := service.NewChatService(chatRepo)
 	messageService := service.NewMessageService(messageRepo)
 	exportService := service.NewExportService(exportRepo, queue)
+	swaggerService := service.NewSwaggerService()
+
+	// Configure Swagger documentation with API information
+	swaggerService.SetSwaggerInfo(version.Version, cfg.ApiServer.Host, cfg.ApiServer.Port)
 
 	// 6. Bundle services for dependency injection
 	services := &api.AppServices{
@@ -99,13 +105,21 @@ func main() {
 		ChatService:         chatService,
 		MessageService:      messageService,
 		ExportService:       exportService,
+		SwaggerService:      swaggerService,
 		Config: &api.AppConfig{
 			ExportDir: cfg.ExportDir,
+			APIServer: struct {
+				Host string
+				Port string
+			}{
+				Host: cfg.ApiServer.Host,
+				Port: cfg.ApiServer.Port,
+			},
 		},
 	}
 
 	// 7. Set up Gin Router with routes and inject services
-	router := api.NewRouter(services, cfg.JWTSecret, cfg)
+	router := api.NewRouter(services, cfg.JWTSecret)
 
 	// 8. Start the Server
 	port := cfg.ServerPort
