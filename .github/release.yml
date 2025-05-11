@@ -1,30 +1,55 @@
-# .github/release.yml
-
 changelog:
+  categories:
+    - title: "🚀 Features"
+      labels:
+        - "feature"
+        - "enhancement"
+    - title: "🐛 Bug Fixes"
+      labels:
+        - "bug"
+    - title: "🧰 Maintenance & Refactors"
+      labels:
+        - "chore"
+        - "refactor"
+        - "ci"
+        - "infra"
+    - title: "📝 Documentation"
+      labels:
+        - "docs"
+    - title: "✅ Tests"
+      labels:
+        - "test"
+    - title: "📦 Dependencies"
+      labels:
+        - "dependencies"
+    - title: "🔧 Other Changes"
+      labels:
+        - "*" # catch-all
   exclude:
     labels:
-      - ignore-for-release
+      - "skip-changelog"
     authors:
+      - "github-actions[bot]"
       - octocat
       - dependabot[bot]
       - github-advanced-security[bot]
       - github-actions[bot]
       - Copilot
-  categories:
-    - title: Breaking Changes 🛠
-      labels:
-        - Semver-Major
-        - breaking-change
-    - title: Exciting New Features 🎉
-      labels:
-        - Semver-Minor
-        - enhancement
-    - title: Bug Fixes 🐛
-      labels:
-        - '*'
-      exclude:
-        labels:
-          - dependencies
-    - title: 👒 Dependencies
-      labels:
-        - dependencies
+
+  # # Add contributor section
+  # contributors:
+  #   title: "🧑‍💻 Contributors"
+  #   includeBots: false
+  #   collapseAfter: 5
+
+  # # Group unlabeled PRs under 'Other Changes'
+  # change-template: |
+  #   * $title (#$number) by @$author
+
+  # # Customize header
+  # template: |
+  #   ## $RESOLVED_VERSION – $RELEASE_DATE
+
+  #   $CHANGES
+
+  #   $CONTRIBUTORS

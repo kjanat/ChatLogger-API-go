@@ -31,7 +31,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }} #-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -392,17 +392,26 @@ jobs:
         run: |
           echo "🔐 Signing tags for matrix package: ${{ matrix.package }}"
 
-          # Extract image tags from metadata output
-          IMAGE_TAGS=$(jq -r '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON")
-
-          # Sign each tag for both registries
-          while IFS= read -r tag; do
-            if [[ -n "$tag" ]]; then
-              echo "📦 Signing tag: $tag"
-              cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$tag"
-            fi
-          done <<< "$IMAGE_TAGS"
-
+          # First sign versioned tags (which will create the SHA signatures)
+          VERSION_TAG="kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.version.outputs.version-no-v }}"
+          GHCR_VERSION_TAG="ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:${{ steps.version.outputs.version-no-v }}"
+          echo "📦 Signing version tag: $VERSION_TAG"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$VERSION_TAG"
+          echo "📦 Signing GHCR version tag: $GHCR_VERSION_TAG"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$GHCR_VERSION_TAG"
+          
+          # Then push latest tags separately *after* the version tags are signed
+          # This should make them appear at the top of the package list
+          docker tag "$VERSION_TAG" "kjanat/chatlogger-api-${{ matrix.package }}:latest"
+          docker push "kjanat/chatlogger-api-${{ matrix.package }}:latest"
+          docker tag "$GHCR_VERSION_TAG" "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
+          docker push "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
+          
+          # Sign the latest tags last
+          echo "📦 Signing latest tag"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "kjanat/chatlogger-api-${{ matrix.package }}:latest"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "ghcr.io/kjanat/chatlogger-api-${{ matrix.package }}:latest"
+          
           echo "✅ Done signing tags"
 
       - name: Sign digest-based manifest references
