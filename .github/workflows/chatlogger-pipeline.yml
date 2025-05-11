@@ -358,7 +358,7 @@ jobs:
             type=semver,pattern={{version}},enable=true,priority=1000
             type=semver,pattern={{major}}.{{minor}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=900
             type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }},priority=800
-            type=raw,value=${{ steps.version.outputs.version-no-v }}-$(date +%Y%m%d),enable=true,priority=300
+            type=raw,value=${{ steps.version.outputs.version-no-v }}-${{ steps.version.outputs.build-date-tag }},enable=true,priority=300
 
             # Branch-based tags
             type=ref,event=branch,enable=${{ github.ref == format('refs/heads/{0}', 'master') }},priority=600
