@@ -95,7 +95,7 @@ func main() {
 	swaggerService := service.NewSwaggerService()
 
 	// Configure Swagger documentation with API information
-	swaggerService.SetSwaggerInfo(version.Version, cfg.ApiServer.Host, cfg.ApiServer.Port)
+	swaggerService.SetSwaggerInfo(version.Version, cfg.ApiServer.Scheme, cfg.ApiServer.Host, cfg.ApiServer.Port)
 
 	// 6. Bundle services for dependency injection
 	services := &api.AppServices{
@@ -111,9 +111,11 @@ func main() {
 			APIServer: struct {
 				Host string
 				Port string
+				Scheme string
 			}{
 				Host: cfg.ApiServer.Host,
 				Port: cfg.ApiServer.Port,
+				Scheme: cfg.ApiServer.Scheme,
 			},
 		},
 	}

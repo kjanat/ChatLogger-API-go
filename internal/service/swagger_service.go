@@ -18,8 +18,14 @@ func NewSwaggerService() domain.SwaggerService {
 }
 
 // SetSwaggerInfo updates the OpenAPI/Swagger documentation information.
-func (s *SwaggerService) SetSwaggerInfo(version, host, port string) {
+func (s *SwaggerService) SetSwaggerInfo(version, scheme, host, port string) {
 	serverAddr := host
+	if scheme != "" {
+		serverAddr = fmt.Sprintf("%s://%s", scheme, host)
+	}
+	// If the port is not empty and not the default HTTP/HTTPS ports, include it in the address
+	// Otherwise, the default ports (80 for HTTP and 443 for HTTPS) are implied
+	// and do not need to be included in the address.
 	if port != "" && port != "80" && port != "443" {
 		serverAddr = fmt.Sprintf("%s:%s", host, port)
 	}

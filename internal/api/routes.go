@@ -33,7 +33,7 @@ func setupSwaggerRoutes(router *gin.Engine) {
 		ginSwagger.WrapHandler(
 			swaggerFiles.Handler,
 			ginSwagger.DocExpansion("list"),
-			ginSwagger.URL("/docs/OpenAPIv3_swagger.json"),
+			ginSwagger.URL("/docs/api.json"),
 		),
 	)
 

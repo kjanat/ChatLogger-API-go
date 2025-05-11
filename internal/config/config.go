@@ -24,10 +24,14 @@ type Config struct {
 	RedisAddr string
 	// ExportDir is the directory where export files will be stored
 	ExportDir string
-	// PublicHost is the public hostname for the API
+	// ApiServer contains the API server configuration
+	// Host is the hostname for the API server
+	// Port is the port for the API server
+	// Scheme is the scheme (http or https) for the API server
 	ApiServer struct {
 		Host string
 		Port string
+		Scheme string
 	}
 }
 
@@ -50,9 +54,11 @@ func LoadConfig() (*Config, error) {
 		ApiServer: struct {
 			Host string
 			Port string
+			Scheme string
 		}{
 			Host: os.Getenv("API_ENDPOINT_HOST"),
 			Port: os.Getenv("API_ENDPOINT_PORT"),
+			Scheme: os.Getenv("API_ENDPOINT_SCHEME"),
 		},
 		// Load other config...
 	}
@@ -103,6 +109,10 @@ func LoadConfig() (*Config, error) {
 	if cfg.ApiServer.Port == "" {
 		cfg.ApiServer.Port = cfg.ServerPort // Default to server port
 		log.Println("Warning: API_ENDPOINT_PORT not set, using server port")
+	}
+	if cfg.ApiServer.Scheme == "" {
+		cfg.ApiServer.Scheme = "http" // Default to http
+		log.Println("Warning: API_ENDPOINT_SCHEME not set, using http")
 	}
 
 	// Create export directory if it doesn't exist

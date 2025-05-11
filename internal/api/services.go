@@ -14,6 +14,7 @@ type AppConfig struct {
 	APIServer struct {
 		Host string
 		Port string
+		Scheme string
 	}
 }
 
