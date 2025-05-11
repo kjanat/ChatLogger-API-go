@@ -243,7 +243,6 @@ jobs:
   docker-build:
     name: Docker Build (${{ matrix.package }}, ${{ matrix.platform }})
     needs: [ci]
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -303,7 +302,6 @@ jobs:
     name: Create Docker Manifest (${{ matrix.package }})
     needs: docker-build
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
     permissions:
       contents: read
       packages: write

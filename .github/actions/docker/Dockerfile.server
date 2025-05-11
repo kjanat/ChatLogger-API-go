@@ -18,9 +18,9 @@ COPY docs/ ./docs
 COPY internal/ ./internal
 
 # If 32-bit architecture, change the version of gorm.io/gorm to v1.25.12
-RUN ARCH=$(uname -m) && if [ "$ARCH" = "i686" ] || [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armv6l" ]; then \
-echo "32-bit architecture detected ($ARCH), changing gorm version to v1.25.12"; go mod edit -replace=gorm.io/gorm=gorm.io/gorm@v1.25.12; \
-else echo "Not a 32-bit architecture ($ARCH), using default gorm version"; fi
+RUN BIT=$(getconf LONG_BIT) && if [ "$BIT" = "32" ]; then \
+echo "32-bit architecture detected ($BIT), changing gorm version to v1.25.12"; go mod edit -replace=gorm.io/gorm=gorm.io/gorm@v1.25.12; \
+else echo "Not a 32-bit architecture ($BIT), using default gorm version"; fi
 
 # Install dependencies
 RUN go mod tidy
