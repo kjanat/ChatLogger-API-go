@@ -35,7 +35,7 @@ The API is documented using Swagger/OpenAPI:
 
 1. Generate documentation: `./scripts/docs_generate.sh` or `./scripts/docs_generate.ps1`
 2. Start the server: `go run cmd/server/main.go`
-3. Open browser: [`http://localhost:8080/swagger/index.html`](http://localhost:8080/swagger/index.html)
+3. Open browser: [`http://localhost:8080/openapi/index.html`](http://localhost:8080/openapi/index.html)
 
 > [!TIP]
 > View the package documentation for more details on the API endpoints and usage.
@@ -149,12 +149,12 @@ curl -X GET \
 
 The API implements a comprehensive role-based access control system:
 
-| Role         | Description                                                  | Capabilities                                               |
-|:-------------|:-------------------------------------------------------------|:-----------------------------------------------------------|
-| `superadmin` | System-wide administrator with unrestricted access           | Full access to all endpoints and organizations              |
-| `admin`      | Organization administrator                                   | Full access within their organization including API keys    |
-| `user`       | Regular organization user                                    | Access to own chats/messages and basic functionality        |
-| `viewer`     | Read-only user                                               | View-only access to permitted resources                     |
+| Role         | Description                                        | Capabilities                                             |
+| :----------- | :------------------------------------------------- | :------------------------------------------------------- |
+| `superadmin` | System-wide administrator with unrestricted access | Full access to all endpoints and organizations           |
+| `admin`      | Organization administrator                         | Full access within their organization including API keys |
+| `user`       | Regular organization user                          | Access to own chats/messages and basic functionality     |
+| `viewer`     | Read-only user                                     | View-only access to permitted resources                  |
 
 RBAC is implemented via middleware that checks the user's role before allowing access to protected resources.
 
@@ -185,72 +185,72 @@ RBAC is implemented via middleware that checks the user's role before allowing a
 
 ### System Endpoints
 
-| Method   | Endpoint                      | Description                  |
-|:---------|:------------------------------|:-----------------------------|
-| `GET`    | `/health`                     | Health check endpoint        |
-| `GET`    | `/version`                    | API version information      |
-| `GET`    | `/swagger/*any`               | Swagger UI documentation     |
-| `GET`    | `/openapi/*any`               | OpenAPI documentation        |
+| Method | Endpoint        | Description              |
+| :----- | :-------------- | :----------------------- |
+| `GET`  | `/health`       | Health check endpoint    |
+| `GET`  | `/version`      | API version information  |
+| `GET`  | `/openapi/*any` | Swagger UI documentation |
+| `GET`  | `/openapi/*any` | OpenAPI documentation    |
 
 ### Auth Endpoints
 
-| Method   | Endpoint                      | Description                  |
-|:---------|:------------------------------|:-----------------------------|
-| `POST`   | `/auth/login`                 | Login and get JWT cookie     |
-| `POST`   | `/auth/register`              | Register a new user          |
-| `POST`   | `/auth/logout`                | Logout and clear JWT cookie  |
+| Method | Endpoint         | Description                 |
+| :----- | :--------------- | :-------------------------- |
+| `POST` | `/auth/login`    | Login and get JWT cookie    |
+| `POST` | `/auth/register` | Register a new user         |
+| `POST` | `/auth/logout`   | Logout and clear JWT cookie |
 
 ### Dashboard API (Authenticated with JWT)
 
-| Method   | Endpoint                          | Description                      |
-|:---------|:----------------------------------|:---------------------------------|
-| `GET`    | `/v1/users/me`                | Get current user profile         |
-| `PATCH`  | `/v1/users/me`                | Update current user profile      |
-| `POST`   | `/v1/users/me/password`       | Change current user's password   |
-| `POST`   | `/v1/chats`                   | Create a new chat                |
-| `GET`    | `/v1/chats`                   | List user's chats                |
-| `GET`    | `/v1/chats/:chatID`           | Get a specific chat              |
-| `PATCH`  | `/v1/chats/:chatID`           | Update a chat                    |
-| `DELETE` | `/v1/chats/:chatID`           | Delete a chat                    |
-| `GET`    | `/v1/chats/:chatID/messages`  | Get messages from a chat         |
-| `GET`    | `/v1/analytics/messages`      | Get message analytics            |
+| Method   | Endpoint                     | Description                    |
+| :------- | :--------------------------- | :----------------------------- |
+| `GET`    | `/v1/users/me`               | Get current user profile       |
+| `PATCH`  | `/v1/users/me`               | Update current user profile    |
+| `POST`   | `/v1/users/me/password`      | Change current user's password |
+| `POST`   | `/v1/chats`                  | Create a new chat              |
+| `GET`    | `/v1/chats`                  | List user's chats              |
+| `GET`    | `/v1/chats/:chatID`          | Get a specific chat            |
+| `PATCH`  | `/v1/chats/:chatID`          | Update a chat                  |
+| `DELETE` | `/v1/chats/:chatID`          | Delete a chat                  |
+| `GET`    | `/v1/chats/:chatID/messages` | Get messages from a chat       |
+| `GET`    | `/v1/analytics/messages`     | Get message analytics          |
 
 ### Admin-Only Endpoints (JWT + Admin Role)
 
-| Method   | Endpoint                          | Description                      |
-|:---------|:----------------------------------|:---------------------------------|
-| `GET`    | `/v1/orgs/me/apikeys`         | List organization API keys       |
-| `POST`   | `/v1/orgs/me/apikeys`         | Generate a new API key           |
-| `DELETE` | `/v1/orgs/me/apikeys/:id`     | Revoke an API key                |
+| Method   | Endpoint                  | Description                |
+| :------- | :------------------------ | :------------------------- |
+| `GET`    | `/v1/orgs/me/apikeys`     | List organization API keys |
+| `POST`   | `/v1/orgs/me/apikeys`     | Generate a new API key     |
+| `DELETE` | `/v1/orgs/me/apikeys/:id` | Revoke an API key          |
 
 ### Export Endpoints (JWT Auth)
 
-| Method   | Endpoint                          | Description                      |
-|:---------|:----------------------------------|:---------------------------------|
-| `POST`   | `/v1/exports`                 | Create async export job          |
-| `GET`    | `/v1/exports`                 | List export jobs                 |
-| `GET`    | `/v1/exports/:id`             | Get export job status            |
-| `GET`    | `/v1/exports/:id/download`    | Download completed export        |
-| `POST`   | `/v1/exports/sync`            | Create synchronous export        |
+| Method | Endpoint                   | Description               |
+| :----- | :------------------------- | :------------------------ |
+| `POST` | `/v1/exports`              | Create async export job   |
+| `GET`  | `/v1/exports`              | List export jobs          |
+| `GET`  | `/v1/exports/:id`          | Get export job status     |
+| `GET`  | `/v1/exports/:id/download` | Download completed export |
+| `POST` | `/v1/exports/sync`         | Create synchronous export |
 
 ### Public API (API Key Auth)
 
-| Method   | Endpoint                                   | Description                |
-|:---------|:-------------------------------------------|:---------------------------|
-| `POST`   | `/v1/orgs/:slug/chats`                 | Create a new chat session  |
-| `POST`   | `/v1/orgs/:slug/chats/:chatID/messages`| Add a message to a chat    |
+| Method | Endpoint                                | Description               |
+| :----- | :-------------------------------------- | :------------------------ |
+| `POST` | `/v1/orgs/:slug/chats`                  | Create a new chat session |
+| `POST` | `/v1/orgs/:slug/chats/:chatID/messages` | Add a message to a chat   |
 
 ## 🔧 Configuration
 
 The application is configured using environment variables:
 
-| Variable       | Description                      | Default           |
-|:---------------|:---------------------------------|:------------------|
-| `PORT`         | Server port                      | `8080`            |
-| `DATABASE_URL` | PostgreSQL connection string     | Required          |
-| `JWT_SECRET`   | Secret for JWT signing           | Required          |
-| `REDIS_ADDR`   | Redis address for job queue      | `localhost:6379`  |
-| `EXPORT_DIR`   | Directory to store export files  | `./exports`       |
+| Variable       | Description                     | Default          |
+| :------------- | :------------------------------ | :--------------- |
+| `PORT`         | Server port                     | `8080`           |
+| `DATABASE_URL` | PostgreSQL connection string    | Required         |
+| `JWT_SECRET`   | Secret for JWT signing          | Required         |
+| `REDIS_ADDR`   | Redis address for job queue     | `localhost:6379` |
+| `EXPORT_DIR`   | Directory to store export files | `./exports`      |
 
 ## ⚙️ Export System
 

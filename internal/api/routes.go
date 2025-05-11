@@ -23,12 +23,6 @@ func setupSwaggerRoutes(router *gin.Engine) {
 	log.Printf("Setting up Swagger routes")
 
 	// Set up Swagger UI endpoint for API documentation
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(
-		swaggerFiles.Handler,
-		ginSwagger.DocExpansion("list"),
-	))
-
-	// Also make documentation available at /openapi for OpenAPI 3.0
 	router.GET("/openapi/*any",
 		ginSwagger.WrapHandler(
 			swaggerFiles.Handler,
@@ -70,7 +64,7 @@ func addRoutes(router *gin.Engine, services *AppServices, jwtSecret string) {
 			"build_time": version.BuildTime,
 			"git_commit": version.GitCommit,
 			"docs": gin.H{
-				"gui":  "/swagger/index.html",
+				"gui":  "/openapi/index.html",
 				"json": "/docs/api.json",
 				"yaml": "/docs/api.yaml",
 			},

@@ -86,9 +86,16 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
     name: Deploy API documentation on Bump.sh
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: powershell
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Generate documentation
+        run: ./scripts/docs_generate
+
       - name: Deploy API documentation
         uses: bump-sh/github-action@v1
         with:
