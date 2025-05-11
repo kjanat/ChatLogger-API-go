@@ -80,7 +80,7 @@ runs:
           org.opencontainers.image.created=${{ steps.version.outputs.build-date }}
           org.opencontainers.image.authors=kjanat
           org.opencontainers.image.url=https://github.com/${{ github.repository }}
-          org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/tree/main/docs
+          org.opencontainers.image.documentation=https://chatlogger-api-docs.kjanat.com/
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           org.opencontainers.image.version=${{ steps.version.outputs.version-no-v }}
           org.opencontainers.image.revision=${{ github.sha }}
