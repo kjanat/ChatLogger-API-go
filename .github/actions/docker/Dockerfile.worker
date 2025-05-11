@@ -5,7 +5,9 @@ ARG TARGETOS
 ARG TARGETARCH
 ARG LD_FLAGS
 
-LABEL org.opencontainers.image.description DESCRIPTION="ChatLogger API Worker"
+LABEL org.opencontainers.image.source="https://github.com/kjanat/chatlogger-api-go"
+LABEL org.opencontainers.image.description="ChatLogger API Worker"
+LABEL org.opencontainers.image.licenses="MIT"
 
 WORKDIR /src
 

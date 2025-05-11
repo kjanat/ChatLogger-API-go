@@ -77,7 +77,7 @@ runs:
           kjanat/chatlogger-api-${{ inputs.PACKAGE }}
           ghcr.io/kjanat/chatlogger-api-${{ inputs.PACKAGE }}
         labels: |
-          org.opencontainers.image.created=${{ steps.version.outputs.commit-date }}
+          org.opencontainers.image.created=${{ steps.version.outputs.build-date }}
           org.opencontainers.image.authors=kjanat
           org.opencontainers.image.url=https://github.com/${{ github.repository }}
           org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/tree/main/docs
@@ -109,9 +109,10 @@ runs:
         cache-to: type=gha,scope=${{ inputs.PACKAGE }},mode=max
         build-args: |
           VERSION=${{ steps.version.outputs.version-no-v }}
-          BUILD_TIME=${{ steps.version.outputs.commit-date }}
+          BUILD_TIME=${{ steps.version.outputs.build-date }}
           GIT_COMMIT=${{ github.sha }}
           GIT_TAG=${{ github.ref_name }}
+          LD_FLAGS=-X github.com/kjanat/chatlogger-api-go/internal/version.Version=${{ steps.version.outputs.version-no-v }} -X github.com/kjanat/chatlogger-api-go/internal/version.BuildTime=${{ steps.version.outputs.build-date }} -X github.com/kjanat/chatlogger-api-go/internal/version.GitCommit=${{ github.sha }} -X github.com/kjanat/chatlogger-api-go/internal/version.GitTag=${{ github.ref_name }}
         outputs: |
           type=image,name=kjanat/chatlogger-api-${{ inputs.PACKAGE }},push-by-digest=true
           type=image,name=ghcr.io/kjanat/chatlogger-api-${{ inputs.PACKAGE }},push-by-digest=true
