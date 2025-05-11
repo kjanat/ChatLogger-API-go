@@ -12,7 +12,7 @@ updates:
     schedule:
       interval: daily
       day: 'tuesday'
-      time: '03:00'
+      time: '07:00'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     labels:
@@ -32,7 +32,7 @@ updates:
     schedule:
       interval: daily
       day: 'tuesday'
-      time: '03:00'
+      time: '07:00'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     labels:
@@ -55,7 +55,7 @@ updates:
     schedule:
       interval: daily
       day: 'tuesday'
-      time: '03:00'
+      time: '07:00'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     reviewers:
@@ -65,7 +65,7 @@ updates:
         patterns:
           - '*'
   - package-ecosystem: 'docker-compose'
-    dirctories:
+    directories:
       - '/'
       - '/.github/actions/docker/'
     allow:
@@ -74,7 +74,7 @@ updates:
     schedule:
       interval: daily
       day: 'tuesday'
-      time: '03:00'
+      time: '07:00'
       timezone: 'Europe/Amsterdam'
     open-pull-requests-limit: 10
     reviewers:

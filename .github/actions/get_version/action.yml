@@ -36,6 +36,9 @@ outputs:
   build-date:
     value: ${{ steps.extract-everything.outputs.build-date }}
     description: 'UTC build timestamp (RFC3339)'
+  build-date-tag:
+    value: ${{ steps.extract-everything.outputs.build-date-tag }}
+    description: 'UTC build timestamp to add to tag'
   go-version:
     value: ${{ steps.extract-everything.outputs.go-version }}
     description: 'Go version from go.mod'
@@ -68,6 +71,7 @@ runs:
 
         # Generate build date
         build_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        build_date_tag=$(date -u +"%Y%m%d_%H%M")
 
         # Extract Go version from go.mod
         go_version=$(grep -oP '^go\s+\K[\d.]+' go.mod)
@@ -82,4 +86,5 @@ runs:
         echo "commit-date=$commit_date" >> $GITHUB_OUTPUT
         echo "timestamp=$timestamp" >> $GITHUB_OUTPUT
         echo "build-date=$build_date" >> $GITHUB_OUTPUT
+        echo "build-date-tag=$build_date_tag" >> $GITHUB_OUTPUT
         echo "go-version=$go_version" >> $GITHUB_OUTPUT
