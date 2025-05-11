@@ -90,6 +90,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with: { go-version-file: 'go.mod', cache: true }
+
+      - name: Install swaggo
+        run: go install github.com/swaggo/swag/v2/cmd/swag@latest
       - name: Generate documentation
         run: ./scripts/docs_generate.ps1
 
