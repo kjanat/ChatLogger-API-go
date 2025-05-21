@@ -3,7 +3,7 @@ module github.com/kjanat/chatlogger-api-go
 go 1.24.2
 
 require (
-	github.com/gin-gonic/gin v1.10.0
+	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/hibiken/asynq v0.25.1
 	github.com/joho/godotenv v1.5.1
